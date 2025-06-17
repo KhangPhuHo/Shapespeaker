@@ -1,0 +1,14 @@
+table thead {
+        display: none;
+    }
+    table,
+    tbody,
+    tr,
+    td {
+        display: block;
+        width: 100%;
+    }
+    td {
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }

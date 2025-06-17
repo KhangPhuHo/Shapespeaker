@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Danh sách Sản phẩm</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./src/css/index.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+
+    <!-- Firebase Auth -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.1/firebase-auth-compat.min.js"
+        integrity="sha512-b2PGOE6ClpdFR5WZylPqJ9NEtHyGtdXKIe5wI0qRKVg3VeH9Km8CvihpnySwf6v21TV2cMTUp/BuglUiFLB38Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+</head>
+
+<body>
+    <div id="Menu">
+        <button id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></button>
+        <p>
+        <h2 style="color: #ffffff;">My<span style="color: #ffcc66"> Books</span></h2>
+        <div id="profile"></div><!--do khong lam hoan toan tu js nen no khong cap nhat tu dong-->
+        </p>
+        <p id="Menu1">
+            <a href="isgamemarket.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
+            <a href="news.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> News</a>
+            <a href="market.html"><i class="fa fa-book" aria-hidden="true"></i> Books</a>
+            <a href="language.html"><i class="fa fa-globe" aria-hidden="true"></i> Language</a>
+            <a href="myaccount.html"><i class="fa fa-address-book-o" aria-hidden="true"></i> My Account</a>
+        </p>
+        <p id="logout">
+        </p>
+    </div><br><br><br><br><br><br><br><br><br>
+    <div id="wrapper">
+        <h1 style="text-align: center;">Danh sách Sản Phẩm</h1>
+        <button id="themmoi" onclick="openModal()">+ Thêm mới sản phẩm</button>
+        <div id="tableinfo" style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Chi tiết</th>
+                        <th>Giá</th>
+                        <th>Số lượng</th>
+                        <th>Link</th>
+                        <th>Action</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody id="content"></tbody>
+            </table>
+        </div>
+
+        <!--form thêm mới sản phẩm-->
+        <div class="modal" id="productModal">
+            <div class="modal-content">
+                <button class="close" onclick="closeModal()">&times;</button>
+                <h2>Tạo Sản Phẩm Mới</h2>
+                <form id="form-new-product">
+                    <div class="form-group">
+                        <label for="picture">Hình ảnh</label>
+                        <input type="file" id="picture" name="picture">
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Tên sản phẩm</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="details">Chi tiết sản phẩm</label>
+                        <input type="text" id="details" name="details" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Giá</label>
+                        <input type="number" id="price" name="price" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Số lượng</label>
+                        <input type="number" id="stock" name="stock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="link">Link</label>
+                        <input type="text" id="link" name="link" required>
+                    </div>
+                    <button id="submit" type="submit">Tạo sản phẩm</button><br><br>
+                </form>
+            </div>
+        </div>
+
+        <!-- Form sửa sản phẩm -->
+        <div class="modal" id="productModal2">
+            <div class="modal-content">
+                <button class="close" onclick="closeModal2()">&times;</button>
+                <h2>Chỉnh sửa sản phẩm</h2>
+                <form id="form-edit-product" onsubmit="updateProduct(event)">
+                    <div class="form-group">
+                        <label for="picture">Hình ảnh</label>
+                        <img id="preview-picture" src="" alt="Ảnh hiện tại" style="max-width: 200px;margin-bottom: 10px;">
+                        <input type="file" id="edit-picture" name="picture">
+                    </div>
+                    <div class="form-group">
+                        <label for="name">Tên sản phẩm</label>
+                        <input type="text" id="edit-name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="details">Chi tiết sản phẩm</label>
+                        <input type="text" id="edit-details" name="details" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Giá</label>
+                        <input type="number" id="edit-price" name="price" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Số lượng</label>
+                        <input type="number" id="edit-stock" name="stock" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="link">Link</label>
+                        <input type="text" id="edit-link" name="link" required>
+                    </div>
+                    <button id="submit" type="submit">Xác nhận sửa sản phẩm</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="./src/js/firebase-config.js"></script>
+    <script src="./src/js/index.js"></script>
+    <script>
+        function closeModal() {
+            document.getElementById("productModal").style.display = "none";
+        }
+        function openModal() {
+            document.getElementById("productModal").style.display = "block";
+        }
+        // Khi mở modal chỉnh sửa sản phẩm, cần lưu ID sản phẩm để cập nhật đúng mục
+        function openModal2(productId) {
+            document.getElementById('edit-name').dataset.productId = productId;
+            document.getElementById('productModal2').style.display = "block";
+        }
+
+        function closeModal2() {
+            document.getElementById('productModal2').style.display = "none";
+        }
+
+        // xử lý hiển thị ảnh
+        const fileInput = document.getElementById('edit-picture');
+        const previewImg = document.getElementById('preview-picture');
+
+        fileInput.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
+</body>
+
+</html>

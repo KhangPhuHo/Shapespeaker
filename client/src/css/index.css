@@ -1,0 +1,292 @@
+/* Default styles */
+body {
+    font-family: Arial, sans-serif;
+}
+
+/* Make table responsive */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#wrapper {
+    position: relative;
+    width: 70%;
+    margin: 30px auto;
+}
+
+#themmoi {
+    position: absolute;
+    top: 40px;
+    right: 0;
+}
+
+/* Mobile styles */
+@media only screen and (max-width: 480px) {
+    h1 {
+        font-size: 20px;
+    }
+
+    button {
+        font-size: 10px;
+        padding: 8px;
+    }
+    table,
+    tbody,
+    tr,
+    td {
+        display: block;
+        width: 100%;
+    }
+    table thead {
+        display: none;
+    }
+    
+    td {
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+    }
+}
+
+/* Tablet styles */
+@media only screen and (max-width: 800px) {
+    #Menu {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+    }
+
+    #Menu1 {
+        display: none; /* Hide menu items */
+    }
+
+    #menu-toggle {
+        display: block;
+        background-color: #ffcc66;
+        color: white;
+		height: 35px;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    #Menu1.active {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 71px;
+        left: 0;
+        width: 100%;
+        background-color: rgba(46, 46, 46, 0.911);
+        z-index: 1000;
+        padding: 10px;
+    }
+
+    #Menu1 a {
+        display: block;
+        padding: 10px;
+        text-align: center;
+    }
+    h1 {
+        margin-top: 12px;
+
+    }
+
+    button {
+        font-size: 16px;
+        padding: 10px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th,
+    td {
+        padding: 8px;
+    }
+}
+
+/* Laptop styles */
+@media only screen and (min-width: 801px) {
+    #menu-toggle {
+        display: none;
+    }
+
+    h1 {
+        font-size: 28px;
+    }
+
+    button {
+        font-size: 18px;
+        padding: 12px;
+    }
+
+    table {
+        font-size: 16px;
+    }
+
+    th,
+    td {
+        padding: 10px;
+    }
+
+}
+
+#logoutButton {
+    position: relative;
+    background-color: rgba(70, 97, 118, 0.318);
+    left: -15px;
+    border-radius: 10px;
+}
+
+#Menu .info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#Menu {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    margin-left: -10px;
+    display: flex;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    align-items: center;
+    background-color: rgba(46, 46, 46, 0.911);
+    z-index: 1000;
+}
+
+#Menu a {
+    text-decoration: none;
+    color: white;
+}
+
+#Menu1 {
+    margin-right: 160px;
+}
+
+#Signin {
+    position: relative;
+    left: -15px;
+    background-color: rgb(49, 55, 56);
+    border-radius: 10px;
+}
+
+#Login {
+    position: relative;
+    left: -15px;
+    background-color: rgb(3, 37, 44);
+    border-radius: 10px;
+}
+#submit {
+    width: 80%;
+    margin: auto;
+    display: flex;
+    justify-content: center;
+}
+
+table {
+    width: 100%;
+    margin: 40px auto;
+    border-collapse: collapse;
+}
+
+table,
+th,
+td {
+    border: 1px solid black;
+}
+
+th,
+td {
+    padding: 10px;
+    text-align: center;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+/* form */
+
+#wrapper {
+    position: relative;
+}
+
+.modal {
+    display: none;
+    /* Ẩn thẻ lúc đầu */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Màu nền mờ cho background */
+    z-index: 1000;
+    /* popup và background hiển thị rõ hơn các phần tử khác  */
+}
+
+.modal-content {
+    position: absolute;
+    width: 350px;
+    height: 500px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -47%);
+    /* dịch chuyển thẻ cả chiều ngang và chiều dọc*/
+    background-color: white;
+    border: 2px solid #000;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-radius: 10px;
+    overflow-y: auto;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    background-color: #ffcc66;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #eca10c;
+}
+
+.close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: red;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 10%;
+    width: 30px;
+}

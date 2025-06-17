@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="./src/css/styles.css">
+  <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
+  <!-- Firebase App (bắt buộc) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+
+  <!-- Firebase Authentication -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+
+  <!-- Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+</head>
+<style>
+  #searchNews {
+    margin-top: 200px;
+  }
+
+  #search {
+    display: flex;
+    justify-content: start;
+    margin-left: 50px;
+    background-color: transparent;
+    width: 400px;
+    height: 25px;
+    color: #ccc;
+    border-radius: 20px;
+  }
+
+  #logoutButton {
+    position: relative;
+    background-color: rgba(70, 97, 118, 0.318);
+    left: -15px;
+    border-radius: 10px;
+  }
+
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .suggestion-item {
+    display: flex;
+    justify-content: start;
+    margin-left: 50px;
+  }
+
+  /*Phần suggestions*/
+  .suggestion-item:hover {
+    cursor: pointer;
+    color: #ffcc66;
+  }
+
+  /* Phần Popup */
+  .popup-container {
+    display: none;
+    /* Ẩn thẻ lúc đầu */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    /* Màu nền mờ cho background */
+    z-index: 1000;
+    /* popup và background hiển thị rõ hơn các phần tử khác  */
+  }
+
+  .popup {
+    position: absolute;
+    width: 500px;
+    height: 560px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -47%);
+    /* dịch chuyển thẻ cả chiều ngang và chiều dọc*/
+    background-color: #383b3d;
+    border: 2px solid #000;
+    padding: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    border-radius: 10px;
+  }
+
+  .popup img {
+    width: 400px;
+    height: 300px;
+    margin: 0 auto;
+  }
+
+  .popup h3 {
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .popup p {
+    text-align: center;
+    margin: 5px 0;
+  }
+
+  .popup a {
+    display: grid;
+    place-items: center;
+    text-decoration: none;
+  }
+
+  .close-popup {
+    display: block;
+    margin: 10px auto;
+    padding: 5px 10px;
+    position: relative;
+    left: 50%;
+    background-color: transparent;
+    color: red;
+    font-size: 20px;
+    border: none;
+    cursor: pointer
+  }
+
+  .close-popup:hover {
+    background-color: transparent;
+    color: white;
+  }
+
+  #display-avs {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+  }
+
+  .author-popup {
+    font-size: 30px;
+    color: #ddcba8;
+  }
+
+  .description-popup {
+    color: #ffcc66;
+  }
+
+  #Menu .info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  #Menu {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    margin-left: -10px;
+    display: flex;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+    align-items: center;
+    background-color: rgba(46, 46, 46, 0.911);
+    border-radius: 10px;
+    z-index: 1000;
+  }
+
+  #Menu a {
+    text-decoration: none;
+    color: white;
+  }
+
+  #Menu1 a {
+    padding-left: 20px;
+  }
+
+  #Menu1 {
+    margin-right: 160px;
+  }
+
+  #Signin {
+    position: relative;
+    left: -15px;
+    background-color: rgb(49, 55, 56);
+    border-radius: 10px;
+  }
+
+  /* Phần code */
+  #Lastestnews {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 100px;
+  }
+
+  .new img {
+    width: 300px;
+    height: 250px;
+    border-radius: 10px;
+    border: 2px solid #000;
+  }
+
+  .new {
+    text-decoration: none;
+    background-color: rgba(61, 54, 54, 0.911);
+    color: #000;
+    margin: 0 10px;
+    width: 31%;
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+
+  #Lastestnews span {
+    background-color: #ffcc66;
+    border-radius: 10px
+  }
+
+  .new:hover {
+    background-color: #eca10c;
+    color: white;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .new img:hover {
+    width: 380px;
+    height: 250px;
+  }
+
+  .container {
+    width: 100%;
+    height: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+    border-radius: 10px;
+    background: #232526;
+    background: -webkit-linear-gradient(to right, #414345, #232526);
+    background: linear-gradient(to right, #414345, #232526);
+  }
+
+  .image {
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin: 0 auto;
+    border: 5px solid #fdf5e6;
+  }
+
+  .w3-border {
+    border: 3px solid #ccc !important;
+  }
+
+  .contact {
+    text-align: center;
+    color: #fdf5e6;
+  }
+
+  .contact .info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .contact .info span {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .bio {
+    font-size: 11px;
+    text-align: center;
+  }
+
+  @media screen and (min-width: 768px) {
+    .link {
+      width: 100%;
+    }
+  }
+
+  @media screen and (min-width: 576px) {
+    .container {
+      max-width: 540px;
+    }
+
+    .profession span {
+      font-size: 24px;
+    }
+
+    .bio {
+      font-size: 15px;
+    }
+  }
+
+  #icon {
+    text-align: center;
+  }
+
+  .icon {
+    color: black;
+  }
+
+  #footer {
+    text-align: center;
+  }
+
+  iframe {
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+
+<body>
+  <div id="Menu">
+    <p>
+    <h2 style="color: #ffffff;">My<span style="color: #ffcc66"> Books</span></h2>
+    <div id="profile"></div>
+    </p>
+    <p id="Menu1">
+      <a href="isgamemarket.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
+      <a href="news.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> News</a>
+      <a href="market.html"><i class="fa fa-book" aria-hidden="true"></i> Books</a>
+      <a href="language.html"><i class="fa fa-globe" aria-hidden="true"></i> Language</a>
+      <a href="myaccount.html"><i class="fa fa-address-book-o" aria-hidden="true"></i> My Account</a>
+    </p>
+    <p id="logout">
+    </p>
+  </div>
+  <div class="video-container">
+    <video autoplay muted loop id="background-video">
+      <source src="./src/video/1722969-uhd_3840_2160_25fps.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+  <div id="content9">
+    <div id="searchNews">
+      <input type="text" id="search" onkeyup="search(); suggest()" placeholder="Search for a book...">
+      <div id="suggestions"></div>
+      <div id="container"></div>
+    </div>
+    <div class="popup-container">
+      <div class="popup"></div>
+    </div>
+    <div id="Lastestnews">
+    </div>
+    <br><br><br><br><br>
+    <div class="container">
+      <div style="text-align: center">
+        <div><img class="image" src="./src/img/cauculator icon.png" alt="logo"></div>
+        <p class="profession"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">My<span
+              style="color: #ffcc66">Books</span></span></p>
+        <p class="bio"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">BOOKS
+            SOFTWARE</span></p><br>
+      </div>
+      <div class="contact">
+        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">CONTACT US</span></p>
+        <div id="icon">
+          <a href="https://x.com/i/flow/login" class="icon"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
+          <a href="https://www.facebook.com/" class="icon"><i class="fa fa-facebook-official"
+              aria-hidden="true"></i></a>
+          <a href="https://www.instagram.com/" class="icon"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+          <a href="https://www.google.com/intl/vi/gmail/about/" class="icon"><i class="fa fa-envelope-o"
+              aria-hidden="true"></i></a>
+        </div>
+        <div id="footer">
+          <p>©Copyright from opening source</p>
+        </div>
+      </div>
+      <div class="contact">
+        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">Find us</span></p>
+        <iframe src="https://maps.google.com/maps?q=HCMCity,+Njemačka&output=embed" width="100%" height="250"
+          frameborder="0" style="border:0" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+  <script src="./src/js/firebase-config.js"></script>
+  <script type="module" src="./src/js/News.js"></script>
+  <script src="./src/js/logout.js"></script>
+  <script type="module" src="./src/js/profile.js"></script>
+  <script src="./src/js/checklogin.js"></script>
+</body>
+
+</html>

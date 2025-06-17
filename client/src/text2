@@ -1,0 +1,696 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+// Config Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",//apikey để gửi dữ liệu cho firebase
+  authDomain: "book-management-b7265.firebaseapp.com",
+  projectId: "book-management-b7265",
+  storageBucket: "book-management-b7265.firebasestorage.app",
+  messagingSenderId: "1046859996196",
+  appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
+  measurementId: "G-ZYTCE1YML4"
+};
+
+// Init Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+document.addEventListener("DOMContentLoaded", () => {
+    displayProfile();
+});
+
+function displayProfile() {
+    const profileContainer = document.getElementById('profile');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const docSnap = await getDoc(doc(db, "users", user.uid));
+
+            if (docSnap.exists()) {
+                const userInfo = docSnap.data();
+                const username = userInfo.name || user.displayName || "Người dùng";
+                const avatar = user.photoURL;
+
+                profileContainer.innerHTML = `
+                    <p class="info">
+                        ${avatar ? `<img style="width: 40px; height: 40px; border-radius: 10px;" src="${avatar}" alt="Avatar">` : "👤"} 
+                        <span id="username1">${username}</span>
+                    </p>
+                `;
+            } else {
+                profileContainer.innerHTML = `<p>Không tìm thấy thông tin người dùng.</p>`;
+            }
+        } else {
+            profileContainer.innerHTML = `<p>Hãy đăng nhập để hiển thị hồ sơ.</p>`;
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+function searchBooks() {
+  const raw = document.getElementById('search').value;
+  const key = raw.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+  const results = bookSearch.filter(book => {
+    const combined = `${book.name} ${book.author} ${book.votes}`.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+    return combined.includes(key);
+  });
+  const container = document.getElementById('Market');
+  container.innerHTML = '';
+  if (results.length) {
+    displayBooks(results);
+  } else {
+    container.innerHTML = '<div>No result found!</div>';
+  }
+}
+
+function suggest() {
+  const raw = document.getElementById('search').value;
+  const key = raw.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+  const suggestionsDiv = document.getElementById('suggestions');
+  suggestionsDiv.innerHTML = '';
+  if (!key) return;
+  bookSearch.forEach(book => {
+    const combined = `${book.name} ${book.author}`.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+    if (combined.includes(key)) {
+      const item = document.createElement('div');
+      item.classList.add('suggestion-item');
+      item.textContent = book.name;
+      item.addEventListener('click', () => {
+        document.getElementById('search').value = book.name;
+        searchBooks();
+        suggestionsDiv.innerHTML = '';
+      });
+      suggestionsDiv.appendChild(item);
+    }
+  });
+}
+
+function addPopup(book) {
+  const popupContainer = document.querySelector('.popup-container');
+  const popup = document.querySelector('.popup');
+  popup.innerHTML = `
+    <button class="close-popup" onclick="hidePopup()"><i class="fa fa-times-circle-o"></i></button>
+    <img src="${book.cover}" alt="${book.name}">
+    <h3><span>${book.name}</span></h3>
+    <div id="display-avs">
+      <p>Author:<br><span class="author-popup">${book.author}</span></p>
+      <p>Votes:<br><span class="votes-popup">${book.votes}</span></p>
+    </div>
+    <a href="${book.url}" target="_blank">
+      <button class="box"><span>More information</span></button>
+    </a>
+  `;
+  popupContainer.style.display = 'block';
+}
+
+function hidePopup() {
+  document.querySelector('.popup-container').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  fetchData();
+  const input = document.getElementById('search');
+  input.addEventListener('input', () => {
+    searchBooks();
+    suggest();
+  });
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Import the necessary Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",//apikey để gửi dữ liệu cho firebase
+            authDomain: "book-management-b7265.firebaseapp.com",
+            projectId: "book-management-b7265",
+            storageBucket: "book-management-b7265.firebasestorage.app",
+            messagingSenderId: "1046859996196",
+            appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
+            measurementId: "G-ZYTCE1YML4"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to fetch and display products
+        async function fetchProducts() {
+            const productsCollection = collection(db, "products");
+            const productSnapshot = await getDocs(productsCollection);
+            const productList = document.getElementById("Market");
+
+            productSnapshot.forEach((doc) => {
+                const product = doc.data();
+                const productElement = document.createElement("div");
+                productElement.classList.add("product");
+
+                productElement.innerHTML = `
+          <img src="${product.picture}" alt="${product.name}" />
+          <h3>${product.name}</h3>
+          <p>${product.details}</p>
+          <p>Price: $${product.price}</p>
+          <p>Stock: ${product.stock}</p>
+        `;
+
+                productList.appendChild(productElement);
+            });
+        }
+
+        // Call the function to fetch products
+        fetchProducts();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+        });
+
+
+        
+// Hiển thị danh sách sản phẩm
+function displayProducts(productArray) {
+  productList.innerHTML = "";
+  productArray.forEach(product => {
+    const productEl = document.createElement("div");
+    productEl.classList.add("product");
+
+    productEl.innerHTML = `
+      <img src="${product.picture}" alt="${product.name}" loading="lazy" />
+      <h3>${product.name}</h3>
+    `;
+
+    productEl.addEventListener("click", () => showPopup(product));
+    productList.appendChild(productEl);
+  });
+}
+
+
+
+
+
+
+
+
+
+function showPopup(product) {
+
+  popup.innerHTML = `
+  <button class="close-popup" onclick="hidePopup()"><i class="fa fa-times-circle-o" aria-hidden="true"></i></button>
+    <img src="${product.picture}" alt="${product.name}" loading="lazy" />
+    <h3>${product.name}</h3>
+    <p>${product.details}</p>
+    <div id="display-avs"><p>Price:<br><span class="author-popup">$${product.price}</span></p> <p>Stock:<br><span class="votes-popup">${product.stock}</span></p></div>
+  `;
+  //<a href="${product.url}" target="_blank"><button class="box"><span>More information</span></button></a>
+  popupContainer.style.display = "block";
+
+  document.querySelector(".close-popup").addEventListener("click", () => {
+    popupContainer.style.display = "none";
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const bookSearch = [
+  {
+    "book_id": 1,
+    "name": "16 New Books Coming in January",
+    "author": "Joumana Khatib",
+    "description": "This month brings memoirs from Carl Bernstein and Bernardine Evaristo, a biography of Lorraine Hansberry, two high-octane thrillers and much more.",
+    "cover": "https://static01.nyt.com/images/2021/12/31/books/30JANUARY-BOOKS-COMBO/30JANUARY-BOOKS-COMBO-superJumbo.jpg",
+    "url": "https://www.nytimes.com/2021/12/30/books/january-2022-books.html"
+  },
+  {
+    "book_id": 2,
+    "name": "The Science of Systems",
+    "author": "David Shugar",
+    "description": "A Unified View of Nature's Patterns",
+    "cover": "https://m.media-amazon.com/images/I/41iD516KBiL._SL500_.jpg",
+    "url": "https://bookauthority.org/books/new-science-books"
+  },
+  {
+    "book_id": 3,
+    "name": "These are Science News’ favorite books of 2023",
+    "author": "Science News Staff",
+    "description":"Books introducing emerging areas of science, as well as new looks at familiar fields, were among the Science News staff’s favorite science reads this year. Did we overlook your favorite? Let us know at feedback@sciencenews.org.",
+    "cover": "https://i0.wp.com/www.sciencenews.org/wp-content/uploads/2023/12/121623_reviews_feat_REV.jpg?fit=1030%2C580&ssl=1",
+    "url": "https://www.sciencenews.org/article/science-news-favorite-top-books-2023"
+  },
+  {
+    "book_id": 4,
+    "name": "12 Science Books You Should Read Right Now",
+    "author": "WIRED Staff Science",
+    "description": "Snuggle up with these 2019 books on the so-called language of God, dirty drugmakers, and the future of food and booze.",
+    "cover": "https://media.wired.com/photos/5dfc0b15a03b9b0008afa1a0/master/w_1600%2Cc_limit/Science_books_9781328879981_hres.jpg",
+    "url": "https://www.wired.com/story/12-top-science-books-2019/"
+  },
+  {
+    "book_id": 5,
+    "name": "The Best New Science Books To Read In 2025",
+    "author": "Seth Reichelson",
+    "description": "Discover the best new science books, recommended by leaders, experts, and readers worldwide",
+    "cover": "https://m.media-amazon.com/images/I/51vUc1amAYL._SL500_.jpg",
+    "url": "https://bookauthority.org/books/new-science-books"
+  },
+  {
+    "book_id": 6,
+    "name": "9 “new math” problems and methods",
+    "author": "The Understood Team",
+    "description": "Are you confused by unfamiliar-looking math problems in your child’s homework? The approach to teaching math has changed in recent years. The examples below, created with the help of math specialist Heidi Cohen, can help you help your child with “new math.”",
+    "cover": "https://images.ctfassets.net/p0qf7j048i0q/B4627643457F455D827D73164A51F5D6/f2f564840fb900c27d96563deef251d4/7.png?w=3840&q=75&h=3840&fm=webp",
+    "url": "https://www.understood.org/en/articles/9-new-math-problems-and-methods"
+  },
+  {
+    "book_id": 7,
+    "name": "The Math Equation That Tried to Stump the Internet",
+    "author": "Steven Strogatz",
+    "description": "Sometimes BODMAS is just PEMDAS by another name. And no, the answer is not 100.",
+    "cover": "https://static01.nyt.com/images/2019/08/02/science/02EQUATION1/merlin_158743359_ff291f8a-d473-4849-9d81-9762826b55f4-articleLarge.jpg?quality=75&auto=webp&disable=upscale",
+    "url": "https://www.nytimes.com/2019/08/02/science/math-equation-pedmas-bemdas-bedmas.html"
+  },
+  {
+    "book_id": 8,
+    "name": "Learn the language of maths, that truly explains our world",
+    "description": "Instant Expert – The mathematics that explains our world",
+    "cover": "https://images.newscientist.com/wp-content/uploads/2024/07/08114913/2024_events_keyassets_1200x800_ie_mathematics.jpg",
+    "url": "https://www.newscientist.com/science-events/the-mathematics-that-explains-our-world/"
+  },
+];
+
+
+
+
+console.log(bookSearch);
+
+function fetchData() {
+  displayBooks(bookSearch); // Sử dụng dữ liệu bookSearch cục bộ
+}
+
+function displayBooks(data) {
+  const container = document.getElementById("Lastestnews");
+  container.innerHTML = ''; // Xóa nội dung cũ trong container
+  data.forEach(book => {
+    const newDiv = document.createElement('div');
+    newDiv.classList.add('new');
+
+    // Tạo cấu trúc HTML cho mỗi cuốn sách
+    newDiv.innerHTML = `
+      <img src="${book.cover}" alt="${book.name}">
+      <h3><span>${book.name}</span></h3>
+    `;
+    newDiv.setAttribute('data-cover', book.cover);
+    newDiv.setAttribute('data-name', book.name);
+    newDiv.setAttribute('data-author', book.author || "Don't have author");
+    newDiv.setAttribute('data-description', book.description || "Don't have description");
+    newDiv.setAttribute('data-url', book.url);
+    container.appendChild(newDiv);
+  });
+}
+
+function search() {
+  const searchInput = document.getElementById('search').value.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+  const container = document.getElementById("Lastestnews");
+  const container2 = document.getElementById('container');
+  container.innerHTML = '';
+  container2.innerHTML = '';
+
+  let found = false;
+
+  for (let i = 0; i < bookSearch.length; i++) {
+    if (bookSearch[i].name.toLowerCase().trim().replace(/[\s,\.]+/g, '').includes(searchInput)) {
+      const newElement = document.createElement('div');
+      newElement.classList.add('new');
+      newElement.innerHTML = `
+        <img src="${bookSearch[i].cover}" alt="${bookSearch[i].name}">
+        <h3><span>${bookSearch[i].name}</span></h3>
+      `;
+
+      newElement.setAttribute('data-cover', bookSearch[i].cover);
+      newElement.setAttribute('data-name', bookSearch[i].name);
+      newElement.setAttribute('data-author', bookSearch[i].author || "Don't have author");
+      newElement.setAttribute('data-description', bookSearch[i].description || "Don't have description");
+      newElement.setAttribute('data-url', bookSearch[i].url);
+
+      newElement.addEventListener('click', () => {
+        addPopup(bookSearch[i]);
+      });
+
+      container.appendChild(newElement);
+      found = true;
+    }
+  }
+
+  if (!found) {
+    const noResult = document.createElement('div');
+    noResult.innerHTML = 'No result found!';
+    container.appendChild(noResult);
+  }
+}
+
+function suggest() {
+  const searchInput = document.getElementById('search').value.toLowerCase().trim().replace(/[\s,\.]+/g, '');
+  const suggestionsDiv = document.getElementById('suggestions');
+  suggestionsDiv.innerHTML = '';
+
+  if (searchInput === '') {
+    return;
+  }
+
+  for (let i = 0; i < bookSearch.length; i++) {
+    if (bookSearch[i].name.toLowerCase().trim().replace(/[\s,\.]+/g, '').includes(searchInput)) {
+      const suggestionItem = document.createElement('div');
+      suggestionItem.classList.add('suggestion-item');
+      suggestionItem.innerHTML = bookSearch[i].name;
+
+      suggestionItem.addEventListener('click', () => {
+        document.getElementById('search').value = bookSearch[i].name;
+        search();
+        suggestionsDiv.innerHTML = '';
+      });
+
+      suggestionsDiv.appendChild(suggestionItem);
+    }
+  }
+}
+
+function addPopup(book) {
+  const popupContainer = document.querySelector('.popup-container');
+  const popup = document.querySelector('.popup');
+  popup.innerHTML = `
+    <button class="close-popup" onclick="hidePopup()"><i class="fa fa-times-circle-o" aria-hidden="true"></i></button>
+    <div id="bookcounts"></div>
+    <img src="${book.cover}" alt="${book.name}">
+    <h3><span>${book.name}</span></h3>
+    <p class="description-popup">${book.description}</p>
+    <div id="display-avs"><p>Author:<br><span class="author-popup">${book.author || "Don't have author"}</span></p></div>
+    <a href="${book.url}" target="_blank"><button class="box"><span>More information</span></button></a>
+  `;
+  popupContainer.style.display = 'block';
+}
+
+function hidePopup() {
+  const popupContainer = document.querySelector('.popup-container');
+  popupContainer.style.display = 'none';
+}
+
+document.addEventListener('click', (event) => {
+  if (event.target && event.target.closest('.new')) {
+    const newDiv = event.target.closest('.new');
+    const book = {
+      cover: newDiv.getAttribute('data-cover'),
+      name: newDiv.getAttribute('data-name'),
+      author: newDiv.getAttribute('data-author'),
+      description: newDiv.getAttribute('data-description'),
+      url: newDiv.getAttribute('data-url')
+    };
+    addPopup(book);
+  }
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  fetchData();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+document.addEventListener("DOMContentLoaded", () =>{
+    displayLogout();
+    deleteAccount();
+});
+
+function displayLogout(){
+    const logOut = document.getElementById('logout');
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if(currentUser){
+        logOut.innerHTML = `<button id="logoutButton" class='box'><span><i class="fa fa-sign-in" aria-hidden="true"></i> Log out</span></button>`;
+    } else {
+        logOut.innerHTML = `<a href="login.html"><button id="Signin" class='box'><span><i class="fa fa-sign-in" aria-hidden="true"></i> Signin/Login<span></button></a>`;
+    }
+}
+
+function deleteAccount(){
+    document.addEventListener('click', (event) => {
+        if(event.target && event.target.id === 'logoutButton'){
+            let storedUsers = JSON.parse(localStorage.getItem('users'))
+            const currentUser = JSON.parse(localStorage.getItem('user'))
+            if(storedUsers && currentUser){
+                // Xóa người dùng hiện tại khỏi danh sách users
+                storedUsers = storedUsers.filter(user => user.email !== currentUser.email)
+                localStorage.setItem('users', JSON.stringify(storedUsers))
+                // Xóa thông tin người dùng hiện tại
+                localStorage.removeItem('user')
+            }
+            window.location.href = "login.html";
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const googleLoginBtn = document.getElementById('google-login');
+
+// Khi bấm nút đăng nhập Google
+googleLoginBtn.addEventListener('click', () => {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            // Đăng nhập thành công → chuyển trang
+            window.location.href = 'isgamemarket.html';
+        })
+        .catch((error) => {
+            alert('Lỗi khi đăng nhập: ' + error.message);
+            console.error(error);
+        });
+});
+
+
+
+
+
+
+
+async function handleAddProduct() {
+    let picture = document.getElementById("picture").files[0];
+    let name = document.getElementById("name").value;
+    let details = document.getElementById("details").value;
+    let author = document.getElementById("author").value;
+    let link = document.getElementById("link").value;
+    let newProduct = {
+        name: name,
+        details: details,
+        author: author,
+        link: link
+    };
+    if (picture) {
+        console.log(picture)
+        const formData = new FormData();
+        formData.append("image", picture);
+
+        await fetch("http://localhost:3000/upload", {
+            method: "POST",
+            body: formData,
+        })
+            .then((response) => response.json())
+            .then((result) => {
+                console.log(result.data)
+                newProduct = { ...newProduct, picture: result.data.secure_url };
+            })
+            .catch((error) => {
+                console.error("Error uploading image:", error);
+            });
+    }
+    AddProduct(newProduct);
+}
+
+
+
+
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (text === '') return;
+
+  addMessage('Bạn', text, 'right');
+  input.value = '';
+
+  const response = await getWitResponse(text);
+  addMessage('Chatbot', response, 'left');
+
+  if (!chatbotBox.classList.contains('show')) showPopup(response);
+}
+
+
+
+
+
+
+
+async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (text === '') return;
+
+    addMessage('Bạn', text, 'right');
+    input.value = '';
+
+    const chatBody = document.getElementById('chat-body');
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'message left typing-indicator';
+    loadingMsg.textContent = 'Đang trả lời...';
+    chatBody.appendChild(loadingMsg);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    try {
+        const response = await getWitResponse(text); // 👈 CHỜ kết quả thực
+        loadingMsg.remove();
+
+        addMessage('Chatbot', response, 'left');
+        speak(response);
+
+        if (chatbotBox.style.display === 'none') {
+            showPopup(response);
+        }
+    } catch (err) {
+        loadingMsg.remove();
+        addMessage('Chatbot', 'Đã xảy ra lỗi khi xử lý yêu cầu.', 'left');
+    }
+}
+
+voice: 'banmai',
+      speed: 1.0,
+      text: text,

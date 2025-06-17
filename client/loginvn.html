@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Login/Register Page</title>
+    <link rel="stylesheet" href="./src/css/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="icon" type="image/png" href="./src/img/cauculator icon.png">
+</head>
+
+<body>
+<body>
+    <div class="wrapper">
+        <!-- Biểu mẫu Đăng nhập -->
+        <div class="form-box login">
+            <h2>Chào mừng trở lại!</h2>
+            <form id="login-form">
+                <div class="input-box">
+                    <input id="login-email" type="email" minlength="6" required>
+                    <label>Email</label>
+                </div>
+                <div class="input-box">
+                    <input id="login-password" type="password" required><i
+                        class="fa fa-eye toggle-password" aria-hidden="true"></i>
+                    <label>Mật khẩu</label>
+                </div>
+                <button id="login-button" type="submit">Đăng nhập</button>
+                <p class="switch-form">Chưa có tài khoản?
+                    <a href="#" id="show-register">Đăng ký</a>
+                </p>
+                <div class="divider">
+                    <hr>
+                    <span>HOẶC</span>
+                    <hr>
+                </div>
+                <!-- Nút đăng nhập Google -->
+                <div class="social-login">
+                    <button id="google-login"><i class="fa fa-google"></i> <span>Đăng nhập bằng Google</span></button>
+                </div>
+                <br>
+                <div id="logout">
+                </div>
+            </form>
+        </div>
+
+        <!-- Biểu mẫu Đăng ký -->
+        <div class="form-box register">
+            <h2>Tham gia với chúng tôi!</h2>
+            <form id="signup-form">
+                <div class="input-box">
+                    <input type="text" id="name" required>
+                    <label>Tên người dùng</label>
+                </div>
+                <div class="input-box">
+                    <input id="signup-email" required>
+                    <label>Email</label>
+                </div>
+                <div class="input-box">
+                    <input id="signup-password" type="password" required><i
+                        class="fa fa-eye toggle-password" aria-hidden="true"></i>
+                    <label>Mật khẩu</label>
+                </div>
+                <div class="input-box">
+                    <input type="password" id="confirm-password" required> <i class="fa fa-eye toggle-password"
+                        aria-hidden="true"> </i>
+                    <label>Xác nhận mật khẩu</label>
+                </div>
+                <button type="submit" class="btn">Đăng ký</button>
+                <p class="switch-form">Đã có tài khoản?
+                    <a href="#" id="show-login">Đăng nhập</a>
+                </p>
+                <h3 id="alert_signup"></h3>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.1/firebase-auth-compat.min.js"
+        integrity="sha512-b2PGOE6ClpdFR5WZylPqJ9NEtHyGtdXKIe5wI0qRKVg3VeH9Km8CvihpnySwf6v21TV2cMTUp/BuglUiFLB38Q=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="./src/js/firebase-config.js"></script>
+    <script src="./src/js/loginvn.js"></script>
+</body>
+
+</html>

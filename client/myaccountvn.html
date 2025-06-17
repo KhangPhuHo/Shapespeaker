@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="./src/css/responsive.css">
+    <link rel="stylesheet" href="./src/css/styles.css">
+    <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+
+        #sidebar {
+            width: 30%;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #content {
+            position: relative;
+            top: 80px;
+            width: 70%;
+            padding: 20px;
+        }
+
+        #sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #555;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        #sidebar a:hover {
+            background-color: #777;
+        }
+
+        #logoutButton {
+            position: relative;
+            background-color: rgba(70, 97, 118, 0.318);
+            left: -15px;
+            border-radius: 10px;
+        }
+
+        #Menu .info {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        #Menu {
+            position: fixed;
+            width: 100%;
+            top: 0;
+            margin-left: -10px;
+            display: flex;
+            justify-content: space-between;
+            padding-left: 10px;
+            padding-right: 10px;
+            align-items: center;
+            background-color: rgba(46, 46, 46, 0.911);
+            border-radius: 10px;
+            z-index: 1000;
+        }
+
+        #Menu a {
+            text-decoration: none;
+            color: white;
+        }
+
+        #Menu1 a {
+            padding-left: 20px;
+        }
+
+        #Menu1 {
+            margin-right: 160px;
+        }
+
+        #Signin {
+            position: relative;
+            left: -15px;
+            background-color: rgb(49, 55, 56);
+            border-radius: 10px;
+        }
+
+        #Login {
+            position: relative;
+            left: -15px;
+            background-color: rgb(3, 37, 44);
+            border-radius: 10px;
+        }
+
+        #form1 {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            color: white;
+            border-radius: 10px;
+            width: 600px;
+            height: 550px;
+        }
+
+        #form2 {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            color: white;
+            border-radius: 10px;
+            height: 550px;
+        }
+
+        #form2 {
+            background-color: rgba(30, 29, 29, 0.719);
+        }
+
+        #form1 button {
+            color: white;
+            background-color: rgb(75, 84, 84);
+            border-radius: 10px;
+        }
+
+        #form1 button:hover {
+            background-color: rgb(168, 123, 45);
+        }
+
+        #item1 {
+            text-align: center;
+            background-color: #414345;
+            width: 50%;
+            border-radius: 10px;
+        }
+
+        #item2 {
+            text-align: center;
+            background-color: #ffcc66;
+            width: 300px;
+            border-radius: 10px;
+        }
+
+        .profile img {
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            margin: 0 auto;
+            border: 5px solid grey;
+        }
+    </style>
+
+</head>
+<div class="video-container">
+    <video autoplay muted loop id="background-video">
+        <source src="./src/video/1722969-uhd_3840_2160_25fps.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+<div id="Menu">
+    <button id="menu-toggle"><i class="fa fa-bars" aria-hidden="true"></i></button>
+    <p>
+    <h2 style="color: #ffffff;">My<span style="color: #ffcc66"> Books</span></h2>
+    <div id="profile"></div><!--do khong lam hoan toan tu js nen no khong cap nhat tu dong-->
+    </p>
+    <p id="Menu1">
+        <a href="isgamemarketvn.html"><i class="fa fa-home" aria-hidden="true"></i> Trang chủ</a>
+        <a href="newsvn.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> Tin tức</a>
+        <a href="marketvn.html"><i class="fa fa-book" aria-hidden="true"></i> Sách</a>
+        <a href="languagevn.html"><i class="fa fa-globe" aria-hidden="true"></i> Ngôn ngữ</a>
+        <a href="myaccountvn.html"><i class="fa fa-address-book-o" aria-hidden="true"></i> Tài khoản của tôi</a>
+    </p>
+    <p id="logout">
+    </p>
+</div>
+
+<body>
+    <div id="sidebar">
+        <form id="form1" action="">
+            <div id="item1">
+                <h2>Nhập thông tin của bạn</h2><br><br>
+
+                <label for="name">Họ và tên:</label><br>
+                <input type="text" id="name" placeholder="Nhập họ và tên của bạn tại đây ..."><br><br>
+
+                <label for="email">Email:</label><br>
+                <input type="email" id="email" placeholder="Nhập email của bạn tại đây ..."><br><br>
+
+                <div class="input-box">
+                    <label for="currentPassword">Mật khẩu hiện tại:</label>
+                    <input type="password" id="currentPassword" placeholder="Nhập mật khẩu hiện tại của bạn ...">
+                    <i class="fa fa-eye toggle-password" aria-hidden="true"></i>
+                </div>
+                <br>
+
+                <div class="input-box">
+                    <label for="password">Mật khẩu mới:</label><br>
+                    <input type="password" id="password" placeholder="Nhập mật khẩu mới tại đây ...">
+                    <i class="fa fa-eye toggle-password" aria-hidden="true"></i>
+                </div>
+                <br>
+
+                <label for="phonenumber">Số điện thoại:</label><br>
+                <input type="tel" id="phone" placeholder="Nhập số điện thoại của bạn tại đây ..."><br><br>
+
+                <label for="address">Địa chỉ:</label><br>
+                <textarea id="address" placeholder="Nhập địa chỉ của bạn tại đây ..."></textarea><br><br>
+
+                <label for="avatar">Ảnh đại diện (URL):</label><br>
+                <input type="url" id="avatar" placeholder="Nhập URL ảnh đại diện tại đây ..."><br><br>
+
+                <button type="button" onclick="addInfo()">Gửi</button>
+            </div>
+        </form>
+    </div>
+
+    <div id="content">
+        <form id="form2">
+            <div id="item2">
+                <div id="profileAccount" class="profile"></div>
+            </div>
+        </form>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.1/firebase-auth-compat.min.js"
+            integrity="sha512-b2PGOE6ClpdFR5WZylPqJ9NEtHyGtdXKIe5wI0qRKVg3VeH9Km8CvihpnySwf6v21TV2cMTUp/BuglUiFLB38Q=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="./src/js/firebase-config.js"></script><!--./hocsinh/js/-->
+        <script src="./src/js/myaccountvn.js"></script>
+        <script src="./src/js/logout.js"></script>
+        <script type="module" src="./src/js/profile.js"></script>
+    </div>
+</body>
+
+</html>
