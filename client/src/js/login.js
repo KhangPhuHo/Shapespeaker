@@ -139,7 +139,7 @@ function handleLogin(event) {
             document.body.style.opacity = "0";
             // Chuyển hướng sang trang chủ sau khi làm mờ 
             setTimeout(() => {
-                window.location.href = "ISGameMarket.html";
+                window.location.href = "isgamemarket.html";
             }, 500);
         })
         .catch((error) => {

@@ -129,7 +129,7 @@ function handleLogin(event) {
             document.body.style.opacity = "0";
 
             setTimeout(() => {
-                window.location.href = "ISGameMarket.html";
+                window.location.href = "isgamemarket.html";
             }, 500);
         })
         .catch((error) => {
