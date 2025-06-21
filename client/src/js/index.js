@@ -87,7 +87,7 @@ function getOneProduct(productId) {
 }
 
 
-const API_BASE_URL = "https://shapespeaker-production.up.railway.app"; // ⚠️ Thay bằng URL Railway thật của bạn
+const API_BASE_URL = "https://shapespeaker-production.up.railway.app"; // ✅ URL Railway chính xác
 
 // Cập nhật sản phẩm
 async function updateProduct(event) {
@@ -107,7 +107,7 @@ async function updateProduct(event) {
         formData.append("image", picture);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/upload`, {
+            const response = await fetch(`${API_BASE_URL}/upload`, { // ✅ Đã sửa lại thành /upload
                 method: "POST",
                 body: formData,
             });
@@ -158,7 +158,7 @@ async function handleAddProduct() {
         formData.append("image", picture);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/upload`, {
+            const response = await fetch(`${API_BASE_URL}/upload`, { // ✅ Đã sửa lại thành /upload
                 method: "POST",
                 body: formData,
             });
@@ -171,6 +171,7 @@ async function handleAddProduct() {
 
     AddProduct(newProduct);
 }
+
 
 
 // Gắn sự kiện cho form thêm sản phẩm
