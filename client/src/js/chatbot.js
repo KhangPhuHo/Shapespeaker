@@ -217,7 +217,7 @@ async function handleCommand(input) {
 
   // 👉 Xoá người dùng (ban)
   async function deleteUserFromServer(targetUserId) {
-    const response = await fetch('https://your-server-url.com/deleteUser', {
+    const response = await fetch('https://shapespeaker-production.up.railway.app/deleteUser', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
