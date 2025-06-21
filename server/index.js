@@ -17,7 +17,7 @@ admin.initializeApp({
 
 // ✅ Cấu hình CORS chuẩn → Railway sẽ chạy ổn
 app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://your-frontend.vercel.app'], // Thêm domain frontend thật ở đây
+  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://shapespeaker.vercel.app'], // Thêm domain frontend thật ở đây
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));

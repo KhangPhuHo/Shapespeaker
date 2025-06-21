@@ -104,98 +104,91 @@ function getOneProduct(productId) {
         });
 }
 
+const API_BASE_URL = "https://shapespeaker-production.up.railway.app"; // ⚠️ Thay bằng URL Railway thật của bạn
+
 // Cập nhật sản phẩm (có updatedAt)
 async function updateProduct(event) {
     event.preventDefault();
     const productID = document.getElementById("form-edit-product").dataset.productId;
-    let picture = document.getElementById("edit-picture").files[0];
+    const picture = document.getElementById("edit-picture").files[0];
 
     let productDataUpdate = {
         name: document.getElementById("edit-name").value,
         details: document.getElementById("edit-details").value,
         author: document.getElementById("edit-author").value,
         link: document.getElementById("edit-link").value,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp() // ✅ Thêm thời gian cập nhật
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     if (picture) {
         const formData = new FormData();
         formData.append("image", picture);
 
-        await fetch("http://localhost:3000/upload", {
-            method: "POST",
-            body: formData,
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                productDataUpdate = { ...productDataUpdate, picture: result.data.secure_url };
-            })
-            .catch((error) => {
-                console.error("Error uploading image:", error);
+        try {
+            const response = await fetch(`${API_BASE_URL}/upload`, {
+                method: "POST",
+                body: formData,
             });
+            const result = await response.json();
+            productDataUpdate.picture = result.data.secure_url;
+        } catch (error) {
+            console.error("❌ Lỗi khi upload ảnh:", error);
+        }
     }
 
-    db.collection("shapespeaknews").doc(productID).update(productDataUpdate)
-        .then(() => {
-            alert("Cập nhật sản phẩm thành công!");
-            closeModal2();
-            loadProducts(document.getElementById("content"));
-        })
-        .catch((error) => {
-            alert("Lỗi khi cập nhật sản phẩm");
-            console.error("Error updating product: ", error);
-        });
+    try {
+        await db.collection("shapespeaknews").doc(productID).update(productDataUpdate);
+        alert("✅ Cập nhật sản phẩm thành công!");
+        closeModal2();
+        loadProducts(document.getElementById("content"));
+    } catch (error) {
+        alert("❌ Lỗi khi cập nhật sản phẩm");
+        console.error("❌ Error updating product:", error);
+    }
 }
 
 // Thêm sản phẩm mới (có createdAt)
-function AddProduct(newProduct) {
-    db.collection("shapespeaknews").add({
-        ...newProduct,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    })
-    .then(() => {
-        alert("Thêm sản phẩm mới thành công!");
+async function AddProduct(newProduct) {
+    try {
+        await db.collection("shapespeaknews").add({
+            ...newProduct,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("✅ Thêm sản phẩm mới thành công!");
         loadProducts(document.getElementById("content"));
-    })
-    .catch((error) => {
-        console.error("Error adding product: ", error);
-    });
+    } catch (error) {
+        console.error("❌ Error adding product:", error);
+    }
 }
-
 
 // Xử lý sự kiện thêm sản phẩm
 async function handleAddProduct() {
-    let picture = document.getElementById("picture").files[0];
-    let name = document.getElementById("name").value;
-    let details = document.getElementById("details").value;
-    let author = document.getElementById("author").value;
-    let link = document.getElementById("link").value;
+    const picture = document.getElementById("picture").files[0];
 
     let newProduct = {
-        name: name,
-        details: details,
-        author: author,
-        link: link
+        name: document.getElementById("name").value,
+        details: document.getElementById("details").value,
+        author: document.getElementById("author").value,
+        link: document.getElementById("link").value,
     };
 
     if (picture) {
         const formData = new FormData();
         formData.append("image", picture);
 
-        await fetch("http://localhost:3000/upload", {
-            method: "POST",
-            body: formData,
-        })
-            .then((response) => response.json())
-            .then((result) => {
-                newProduct = { ...newProduct, picture: result.data.secure_url };
-            })
-            .catch((error) => {
-                console.error("Error uploading image:", error);
+        try {
+            const response = await fetch(`${API_BASE_URL}/upload`, {
+                method: "POST",
+                body: formData,
             });
+            const result = await response.json();
+            newProduct.picture = result.data.secure_url;
+        } catch (error) {
+            console.error("❌ Lỗi khi upload ảnh:", error);
+        }
     }
 
-    AddProduct(newProduct);
+    await AddProduct(newProduct);
 }
 
 // Gắn sự kiện cho form thêm sản phẩm
