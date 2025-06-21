@@ -1,5 +1,7 @@
 require("dotenv").config();
 const express = require("express");
+const fs = require("fs");
+const path = require("path");
 const upload = require("./middleware/multer");
 const cloudinary = require("./utils/cloudinary");
 const cors = require("cors");
@@ -18,9 +20,9 @@ admin.initializeApp({
 // ✅ Cấu hình CORS chuẩn → Railway + Vercel hoạt động ổn định
 app.use(cors({
   origin: [
-    'http://localhost:5500', 
-    'http://127.0.0.1:5500', 
-    'https://shapespeaker-7g6744zik-grr20091s-projects.vercel.app', // 🟢 Đây mới là URL frontend thật Vercel của bạn
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://shapespeaker-7g6744zik-grr20091s-projects.vercel.app'
   ],
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
@@ -28,18 +30,27 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ Route test
+// ✅ Route test API
 app.get("/", (req, res) => {
   res.send("✅ API đang hoạt động. Sử dụng /upload hoặc /deleteUser.");
 });
 
 // ✅ Route upload ảnh lên Cloudinary
 app.post("/upload", upload.single("image"), (req, res) => {
+  console.log("🟢 Đã nhận file:", req.file);
+
   cloudinary.uploader.upload(req.file.path, (err, result) => {
     if (err) {
-      console.error(err);
+      console.error("❌ Lỗi từ Cloudinary:", err);
       return res.status(500).json({ success: false, message: "Lỗi khi upload ảnh" });
     }
+
+    // ✅ Xoá file tạm sau khi upload thành công
+    fs.unlink(req.file.path, (unlinkErr) => {
+      if (unlinkErr) console.error("❌ Lỗi xoá file tạm:", unlinkErr);
+      else console.log("🗑️ Đã xoá file tạm:", req.file.path);
+    });
+
     res.status(200).json({ success: true, message: "Upload thành công!", data: result });
   });
 });
@@ -68,6 +79,7 @@ app.post("/deleteUser", async (req, res) => {
 
 // ✅ Start server
 app.listen(PORT, () => console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`));
+
 
 
 // khoi tao package.json
