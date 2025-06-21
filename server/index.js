@@ -15,9 +15,13 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-// ✅ Cấu hình CORS chuẩn → Railway sẽ chạy ổn
+// ✅ Cấu hình CORS chuẩn → Railway + Vercel hoạt động ổn định
 app.use(cors({
-  origin: ['http://localhost:5500', 'http://127.0.0.1:5500', 'https://shapespeaker.vercel.app'], // Thêm domain frontend thật ở đây
+  origin: [
+    'http://localhost:5500', 
+    'http://127.0.0.1:5500', 
+    'https://shapespeaker-7g6744zik-grr20091s-projects.vercel.app', // 🟢 Đây mới là URL frontend thật Vercel của bạn
+  ],
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
@@ -64,6 +68,7 @@ app.post("/deleteUser", async (req, res) => {
 
 // ✅ Start server
 app.listen(PORT, () => console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`));
+
 
 // khoi tao package.json
 // cd Server
