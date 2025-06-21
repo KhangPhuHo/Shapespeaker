@@ -11,6 +11,6 @@ function checkUserExist() {
     let session = localStorage.getItem("session")
     if(session){
         alert("Vui lòng đăng nhập để tiếp tục sử dụng")
-        window.location.href = "isgamemarket.html"
+        window.location.href = "home.html"
     }
 }

@@ -1,3 +1,18 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebar = document.getElementById("sidebar");
+  const toggleBtn = document.getElementById("sidebar-toggle");
+
+  toggleBtn.innerHTML = "&#187;"; // >> khi khởi đầu
+
+  toggleBtn.addEventListener("click", () => {
+    sidebar.classList.toggle("active");
+    toggleBtn.innerHTML = sidebar.classList.contains("active") ? "&#171;" : "&#187;";
+    // << khi mở | >> khi đóng
+  });
+});
+
+
+
 window.addEventListener("DOMContentLoaded", () => {
     auth.onAuthStateChanged(async (user) => {
         if (user) {

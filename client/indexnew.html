@@ -7,6 +7,7 @@
     <title>Danh sách Sản phẩm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="./src/css/index.css">
+    <link rel="stylesheet" href="./src/css/chatbot.css">
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -28,7 +29,7 @@
         <div id="profile"></div><!--do khong lam hoan toan tu js nen no khong cap nhat tu dong-->
         </p>
         <p id="Menu1">
-            <a href="isgamemarket.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
+            <a href="home.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
             <a href="news.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> News</a>
             <a href="market.html"><i class="fa fa-book" aria-hidden="true"></i> Books</a>
             <a href="language.html"><i class="fa fa-globe" aria-hidden="true"></i> Language</a>
@@ -37,6 +38,7 @@
         <p id="logout">
         </p>
     </div><br><br><br><br><br><br><br><br><br>
+    <div id="bot"></div>
     <div id="wrapper">
         <h1 style="text-align: center;">Danh sách Sản Phẩm</h1>
         <button id="themmoi" onclick="openModal()">+ Thêm mới sản phẩm</button>
@@ -124,6 +126,7 @@
     </div>
     <script src="./src/js/firebase-config.js"></script>
     <script src="./src/js/indexv8.js"></script>
+    <script src="./src/js/chatbot.js"></script>
     <script>
         function closeModal() {
             document.getElementById("productModal").style.display = "none";

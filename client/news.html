@@ -7,6 +7,7 @@
   <title>News</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="./src/css/styles.css">
+  <link rel="stylesheet" href="./src/css/menure.css">
   <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
   <!-- Firebase App (bắt buộc) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -18,10 +19,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <style>
-  #searchNews {
-    margin-top: 200px;
-  }
-
   #search {
     display: flex;
     justify-content: start;
@@ -33,6 +30,10 @@
     border-radius: 20px;
   }
 
+  #searchNews {
+    margin-top: 200px;
+  }
+
   #logoutButton {
     position: relative;
     background-color: rgba(70, 97, 118, 0.318);
@@ -42,6 +43,7 @@
 
   body {
     font-family: Arial, Helvetica, sans-serif;
+    background-color: #ddcba8;
   }
 
   .suggestion-item {
@@ -142,6 +144,91 @@
     color: #ffcc66;
   }
 
+  @media only screen and (max-width: 768px) {
+    #Menu1 {
+      text-align: center;
+      width: 600px;
+    }
+
+    #Menu {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #menu-toggle {
+      position: relative;
+      left: 10px;
+    }
+
+    #content9 #search {
+      width: 70%;
+    }
+
+    .new {
+      text-decoration: none;
+      background-color: rgba(61, 54, 54, 0.911);
+      color: #000;
+      margin: 0 10px;
+      width: 45%;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .new img {
+      width: 100%;
+      height: 30%;
+      border-radius: 10px;
+      border: 2px solid #000;
+    }
+
+    #content9 .image {
+      width: 160px;
+      height: 160px;
+    }
+
+    #content9 .container {
+      width: 300px;
+      height: 570px;
+      font-size: 10px;
+    }
+
+    .profession span {
+      font-size: 25px;
+    }
+
+    .bio {
+      font-size: 10px;
+    }
+
+    iframe {
+      height: 200px;
+    }
+  }
+
+  @media only screen and (min-width: 800px) {
+    .new {
+      text-decoration: none;
+      background-color: rgba(61, 54, 54, 0.911);
+      color: #000;
+      margin: 0 10px;
+      width: 31%;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+
+    .new img {
+      width: 300px;
+      height: 250px;
+      border-radius: 10px;
+      border: 2px solid #000;
+    }
+
+    .new img:hover {
+      width: 380px;
+      height: 250px;
+    }
+  }
+
   #Menu .info {
     display: flex;
     flex-direction: row;
@@ -191,22 +278,7 @@
     margin-top: 100px;
   }
 
-  .new img {
-    width: 300px;
-    height: 250px;
-    border-radius: 10px;
-    border: 2px solid #000;
-  }
 
-  .new {
-    text-decoration: none;
-    background-color: rgba(61, 54, 54, 0.911);
-    color: #000;
-    margin: 0 10px;
-    width: 31%;
-    border-radius: 10px;
-    margin-bottom: 20px;
-  }
 
   #Lastestnews span {
     background-color: #ffcc66;
@@ -217,11 +289,6 @@
     background-color: #eca10c;
     color: white;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.25);
-  }
-
-  .new img:hover {
-    width: 380px;
-    height: 250px;
   }
 
   .container {
@@ -316,21 +383,7 @@
 </head>
 
 <body>
-  <div id="Menu">
-    <p>
-    <h2 style="color: #ffffff;">My<span style="color: #ffcc66"> Books</span></h2>
-    <div id="profile"></div>
-    </p>
-    <p id="Menu1">
-      <a href="isgamemarket.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
-      <a href="news.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> News</a>
-      <a href="market.html"><i class="fa fa-book" aria-hidden="true"></i> Books</a>
-      <a href="language.html"><i class="fa fa-globe" aria-hidden="true"></i> Language</a>
-      <a href="myaccount.html"><i class="fa fa-address-book-o" aria-hidden="true"></i> My Account</a>
-    </p>
-    <p id="logout">
-    </p>
-  </div>
+  <div id="Menu"></div>
   <div class="video-container">
     <video autoplay muted loop id="background-video">
       <source src="./src/video/1722969-uhd_3840_2160_25fps.mp4" type="video/mp4">
@@ -379,7 +432,8 @@
     </div>
   </div>
   <script src="./src/js/firebase-config.js"></script>
-  <script type="module" src="./src/js/News.js"></script>
+  <script src="./src/js/menu.js"></script>
+  <script type="module" src="./src/js/news.js"></script>
   <script src="./src/js/logout.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
   <script src="./src/js/checklogin.js"></script>

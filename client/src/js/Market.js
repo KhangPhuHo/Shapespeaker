@@ -55,6 +55,7 @@ function displayProducts(productArray) {
     productEl.innerHTML = `
       <img src="${imageSrc}" alt="${product.name || 'product'}" loading="lazy"/>
       <h3>${product.name}</h3>
+      <p style="color: red;">${product.price} VND</p>
     `;
 
     productEl.addEventListener("click", () => showPopup(product));

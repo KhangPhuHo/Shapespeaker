@@ -12,7 +12,7 @@ function checkLogin() {
             alert("Hãy đăng nhập để sử dụng chức năng này");
 
             setTimeout(() => {
-                window.location.href = "isgamemarketvn.html";
+                window.location.href = "homevn.html";
             }, 1000);
         }
     });

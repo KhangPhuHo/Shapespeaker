@@ -36,12 +36,15 @@ googleLoginBtn.addEventListener('click', async () => {
             await setDoc(userRef, {
                 name: user.displayName || "Không rõ",
                 email: user.email,
+                // 👑 Thêm quyền vào Firestore: mặc định là khách hàng (id: 2, role: 'customer')
+                role: "customer", // 👈 thêm trường role
+                id: 2, 
                 avatar: user.photoURL || ""
             });
         }
 
         // Chuyển đến trang chính
-        window.location.href = 'isgamemarket.html';
+        window.location.href = 'home.html';
     } catch (error) {
         alert('Lỗi khi đăng nhập: ' + error.message);
         console.error(error);

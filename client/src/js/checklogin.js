@@ -12,7 +12,7 @@ function checkLogin() {
             alert("Please login to use this function");
 
             setTimeout(() => {
-                window.location.href = "isgamemarket.html";
+                window.location.href = "home.html";
             }, 1000);
         }
     });

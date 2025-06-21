@@ -92,6 +92,9 @@ function handleSignup(event) {
             firebase.firestore().collection("users").doc(user.uid).set({
                 name: name,
                 email: email,
+                // 👑 Thêm quyền vào Firestore: mặc định là khách hàng (id: 2, role: 'customer')
+                role: "customer", // 👈 thêm trường role
+                id: 2, 
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             })
                 .then(() => {
@@ -139,7 +142,7 @@ function handleLogin(event) {
             document.body.style.opacity = "0";
             // Chuyển hướng sang trang chủ sau khi làm mờ 
             setTimeout(() => {
-                window.location.href = "isgamemarket.html";
+                window.location.href = "home.html";
             }, 500);
         })
         .catch((error) => {

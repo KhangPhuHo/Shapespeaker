@@ -7,6 +7,7 @@
   <title>Language</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="./src/css/styles.css">
+  <link rel="stylesheet" href="./src/css/menure.css">
   <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
   <!-- Firebase App (bắt buộc) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -29,6 +30,93 @@
     font-family: Arial, Helvetica, sans-serif;
     display: grid;
     place-items: center;
+  }
+
+  #Menu h2 {
+    position: relative;
+    left: 10px;
+  }
+
+  @media only screen and (max-width: 768px) {
+    #Menu1 {
+      text-align: center;
+      width: 600px;
+    }
+
+    #Menu {
+      display: flex;
+      flex-direction: row;
+    }
+
+    #menu-toggle {
+      position: relative;
+      left: 10px;
+    }
+
+    #content9 #content1 {
+      background-color: rgba(30, 29, 29, 0.719);
+      border-radius: 10px;
+      height: 200px;
+      margin-top: 140px;
+    }
+
+    #flags img {
+      width: 60px;
+      border-radius: 20px;
+    }
+
+    #flags {
+      display: flex;
+      justify-content: space-around;
+      position: relative;
+      top: 20px;
+    }
+
+    #content9 .image {
+      width: 160px;
+      height: 160px;
+    }
+
+    #content9 .container {
+      width: 300px;
+      height: 570px;
+      font-size: 10px;
+    }
+
+    .profession span {
+      font-size: 25px;
+    }
+
+    .bio {
+      font-size: 10px;
+    }
+
+    iframe {
+      height: 200px;
+    }
+  }
+
+  @media only screen and (min-width: 800px) {
+    #content9 #content1 {
+      background-color: rgba(30, 29, 29, 0.719);
+      border-radius: 10px;
+      width: 800px;
+      height: 400px;
+      margin-top: 140px;
+    }
+
+    #flags img {
+      width: 70px;
+      border-radius: 20px;
+    }
+
+    #flags {
+      display: flex;
+      justify-content: space-around;
+      position: relative;
+      top: 100px;
+
+    }
   }
 
   #Menu .info {
@@ -70,26 +158,6 @@
     left: -15px;
     background-color: rgb(49, 55, 56);
     border-radius: 10px;
-  }
-
-  #content9 {
-    background-color: rgba(30, 29, 29, 0.719);
-    border-radius: 10px;
-    width: 800px;
-    height: 400px;
-    margin-top: 140px;
-  }
-
-  #flags img {
-    width: 70px;
-    border-radius: 20px;
-  }
-
-  #flags {
-    display: flex;
-    justify-content: space-around;
-    position: relative;
-    top: 100px;
   }
 
   .container {
@@ -184,21 +252,7 @@
 </head>
 
 <body>
-  <div id="Menu">
-    <p>
-    <h2 style="color: #ffffff;">My<span style="color: #ffcc66"> Books</span></h2>
-    <div id="profile"></div>
-    </p>
-    <p id="Menu1">
-      <a href="isgamemarket.html"><i class="fa fa-home" aria-hidden="true"></i> Home</a>
-      <a href="news.html"><i class="fa fa-newspaper-o" aria-hidden="true"></i> News</a>
-      <a href="market.html"><i class="fa fa-book" aria-hidden="true"></i> Books</a>
-      <a href="language.html"><i class="fa fa-globe" aria-hidden="true"></i> Language</a>
-      <a href="myaccount.html"><i class="fa fa-address-book-o" aria-hidden="true"></i> My Account</a>
-    </p>
-    <p id="logout">
-    </p>
-  </div>
+  <div id="Menu"></div>
   <div class="video-container">
     <video autoplay muted loop id="background-video">
       <source src="./src/video/1722969-uhd_3840_2160_25fps.mp4" type="video/mp4">
@@ -206,41 +260,46 @@
     </video>
   </div>
   <div id="content9">
-    <h2>Choose your language</h2>
-    <div id="flags">
-      <a href="isgamemarket.html"><img src="https://flagicons.lipis.dev/flags/4x3/um.svg" alt="USA"></a>
-      <a href="isgamemarketvn.html"><img src="https://flagicons.lipis.dev/flags/4x3/vn.svg" alt="Vietnamese"></a>
-    </div>
-  </div>
-  <br><br><br><br><br>
-  <div class="container">
-    <div style="text-align: center">
-      <div><img class="image" src="./src/img/cauculator icon.png" alt="logo"></div>
-      <p class="profession"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">My<span
-            style="color: #ffcc66">Books</span></span></p>
-      <p class="bio"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">BOOKS
-          SOFTWARE</span></p><br>
-    </div>
-    <div class="contact">
-      <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">CONTACT US</span></p>
-      <div id="icon">
-        <a href="https://x.com/i/flow/login" class="icon"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
-        <a href="https://www.facebook.com/" class="icon"><i class="fa fa-facebook-official" aria-hidden="true"></i></a>
-        <a href="https://www.instagram.com/" class="icon"><i class="fa fa-instagram" aria-hidden="true"></i></a>
-        <a href="https://www.google.com/intl/vi/gmail/about/" class="icon"><i class="fa fa-envelope-o"
-            aria-hidden="true"></i></a>
-      </div>
-      <div id="footer">
-        <p>©Copyright from opening source</p>
+    <div id="content1">
+      <h2>Choose your language</h2>
+      <div id="flags">
+        <a href="isgamemarket.html"><img src="https://flagicons.lipis.dev/flags/4x3/um.svg" alt="USA"></a>
+        <a href="isgamemarketvn.html"><img src="https://flagicons.lipis.dev/flags/4x3/vn.svg" alt="Vietnamese"></a>
       </div>
     </div>
-    <div class="contact">
-      <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">Find us</span></p>
-      <iframe src="https://maps.google.com/maps?q=HCMCity,+Njemačka&output=embed" width="100%" height="250"
-        frameborder="0" style="border:0" allowfullscreen></iframe>
+    <br><br><br><br><br>
+    <div class="container">
+      <div style="text-align: center">
+        <div><img class="image" src="./src/img/cauculator icon.png" alt="logo"></div>
+        <p class="profession"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">My<span
+              style="color: #ffcc66">Books</span></span></p>
+        <p class="bio"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">BOOKS
+            SOFTWARE</span></p><br>
+      </div>
+      <div class="contact">
+        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">CONTACT US</span></p>
+        <div id="icon">
+          <a href="https://x.com/i/flow/login" class="icon"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
+          <a href="https://www.facebook.com/" class="icon"><i class="fa fa-facebook-official"
+              aria-hidden="true"></i></a>
+          <a href="https://www.instagram.com/" class="icon"><i class="fa fa-instagram" aria-hidden="true"></i></a>
+          <a href="https://www.google.com/intl/vi/gmail/about/" class="icon"><i class="fa fa-envelope-o"
+              aria-hidden="true"></i></a>
+        </div>
+        <div id="footer">
+          <p>©Copyright from opening source</p>
+        </div>
+      </div>
+      <div class="contact">
+        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">Find us</span></p>
+        <iframe src="https://maps.google.com/maps?q=HCMCity,+Njemačka&output=embed" width="100%" height="250"
+          frameborder="0" style="border:0" allowfullscreen></iframe>
+      </div>
     </div>
   </div>
+
   <script src="./src/js/firebase-config.js"></script>
+  <script src="./src/js/menu.js"></script>
   <script src="./src/js/logout.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
 </body>

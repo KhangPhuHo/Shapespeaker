@@ -1,3 +1,21 @@
+let currentUserId = null;    // ví dụ 1 (admin) hoặc 2 (customer)
+let currentUserUid = null;   // UID dài Firebase Auth
+let currentUserRole = null;  // ví dụ "admin" hoặc "customer"
+
+// Sau khi đăng nhập, lấy thông tin từ Firestore:
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (user) {
+    currentUserUid = user.uid;  // UID dài thực sự
+    console.log(currentUserUid)
+    const docSnap = await firebase.firestore().collection("users").doc(user.uid).get();
+    if (docSnap.exists) {
+      const userData = docSnap.data();
+      currentUserId = userData.id; //1 or 2
+      currentUserRole = userData.role; // admin or customer
+    }
+  }
+});
+
 let chatbotBox, popupNotification, popupTimeout;
 let isTTSEnabled = true; // Trạng thái bật TTS mặc định
 
@@ -132,6 +150,127 @@ function addMessage(sender, message, side) {
   chatBody.scrollTop = chatBody.scrollHeight;
 }
 
+async function processInput(text) {
+  if (text.startsWith("/cmd")) {
+    return await handleCommand(text);
+  } else {
+    return await getWitResponse(text);
+  }
+}
+
+const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2"; // 👈 Admin gốc
+
+async function handleCommand(input) {
+  if (currentUserId !== 1 || currentUserRole !== "admin") {
+    return "❗ Bạn không có quyền thực hiện lệnh này.";
+  }
+
+  const parts = input.trim().split(" ");
+
+  if (parts.length < 2) {
+    return "⚠ Lệnh không hợp lệ. Ví dụ:\n- /cmd index.html\n- /cmd user {uid} admin\n- /cmd remove {uid} admin";
+  }
+
+  const command = parts[1];
+
+  // 👉 Chuyển trang
+  if (command.endsWith(".html")) {
+    setTimeout(() => { window.location.href = command; }, 2000);
+    return `🔄 Đang chuyển đến ${command}...`;
+  }
+
+  // 👉 Cấp quyền admin
+  if (command === "user" && parts.length >= 4 && parts[3] === "admin") {
+    const targetUserId = parts[2];
+
+    try {
+      await firebase.firestore().collection("users").doc(targetUserId).set({
+        role: "admin",
+        id: 1
+      }, { merge: true });
+      return `✅ Đã cấp quyền admin cho user ${targetUserId}`;
+    } catch (error) {
+      console.error("❌ Lỗi khi cấp quyền admin:", error);
+      return "❌ Lỗi khi cấp quyền admin.";
+    }
+  }
+
+  // 👉 Gỡ quyền admin (bảo vệ ADMIN GỐC)
+  if (command === "remove" && parts.length >= 4 && parts[3] === "admin") {
+    const targetUserId = parts[2];
+
+    if (targetUserId === SUPER_ADMIN_UID) {
+      return "❗ Không thể gỡ quyền ADMIN GỐC.";
+    }
+
+    try {
+      await firebase.firestore().collection("users").doc(targetUserId).set({
+        role: "customer",
+        id: 2
+      }, { merge: true });
+      return `✅ Đã gỡ quyền admin khỏi user ${targetUserId}`;
+    } catch (error) {
+      console.error("❌ Lỗi khi gỡ quyền admin:", error);
+      return "❌ Lỗi khi gỡ quyền admin.";
+    }
+  }
+
+  // 👉 Xoá người dùng (ban)
+  async function deleteUserFromServer(targetUserId) {
+    const response = await fetch('https://your-server-url.com/deleteUser', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        requesterUid: currentUserUid,  // chính là uid Firebase Auth của bạn đang đăng nhập
+        targetUid: targetUserId        // uid Firebase Auth của người bị xoá
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Lỗi không xác định');
+    }
+
+    return data;
+  }
+
+  if (command === "user" && parts.length >= 4 && parts[3] === "ban") {
+  console.log("Lệnh ban được kích hoạt");  // Thêm dòng này để kiểm tra
+
+  if (!currentUserUid) {
+    return "❗ Không xác định được UID người dùng hiện tại.";
+  }
+
+  if (currentUserUid !== SUPER_ADMIN_UID) {
+    return "❌ Bạn không có quyền dùng lệnh này.";
+  }
+
+  const targetUserId = parts[2];
+
+  if (targetUserId === SUPER_ADMIN_UID) {
+    return "❌ Không thể xoá người dùng đặc biệt này.";
+  }
+
+  try {
+    const result = await deleteUserFromServer(targetUserId);
+
+    if (result.error) {
+      return "❌ " + result.error;
+    } else {
+      return result.message;
+    }
+  } catch (error) {
+    console.error(error);
+    return "❌ Lỗi không xác định khi gọi API.";
+  }
+}
+
+  return "⚠ Lệnh không hợp lệ hoặc chưa hỗ trợ.";
+}
+
+
+
 async function getWitResponse(input) {
   try {
     const res = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
@@ -185,13 +324,14 @@ async function sendMessage() {
 
   setTimeout(async () => {
     loadingMsg.remove();
-    const response = await getWitResponse(text);
+
+    const response = await processInput(text); // 👉 xử lý command hoặc gọi Wit.ai
     addMessage('Chatbot', response, 'left');
 
     // 👉 ĐỌC TO CÂU TRẢ LỜI BẰNG FPTAI TTS
     if (isTTSEnabled) {
       try {
-        await speakFPT(response); // Gọi hàm chatbot nói chuyện
+        await speakFPT(response);
       } catch (err) {
         console.error("Lỗi khi phát âm thanh:", err);
       }
@@ -201,7 +341,8 @@ async function sendMessage() {
       showPopup(response);
     }
   }, 1500);
-}//2gwFyWnUk3EJnr7siR7wOyGDmrOAt3co
+}
+//2gwFyWnUk3EJnr7siR7wOyGDmrOAt3co
 
 function showPopup(message) {
   hidePopup();
