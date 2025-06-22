@@ -1,35 +1,37 @@
 require("dotenv").config();
 const express = require("express");
 const fs = require("fs");
-const path = require("path");
+const cors = require("cors");
 const upload = require("./middleware/multer");
 const cloudinary = require("./utils/cloudinary");
-const cors = require("cors");
 const admin = require("firebase-admin");
-const serviceAccount = require("./serviceAccountKey.json");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2";
 
-// ✅ Đảm bảo thư mục /tmp tồn tại (an toàn khi test local, Railway vẫn dùng được)
-const TMP_DIR = "/tmp";
-if (!fs.existsSync(TMP_DIR)) {
-  fs.mkdirSync(TMP_DIR, { recursive: true });
-  console.log(`📂 Đã tạo thư mục tạm: ${TMP_DIR}`);
-}
-
-// ✅ Initialize Firebase Admin
+// ✅ Initialize Firebase Admin bằng ENV → fix lỗi invalid_grant
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    type: process.env.FIREBASE_TYPE,
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    client_id: process.env.FIREBASE_CLIENT_ID,
+    auth_uri: process.env.FIREBASE_AUTH_URI,
+    token_uri: process.env.FIREBASE_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
+    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
+  }),
 });
 
-// ✅ Cấu hình CORS → Railway + Vercel hoạt động ổn định
+// ✅ Cấu hình CORS
 app.use(cors({
   origin: [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    'https://shapespeaker-xv283xipv-grr20091s-projects.vercel.app' // 👈 URL frontend thật
+    'https://shapespeaker-xv283xipv-grr20091s-projects.vercel.app'
   ],
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
@@ -90,6 +92,7 @@ app.post("/deleteUser", async (req, res) => {
 
 // ✅ Start server
 app.listen(PORT, () => console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`));
+
 
 
 
