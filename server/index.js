@@ -31,7 +31,7 @@ app.use(cors({
   origin: [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
-    'https://shapespeaker-xv283xipv-grr20091s-projects.vercel.app'
+    'https://shapespeaker-6esoxonfo-grr20091s-projects.vercel.app'
   ],
   methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
