@@ -1,5 +1,4 @@
 {
-  "root": "client",
   "rewrites": [
     { "source": "/(.*)", "destination": "/$1" }
   ]
