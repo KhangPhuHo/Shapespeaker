@@ -45,21 +45,22 @@ function displayProducts(productArray) {
   productList.innerHTML = "";
   productArray.forEach(product => {
     const productEl = document.createElement("div");
-    productEl.classList.add("new");
+    productEl.classList.add("new"); // Bạn vẫn có thể dùng class này để giữ logic cũ nếu có
+    productEl.className = `
+  flex-shrink-0 bg-gray-800 text-white rounded-xl shadow-lg overflow-hidden 
+  hover:shadow-2xl transition duration-300 p-3 
+  w-[48%] sm:w-[45%] md:w-[30%] lg:w-[22%] xl:w-[18%]
+`;
 
-    // Dùng ảnh mặc định nếu không có ảnh
+
     const imageSrc = product.picture && product.picture.trim() !== ""
       ? product.picture
       : "./src/img/cauculator icon.png";
 
-    // Format thời gian
     const formatDate = (timestamp) => {
       if (timestamp?.toDate) {
         const date = timestamp.toDate();
-        return `${date.getDate().toString().padStart(2, '0')}/${
-                 (date.getMonth() + 1).toString().padStart(2, '0')}/${
-                 date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${
-                 date.getMinutes().toString().padStart(2, '0')}`;
+        return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
       }
       return "";
     };
@@ -68,20 +69,26 @@ function displayProducts(productArray) {
     const updatedAtFormatted = formatDate(product.updatedAt);
 
     productEl.innerHTML = `
-      <img src="${imageSrc}" alt="${product.name || 'product'}" loading="lazy"/>
-      <h3>${product.name || ''}</h3>
-      <div style="color: white;">
-        <p>Created: ${createdAtFormatted}</p>
-        <p>Updated: ${updatedAtFormatted || 'Not updated'}</p>
-      </div>
-    `;
+  <img src="${imageSrc}" alt="${product.name || 'product'}"
+    class="w-full h-40 object-cover rounded-lg border border-gray-700 mb-3" loading="lazy" />
+  <div class="p-3 space-y-1">
+    <h3 class="text-base font-semibold text-yellow-400 truncate">${product.name || 'No name'}</h3>
+    
+    <p class="text-xs sm:text-sm md:text-sm lg:text-xs text-gray-300 flex flex-wrap gap-x-2 justify-center">
+    <span><span data-i18n="news.created">Created:</span> ${createdAtFormatted}</span>
+    <span><span data-i18n="news.updated">Updated:</span> ${updatedAtFormatted || 'Not updated'}</span>
+    </p>
+
+  </div>
+`;
+
+    const lang = localStorage.getItem("lang") || "en";
+    setLanguage(lang);
 
     productEl.addEventListener("click", () => showPopup(product));
     productList.appendChild(productEl);
   });
 }
-
-
 
 // Tìm kiếm sản phẩm
 window.search = function () {
@@ -134,21 +141,39 @@ function showPopup(product) {
     : "./src/img/cauculator icon.png";
 
   popup.innerHTML = `
-    <button class="close-popup"><i class="fa fa-times-circle-o" aria-hidden="true"></i></button>
-    <img src="${imageSrc}" alt="${product.name || 'product'}" loading="lazy"/>
-    <h3>${product.name}</h3>
-    <p>${product.details}</p>
-    <div id="display-avs"><p>Author:<br><span class="author-popup">${product.author || "Don't have author"}</span></p></div>
-    <a href="${product.link}" target="_blank"><button class="box"><span>More information</span></button></a>
+    <div class="flex flex-col items-center gap-5">
+    
+      <button class="close-popup absolute top-2 right-2 text-red-400 hover:text-white text-xl">
+        <i class="fa-solid fa-circle-xmark"></i>
+      </button>
+      <br>
+      <img src="${imageSrc}" alt="${product.name || 'product'}" loading="lazy"
+           class="w-full h-60 object-cover rounded-lg border border-gray-600" />
+      <h3 class="text-2xl font-bold text-yellow-400 text-center">${product.name}</h3>
+      <p class="text-sm text-gray-300 text-center whitespace-pre-line">${product.details || ""}</p>
+      <div class="text-center">
+        <p class="text-gray-400 text-sm"data-i18n="news.author">Author:</p>
+        <p class="text-lg font-semibold text-indigo-300"> ${product.author || "Don't have author"}</p>
+      </div>
+      <a href="${product.link}" target="_blank">
+        <button class="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-2 rounded-full font-semibold transition" data-i18n="news.information">
+          More information
+        </button>
+      </a>
+    </div>
   `;
 
-  popupContainer.style.display = "block";
+  // Hiện popup
+  popupContainer.style.display = "flex";
 
+  const lang = localStorage.getItem("lang") || "en";
+  setLanguage(lang);
+
+  // Bắt sự kiện tắt
   document.querySelector(".close-popup").addEventListener("click", () => {
     popupContainer.style.display = "none";
   });
 }
-
 
 // Đóng popup nếu nhấn ra ngoài
 popupContainer.addEventListener("click", (e) => {

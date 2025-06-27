@@ -3,53 +3,13 @@ body {
     font-family: Arial, sans-serif;
 }
 
-/* Mobile styles (max-width: 480px) */
-@media only screen and (max-width: 480px) {
-
-    #Menu {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 10px;
-    }
-    
-    #Menu1 {
-        display: none;
-    }
-
-    #menu-toggle {
-        display: block;
-        background-color: #ffcc66;
-        color: white;
-        height: 35px;
-        padding: 10px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    #Menu1.active {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        background-color: rgba(46, 46, 46, 0.911);
-        padding: 10px;
-        text-align: center;
-    }
-
-    iframe {
-        height: 200px;
-        width: 100%;
-    }
-}
-
 /* Tablet styles (max-width: 800px) */
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 756px) {
     #Menu {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 10px;
+        padding: 20px;
     }
 
     #Menu1 {
@@ -58,12 +18,18 @@ body {
 
     #menu-toggle {
         display: block;
-        background-color: #ffcc66;
+        background-color: rgb(79, 25, 229);
         color: white;
         height: 35px;
-        padding: 10px;
+        width: 35px;
         border-radius: 5px;
         cursor: pointer;
+    }
+
+    #menu-toggle i{
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     #Menu1.active {
@@ -73,7 +39,7 @@ body {
         top: 71px;
         left: 0;
         width: 100%;
-        background-color: rgba(46, 46, 46, 0.911);
+        background-color: white;
         z-index: 1000;
         padding: 10px;
     }
@@ -89,8 +55,8 @@ body {
 
 #logoutButton {
     position: relative;
+    left: 0px;
     background-color: rgba(70, 97, 118, 0.318);
-    left: -15px;
     border-radius: 10px;
 }
 
@@ -114,25 +80,9 @@ body {
     z-index: 1000;
 }
 
-#Menu a {
-    text-decoration: none;
-    color: white;
-}
-
-#Menu1 {
-    margin-right: 160px;
-}
-
 #Signin {
     position: relative;
-    left: -15px;
+    left: 0px;
     background-color: rgb(49, 55, 56);
-    border-radius: 10px;
-}
-
-#Login {
-    position: relative;
-    left: -15px;
-    background-color: rgb(3, 37, 44);
     border-radius: 10px;
 }

@@ -4,14 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>News</title>
+  <title>Store</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="website icon" type="image/png" href="./src/img/cauculator icon.png">
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="src/css/styles.css">
-  <link rel="stylesheet" href="src/css/menure.css">
+  <link rel="stylesheet" href="./src/css/styles.css">
+  <link rel="stylesheet" href="./src/css/menure.css">
   <link rel="stylesheet" href="./src/css/chatbot.css">
 
   <!-- Firebase -->
@@ -28,6 +28,11 @@
     ::-webkit-scrollbar-thumb {
       background-color: #4f46e5;
       border-radius: 10px;
+    }
+
+    .product {
+      all: unset;
+      /* xoá toàn bộ thuộc tính cũ */
     }
 
     .popup {
@@ -52,19 +57,47 @@
       justify-content: center;
       align-items: center;
       padding: 1rem;
-      overflow-y: auto;
+      overflow: auto;
     }
 
     .popup {
-      background-color: #111827;
-      /* nền đen xịn Tailwind */
+      background-color: #1f2937;
+      /* Tailwind gray-900 */
       color: white;
-      padding: 1.5rem;
       border-radius: 1rem;
       max-width: 500px;
       width: 100%;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      max-height: 85vh;
+      padding: 1rem;
+      overflow-y: auto;
       position: relative;
+
+      /* Scrollbar custom */
+      scrollbar-width: thin;
+      scrollbar-color: #6366f1 transparent;
+      /* Firefox */
+    }
+
+    /* WebKit scrollbar (Chrome, Edge, Safari) */
+    .popup::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .popup::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 10px;
+    }
+
+    .popup::-webkit-scrollbar-thumb {
+      background-color: #6366f1;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      /* để tạo khoảng cách giữa track */
+      background-clip: padding-box;
+    }
+
+    .popup::-webkit-scrollbar-thumb:hover {
+      background-color: #aaa;
     }
   </style>
 </head>
@@ -79,8 +112,8 @@
     <div id="searchNews" class="mt-32 flex flex-col items-center gap-4">
       <!-- Ô tìm kiếm -->
       <input id="search" type="text"
-        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500" data-i18n="news.placeholder"
-        onkeyup="search(); suggest()" placeholder="Search for the news..." />
+        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500" data-i18n="store.placeholder"
+        onkeyup="search(); suggest()" placeholder="Search for a book..." />
 
       <!-- Gợi ý tìm kiếm -->
       <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-white"></div>
@@ -92,7 +125,7 @@
     </div>
 
     <!-- Danh sách sách mới -->
-    <div id="Lastestnews" class="flex flex-wrap justify-center gap-4 mt-12"></div>
+    <div id="Market" class="flex flex-wrap justify-center gap-4 mt-12"></div>
   </div>
   <br><br><br><br>
 
@@ -141,12 +174,13 @@
       &copy; 2024 ShapeSpeak. All rights reserved.
     </div>
   </footer>
-
+  <!--file này phải có trước để load ngôn ngữ-->
   <script src="./src/js/language.js" defer></script>
+  <!--Có rồi mới thêm các hàm còn lại-->
   <script src="./src/js/firebase-config.js"></script>
   <script src="./src/js/menu.js"></script>
+  <script type="module" src="./src/js/store.js"></script>
   <script src="./src/js/logout.js"></script>
-  <script type="module" src="./src/js/news.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
   <script src="./src/js/chatbot.js"></script>
   <script src="./src/js/checklogin.js"></script>

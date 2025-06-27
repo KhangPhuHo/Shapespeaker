@@ -2,306 +2,102 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Language</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-i18n="language.language_title">Language</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="website icon" type="image/png" href="./src/img/cauculator icon.png">
+  <link rel="stylesheet" href="./src/css/chatbot.css">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./src/css/styles.css">
   <link rel="stylesheet" href="./src/css/menure.css">
-  <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
-  <!-- Firebase App (bắt buộc) -->
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-
-  <!-- Firebase Authentication -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
-  <!-- Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-</head>
-<style>
-  #logoutButton {
-    position: relative;
-    background-color: rgba(70, 97, 118, 0.318);
-    left: -15px;
-    border-radius: 10px;
-  }
-
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    display: grid;
-    place-items: center;
-  }
-
-  #Menu h2 {
-    position: relative;
-    left: 10px;
-  }
-
-  @media only screen and (max-width: 768px) {
-    #Menu1 {
-      text-align: center;
-      width: 600px;
+  <style>
+    ::-webkit-scrollbar {
+      width: 6px;
     }
 
-    #Menu {
-      display: flex;
-      flex-direction: row;
-    }
-
-    #menu-toggle {
-      position: relative;
-      left: 10px;
-    }
-
-    #content9 #content1 {
-      background-color: rgba(30, 29, 29, 0.719);
+    ::-webkit-scrollbar-thumb {
+      background-color: #4f46e5;
       border-radius: 10px;
-      height: 200px;
-      margin-top: 140px;
     }
-
-    #flags img {
-      width: 60px;
-      border-radius: 20px;
-    }
-
-    #flags {
-      display: flex;
-      justify-content: space-around;
-      position: relative;
-      top: 20px;
-    }
-
-    #content9 .image {
-      width: 160px;
-      height: 160px;
-    }
-
-    #content9 .container {
-      width: 300px;
-      height: 570px;
-      font-size: 10px;
-    }
-
-    .profession span {
-      font-size: 25px;
-    }
-
-    .bio {
-      font-size: 10px;
-    }
-
-    iframe {
-      height: 200px;
-    }
-  }
-
-  @media only screen and (min-width: 800px) {
-    #content9 #content1 {
-      background-color: rgba(30, 29, 29, 0.719);
-      border-radius: 10px;
-      width: 800px;
-      height: 400px;
-      margin-top: 140px;
-    }
-
-    #flags img {
-      width: 70px;
-      border-radius: 20px;
-    }
-
-    #flags {
-      display: flex;
-      justify-content: space-around;
-      position: relative;
-      top: 100px;
-
-    }
-  }
-
-  #Menu .info {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  #Menu {
-    position: fixed;
-    width: 100%;
-    top: 0;
-    margin-left: -10px;
-    display: flex;
-    justify-content: space-between;
-    padding-left: 10px;
-    padding-right: 10px;
-    align-items: center;
-    background-color: rgba(46, 46, 46, 0.911);
-    border-radius: 10px;
-    z-index: 1000;
-  }
-
-  #Menu a {
-    text-decoration: none;
-    color: white;
-  }
-
-  #Menu1 a {
-    padding-left: 20px;
-  }
-
-  #Menu1 {
-    margin-right: 160px;
-  }
-
-  #Signin {
-    position: relative;
-    left: -15px;
-    background-color: rgb(49, 55, 56);
-    border-radius: 10px;
-  }
-
-  .container {
-    width: 100%;
-    height: 100%;
-    padding-right: 15px;
-    padding-left: 15px;
-    margin-right: auto;
-    margin-left: auto;
-    border-radius: 10px;
-    background: #232526;
-    background: -webkit-linear-gradient(to right, #414345, #232526);
-    background: linear-gradient(to right, #414345, #232526);
-  }
-
-  .image {
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
-    margin: 0 auto;
-    border: 5px solid #fdf5e6;
-  }
-
-  .w3-border {
-    border: 3px solid #ccc !important;
-  }
-
-  .contact {
-    text-align: center;
-    color: #fdf5e6;
-  }
-
-  .contact .info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .contact .info span {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-
-  .bio {
-    font-size: 11px;
-    text-align: center;
-  }
-
-  @media screen and (min-width: 768px) {
-    .link {
-      width: 100%;
-    }
-  }
-
-  @media screen and (min-width: 576px) {
-    .container {
-      max-width: 540px;
-    }
-
-    .profession span {
-      font-size: 24px;
-    }
-
-    .bio {
-      font-size: 15px;
-    }
-  }
-
-  #icon {
-    text-align: center;
-  }
-
-  .icon {
-    color: black;
-  }
-
-  #footer {
-    text-align: center;
-  }
-
-  iframe {
-    border-radius: 20px;
-    margin-bottom: 20px;
-  }
-</style>
+  </style>
 </head>
 
-<body>
+<body class="bg-gradient-to-r from-gray-800 to-gray-900 font-sans">
   <div id="Menu"></div>
-  <div class="video-container">
-    <video autoplay muted loop id="background-video">
-      <source src="./src/video/1722969-uhd_3840_2160_25fps.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
-  </div>
-  <div id="content9">
-    <div id="content1">
-      <h2>Choose your language</h2>
-      <div id="flags">
-        <a href="isgamemarket.html"><img src="https://flagicons.lipis.dev/flags/4x3/um.svg" alt="USA"></a>
-        <a href="isgamemarketvn.html"><img src="https://flagicons.lipis.dev/flags/4x3/vn.svg" alt="Vietnamese"></a>
+  <div id="bot"></div>
+
+  <div class="min-h-screen flex flex-col justify-center items-center px-4">
+    <div class="bg-black/60 backdrop-blur-md p-8 rounded-xl shadow-lg text-center max-w-xl w-full mt-32">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-yellow-400" data-i18n="language.choose_language">Choose your
+        language</h2>
+      <div class="flex justify-center gap-10 mt-6">
+        <img id="lang-en" src="https://flagicons.lipis.dev/flags/4x3/um.svg"
+          class="w-16 sm:w-20 rounded-xl shadow cursor-pointer" alt="English">
+        <img id="lang-vn" src="https://flagicons.lipis.dev/flags/4x3/vn.svg"
+          class="w-16 sm:w-20 rounded-xl shadow cursor-pointer" alt="Vietnamese">
       </div>
     </div>
-    <br><br><br><br><br>
-    <div class="container">
-      <div style="text-align: center">
-        <div><img class="image" src="./src/img/cauculator icon.png" alt="logo"></div>
-        <p class="profession"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">My<span
-              style="color: #ffcc66">Books</span></span></p>
-        <p class="bio"><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">BOOKS
-            SOFTWARE</span></p><br>
+  </div>
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-gray-300 py-8 border-t border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+
+      <!-- Logo & Name -->
+      <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+        <img src="./src/img/cauculator icon.png" alt="logo" class="w-16 h-16 object-contain">
+        <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
+            class="text-lg md:text-xl">ShapeSpeak</span></a>
+        <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan"> TOY FOR CHILDREN</p>
       </div>
-      <div class="contact">
-        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">CONTACT US</span></p>
-        <div id="icon">
-          <a href="https://x.com/i/flow/login" class="icon"><i class="fa fa-twitter-square" aria-hidden="true"></i></a>
-          <a href="https://www.facebook.com/" class="icon"><i class="fa fa-facebook-official"
-              aria-hidden="true"></i></a>
-          <a href="https://www.instagram.com/" class="icon"><i class="fa fa-instagram" aria-hidden="true"></i></a>
-          <a href="https://www.google.com/intl/vi/gmail/about/" class="icon"><i class="fa fa-envelope-o"
-              aria-hidden="true"></i></a>
-        </div>
-        <div id="footer">
-          <p>©Copyright from opening source</p>
+
+      <!-- Contact Us -->
+      <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+        <h3 class="text-lg font-semibold text-white" data-i18n="footer.contact">Contact Us</h3>
+        <div class="flex space-x-4 text-2xl">
+          <a href="https://x.com/i/flow/login" class="hover:text-yellow-400 transition">
+            <i class="fa-brands fa-x-twitter"></i>
+          </a>
+          <a href="https://www.facebook.com/" class="text-blue-600 hover:text-yellow-400 transition">
+            <i class="fa-brands fa-facebook"></i>
+          </a>
+          <a href="https://www.instagram.com/" class="text-pink-500 hover:text-yellow-400 transition">
+            <i class="fa-brands fa-instagram"></i>
+          </a>
+          <a href="https://www.google.com/intl/vi/gmail/about/" class="text-red-400 hover:text-yellow-400 transition">
+            <i class="fa-solid fa-envelope"></i>
+          </a>
         </div>
       </div>
-      <div class="contact">
-        <p class=""><span class="w3-padding w3-margin" style="font-weight: bolder; color: #fdf5e6">Find us</span></p>
+
+      <!-- Find Us -->
+      <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
+        <h3 class="text-lg font-semibold text-white" data-i18n="footer.find_us">Find Us</h3>
         <iframe src="https://maps.google.com/maps?q=HCMCity,+Njemačka&output=embed" width="100%" height="250"
           frameborder="0" style="border:0" allowfullscreen></iframe>
       </div>
-    </div>
-  </div>
 
+    </div>
+
+    <!-- Bottom -->
+    <div class="text-center text-gray-500 text-xs mt-6" data-i18n="footer.copyright">
+      &copy; 2024 ShapeSpeak. All rights reserved.
+    </div>
+  </footer>
+
+  <script src="./src/js/language.js" defer></script>
   <script src="./src/js/firebase-config.js"></script>
   <script src="./src/js/menu.js"></script>
   <script src="./src/js/logout.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
+  <script src="./src/js/chatbot.js"></script>
 </body>
 
 </html>

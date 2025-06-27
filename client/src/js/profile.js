@@ -1,61 +1,110 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-// Config Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",//apikey để gửi dữ liệu cho firebase
+  apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
   authDomain: "book-management-b7265.firebaseapp.com",
   projectId: "book-management-b7265",
-  storageBucket: "book-management-b7265.firebasestorage.app",
+  storageBucket: "book-management-b7265.appspot.com",
   messagingSenderId: "1046859996196",
   appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
   measurementId: "G-ZYTCE1YML4"
 };
 
-// Init Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", () => {
-    displayProfile();
+  setupProfileUI();
+  observeAuthState();
+  setupGlobalEvents();
 });
 
-function displayProfile() {
-    const profileContainer = document.getElementById('profile');
-
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            const docSnap = await getDoc(doc(db, "users", user.uid));
-
-            if (docSnap.exists()) {
-                const userInfo = docSnap.data();
-
-                const avatarSVG = `
-                    <svg width="40px" height="40px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M8 7C9.65685 7 11 5.65685 11 4C11 2.34315 9.65685 1 8 1C6.34315 1 5 2.34315 5 4C5 5.65685 6.34315 7 8 7Z" fill="#000000"></path>
-                        <path d="M14 12C14 10.3431 12.6569 9 11 9H5C3.34315 9 2 10.3431 2 12V15H14V12Z" fill="#000000"></path>
-                    </svg>
-                `;
-
-                const avatar = userInfo.avatar || user.photoURL || null;
-                const username = userInfo.name || user.displayName || "Người dùng";
-
-                profileContainer.innerHTML = `
-                    <p class="info">
-                        ${avatar ? 
-                            `<img style="width: 40px; height: 40px; border-radius: 10px;" src="${avatar}" alt="Avatar">`
-                            : avatarSVG
-                        }
-                        <span id="username1" style="color: white">${username}</span>
-                    </p>
-                `;
-            } else {
-                profileContainer.innerHTML = `<p>Không tìm thấy hồ sơ người dùng.</p>`;
-            }
-        } else {
-            profileContainer.innerHTML = `<p>Hãy đăng nhập để hiển thị hồ sơ.</p>`;
-        }
-    });
+function setupProfileUI() {
+  const profileContainer = document.getElementById('profile');
+  profileContainer.innerHTML = `
+    <div id="profile-btn" class="relative inline-block cursor-pointer select-none">
+      <div class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition">
+        <i class="fa-solid fa-circle-user fa-2x text-gray-600"></i>
+        <span class="font-semibold" data-i18n="menu.no_account">No account</span>
+      </div>
+    </div>
+  `;
 }
+
+function observeAuthState() {
+  const profileContainer = document.getElementById('profile');
+  const popup = document.getElementById('popup');
+  const myaccount = document.getElementById('myaccount');
+
+  onAuthStateChanged(auth, async (user) => {
+    popup.classList.add('hidden'); // Ẩn popup mỗi lần trạng thái thay đổi
+
+    if (user) {
+      myaccount.innerHTML = `<span class="text-gray-400">Đang tải...</span>`;
+
+      try {
+        const docSnap = await getDoc(doc(db, "users", user.uid));
+        const userInfo = docSnap.exists() ? docSnap.data() : {};
+
+        if (!docSnap.exists()) {
+          console.warn("Không tìm thấy tài khoản Firestore cho UID:", user.uid);
+        }
+
+        const avatar = userInfo.avatar || user.photoURL || null;
+        const username = userInfo.name || user.displayName || "Người dùng";
+
+        profileContainer.innerHTML = `
+          <div id="profile-btn" class="relative inline-block cursor-pointer select-none">
+            <div class="flex items-center space-x-2 p-2 rounded-md hover:bg-gray-100 transition">
+              ${avatar
+                ? `<img src="${avatar}" alt="Avatar" class="w-8 h-8 rounded-full object-cover">`
+                : `<i class="fa-solid fa-circle-user fa-2x text-gray-600"></i>`
+              }
+              <span class="font-semibold">${username}</span>
+            </div>
+          </div>
+        `;
+
+        const profileBtn = document.getElementById('profile-btn');
+        profileBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          popup.classList.toggle('hidden');
+        });
+
+        myaccount.innerHTML = `
+          <div class="flex flex-col items-center space-y-2 mb-2">
+            ${avatar
+              ? `<img src="${avatar}" alt="Avatar" class="w-12 h-12 rounded-full object-cover">`
+              : `<i class="fa-solid fa-circle-user fa-2x text-gray-600"></i>`
+            }
+            <span class="font-semibold text-lg">${username}</span>
+          </div>
+        `;
+
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+        myaccount.innerHTML = `<span class="text-red-500">Lỗi tải dữ liệu</span>`;
+      }
+
+    } else {
+      // Chưa đăng nhập
+      setupProfileUI();
+      const profileBtn = document.getElementById('profile-btn');
+      profileBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.classList.toggle('hidden');
+      });
+
+      myaccount.innerHTML = `
+        <div class="flex flex-col items-center space-y-2 mb-2 text-gray-500">
+          <i class="fa-solid fa-circle-user fa-2x text-gray-600"></i>
+          <span class="text-lg" data-i18n="menu.no_account">No account</span>
+        </div>
+      `;
+    }
+  });
+}
+

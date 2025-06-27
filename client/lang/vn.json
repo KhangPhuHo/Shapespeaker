@@ -1,0 +1,64 @@
+{
+  "menu": {
+    "home": "Trang chủ",
+    "news": "Thông tin",
+    "store": "Cửa hàng",
+    "language": "Ngôn ngữ",
+    "my_account": "Tài khoản của bạn",
+    "cart": "Giỏ hàng",
+    "logout": "Đăng xuất",
+    "sign_in": "Đăng kí",
+    "no_account": "Chưa có tài khoản"
+  },
+
+  "language": {
+    "language_title": "Ngôn ngữ",
+    "choose_language": "Chọn ngôn ngữ của bạn"
+  },
+
+  "news": {
+    "created": "Tạo lúc:",
+    "updated": "Cập nhật:",
+    "author": "Tác giả:",
+    "information": "Thông tin chi tiết",
+    "placeholder": "Tìm kiếm thông tin..."
+  },
+
+  "store": {
+    "price": "Giá:",
+    "stock": "Còn lại:",
+    "add_to_cart": "Thêm vào giỏ hàng",
+    "information": "Thông tin chi tiết",
+    "placeholder": "Tìm kiếm sản phẩm..."
+  },
+
+  "myaccount": {
+    "my_account_title": "Tài khoản của bạn",
+    "update_info": "Cập nhật thông tin",
+    "name": "Họ và tên",
+    "email": "Email",
+    "current_password": "Mật khẩu hiện tại",
+    "new_password": "Mật khẩu mới",
+    "phone": "Số điện thoại",
+    "address": "Địa chỉ",
+    "avatar": "Ảnh đại diện (URL)",
+    "submit": "Xác nhận",
+    "your_profile": "Hồ sơ của bạn"
+  },
+
+  "cart": {
+    "buy": "Mua ngay",
+    "delete": "Xoá",
+    "price": "Giá:",
+    "stock": "Còn lại:",
+    "total": "Tổng cộng",
+    "checkoutAll": "Thanh toán toàn bộ"
+  },
+
+  "footer": {
+    "slogan": "ĐỒ CHƠI CHO TRẺ EM",
+    "contact": "Liên hệ với chúng tôi",
+    "find_us": "Tìm chúng tôi",
+    "copyright": "2024 ShapeSpeak. Đã đăng ký bản quyền."
+  }
+}

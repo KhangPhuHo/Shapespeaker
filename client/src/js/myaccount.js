@@ -2,15 +2,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebar = document.getElementById("sidebar");
   const toggleBtn = document.getElementById("sidebar-toggle");
 
-  toggleBtn.innerHTML = "&#187;"; // >> khi khởi đầu
-
   toggleBtn.addEventListener("click", () => {
-    sidebar.classList.toggle("active");
-    toggleBtn.innerHTML = sidebar.classList.contains("active") ? "&#171;" : "&#187;";
-    // << khi mở | >> khi đóng
+    const isOpen = sidebar.classList.contains("translate-x-0");
+    sidebar.classList.toggle("translate-x-0", !isOpen);
+    sidebar.classList.toggle("-translate-x-full", isOpen);
+    toggleBtn.innerHTML = isOpen ? "&#187;" : "&#171;"; // >> / <<
   });
 });
-
 
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -44,7 +42,7 @@ window.addEventListener("DOMContentLoaded", () => {
 function renderProfile(avatar, name, email, phone, address) {
     const profile = document.getElementById("profileAccount");
     profile.innerHTML = `
-        <img src="${avatar || 'default-avatar.png'}" alt="Avatar">
+        <img src="${avatar || 'default-avatar.png'}" class="w-56 h-56 rounded-full object-cover mx-auto block" alt="Avatar">
         <h2>${name || "No Name"}</h2>
         <p><strong>Email:</strong> ${email || ""}</p>
         <p><strong>Phone:</strong> ${phone || ""}</p>
@@ -101,18 +99,15 @@ async function addInfo() {
     }
 }
 
-function showHidePassword() {
-    const togglePasswordIcons = document.querySelectorAll('.toggle-password');
-    togglePasswordIcons.forEach(icon => {
-        icon.addEventListener("click", () => {
-            const input = icon.previousElementSibling;
-            input.type = input.type === "password" ? "text" : "password";
-            icon.classList.toggle("fa-eye");
-            icon.classList.toggle("fa-eye-slash");
-        });
-    });
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-    showHidePassword();
+  document.querySelectorAll('.toggle-password').forEach(icon => {
+    icon.addEventListener('click', () => {
+      const input = icon.previousElementSibling;
+      const isPassword = input.type === "password";
+      input.type = isPassword ? "text" : "password";
+      icon.classList.toggle('fa-eye', !isPassword);
+      icon.classList.toggle('fa-eye-slash', isPassword);
+    });
+  });
 });
+

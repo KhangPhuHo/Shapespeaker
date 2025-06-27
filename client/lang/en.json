@@ -1,0 +1,64 @@
+{
+  "menu": {
+    "home": "Home",
+    "news": "News",
+    "store": "Store",
+    "language": "Language",
+    "my_account": "My Account",
+    "cart": "Cart",
+    "logout": "Logout",
+    "sign_in": "Signin/Login",
+    "no_account": "No account"
+  },
+
+  "language": {
+    "language_title": "Language",
+    "choose_language": "Choose your language"
+  },
+
+  "news": {
+    "created": "Created:",
+    "updated": "Updated:",
+    "author": "Author:",
+    "information": "More information",
+    "placeholder": "Search for the new..."
+  },
+
+  "store": {
+    "price": "Price:",
+    "stock": "Stock:",
+    "add_to_cart": "Add To Cart",
+    "information": "More information",
+    "placeholder": "Search for a product..."
+  },
+
+  "myaccount": {
+    "my_account_title": "My Account",
+    "update_info": "Update Your Info",
+    "name": "Name",
+    "email": "Email",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "phone": "Phone Number",
+    "address": "Address",
+    "avatar": "Avatar (URL)",
+    "submit": "Submit",
+    "your_profile": "Your Profile"
+  },
+
+  "cart":{
+    "buy": "Buy",
+    "delete": "Delete",
+    "price": "Price:",
+    "stock": "Stock:",
+    "total": "Total:",
+    "checkoutAll": "Pay out"
+  },
+
+  "footer": {
+    "slogan": "TOY FOR CHILDREN",
+    "contact": "Contact Us",
+    "find_us": "Find Us",
+    "copyright": "2024 ShapeSpeak. All rights reserved."
+  }
+}
