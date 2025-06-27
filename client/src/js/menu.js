@@ -16,7 +16,7 @@ function renderMenu() {
     <a href="home.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-home"></i> <span data-i18n="menu.home">Home</span></a>
     <a href="news.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-newspaper"></i> <span data-i18n="menu.news">News</span></a>
     <a href="store.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-book"></i> <span data-i18n="menu.store">Store</span></a>
-    <a href="language.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-globe"></i> <span data-i18n="menu.language">Language</span></a>
+    <a href="Language.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-globe"></i> <span data-i18n="menu.language">Language</span></a>
 </nav>
 
 <!-- Menu Mobile Dropdown (hiển thị khi active) -->
@@ -24,7 +24,7 @@ function renderMenu() {
     <a href="home.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-home"></i>  <span data-i18n="menu.home">Home</span></a>
     <a href="news.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-newspaper"></i>  <span data-i18n="menu.news">News</span></a>
     <a href="store.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-book"></i>  <span data-i18n="menu.store">Store</span></a>
-    <a href="language.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-globe"></i>  <span data-i18n="menu.language">Language</span></a>
+    <a href="Language.html" class="flex items-center gap-2 hover:text-indigo-600" ><i class="fa fa-globe"></i>  <span data-i18n="menu.language">Language</span></a>
 </nav>
 
             <div id="profile" class="relative"></div>
