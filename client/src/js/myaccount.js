@@ -42,7 +42,7 @@ window.addEventListener("DOMContentLoaded", () => {
 function renderProfile(avatar, name, email, phone, address) {
     const profile = document.getElementById("profileAccount");
     profile.innerHTML = `
-        <img src="${avatar || 'default-avatar.png'}" class="w-56 h-56 rounded-full object-cover mx-auto block" alt="Avatar">
+        <img src="${avatar || 'default-avatar.png'}" class="w-56 h-56 rounded-full object-cover mx-auto" alt="Avatar">
         <h2>${name || "No Name"}</h2>
         <p><strong>Email:</strong> ${email || ""}</p>
         <p><strong>Phone:</strong> ${phone || ""}</p>
