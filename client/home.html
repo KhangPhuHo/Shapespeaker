@@ -96,22 +96,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="./src/css/menure.css">
     <link rel="stylesheet" href="./src/css/styles.css">
+    <link rel="stylesheet" href="./src/css/toast.css">
     <link rel="stylesheet" href="./src/css/chatbot.css">
     <!-- Thêm vào <head> -->
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="website icon" type="png" href="./src/img/cauculator icon.png">
-    <!-- Firebase App (bắt buộc) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-
-    <!-- Firebase Authentication -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-
-    <!-- Firestore -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <link rel="website icon" type="png" href="./src/img/shapespeakicon.jpg">
 </head>
 
 <body class="bg-white text-gray-900 antialiased scroll-smooth" class="loading">
+
     <!-- Header -->
     <div id="Menu"></div>
     <div id="bot"></div>
@@ -384,7 +378,7 @@
 
             <!-- Logo & Name -->
             <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-                <img src="./src/img/cauculator icon.png" alt="logo" class="w-16 h-16 object-contain">
+                <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 object-contain">
                 <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
                         class="text-lg md:text-xl">ShapeSpeak</span></a>
                 <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan"> TOY FOR CHILDREN</p>
@@ -424,21 +418,29 @@
             &copy; 2024 ShapeSpeak. All rights reserved.
         </div>
     </footer>
+    <!-- Toast container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-[1100] space-y-2 max-w-xs w-full md:w-auto mx-auto md:mx-0">
+    </div>
 
-    <script src="./src/js/language.js" defer></script>
+    <script type="module" src="./src/js/language.js" defer></script>
+    <script type="module" src="./src/js/toast.js"></script>
 
     <!-- Chú ý: script type="module" -->
-    <script src="./src/js/firebase-config.js"></script>
-    <script type="module" src="./src/js/profile.js"></script>
+    <script type="module" src="./src/js/firebase-config.js"></script>
     <script src="./src/js/menu.js"></script>
-    <script src="./src/js/logout.js"></script>
+    <script type="module" src="./src/js/profile.js"></script>
+    <script type="module" src="./src/js/logout.js"></script>
+    <script type="module" src="./src/js/chatbot.js"></script>
+    <script type="module">
+        import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+        enableSessionKeepAlive();
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.body.classList.remove('loading');
             document.body.classList.add('loaded');
         });
     </script>
-    <script src="./src/js/chatbot.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
     <script>AOS.init();</script>
 </body>

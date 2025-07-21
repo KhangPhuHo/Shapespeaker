@@ -11,6 +11,13 @@
     "no_account": "No account"
   },
 
+  "modal": {
+    "confirm_title": "Confirm Account Deletion",
+    "confirm_text": "Are you sure you want to delete your account? This action is irreversible.",
+    "confirm": "Delete",
+    "cancel": "Cancel"
+  },
+
   "language": {
     "language_title": "Language",
     "choose_language": "Choose your language"
@@ -20,6 +27,7 @@
     "created": "Created:",
     "updated": "Updated:",
     "author": "Author:",
+    "loading": "Loading news for you...",
     "information": "More information",
     "placeholder": "Search for the new..."
   },
@@ -28,8 +36,10 @@
     "price": "Price:",
     "stock": "Stock:",
     "add_to_cart": "Add To Cart",
+    "loading": "Loading toys for you...",
     "information": "More information",
-    "placeholder": "Search for a product..."
+    "placeholder": "Search for a product...",
+    "filter_price": "Filter Price"
   },
 
   "myaccount": {
@@ -60,5 +70,20 @@
     "contact": "Contact Us",
     "find_us": "Find Us",
     "copyright": "2024 ShapeSpeak. All rights reserved."
+  },
+
+  "login": {
+    "login_title": "Login",
+    "wel_back": "Welcome Back!",
+    "password": "Password",
+    "login": "Login",
+    "verify_password": "Verify Password",
+    "haven't": "Don't have an account?",
+    "register": "Register",
+    "or": "OR",
+    "google_login": "Login with Google",
+    "join_us": "Join Us!",
+    "username": "Username",
+    "have_account": "Already have an account?"
   }
 }

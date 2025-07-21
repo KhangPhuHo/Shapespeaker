@@ -1,25 +1,12 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { db, auth } from "./firebase-config.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
-  authDomain: "book-management-b7265.firebaseapp.com",
-  projectId: "book-management-b7265",
-  storageBucket: "book-management-b7265.appspot.com",
-  messagingSenderId: "1046859996196",
-  appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
-  measurementId: "G-ZYTCE1YML4"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+// không gọi lại initializeApp!
 
 document.addEventListener("DOMContentLoaded", () => {
   setupProfileUI();
   observeAuthState();
-  setupGlobalEvents();
 });
 
 function setupProfileUI() {

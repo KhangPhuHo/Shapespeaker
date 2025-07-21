@@ -7,15 +7,11 @@
   <title>Cart</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="website icon" type="image/png" href="./src/img/cauculator icon.png">
+  <link rel="website icon" type="image/png" href="./src/img/shapespeakicon.jpg">
   <link rel="stylesheet" href="./src/css/styles.css">
   <link rel="stylesheet" href="./src/css/menure.css">
+  <link rel="stylesheet" href="./src/css/toast.css">
   <link rel="stylesheet" href="./src/css/chatbot.css">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <style>
     ::-webkit-scrollbar {
@@ -25,6 +21,15 @@
     ::-webkit-scrollbar-thumb {
       background-color: #4f46e5;
       border-radius: 10px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
     }
   </style>
 </head>
@@ -46,156 +51,24 @@
     </div>
   </div>
 
+  <!-- Toast container -->
+  <div id="toast-container"
+    class="fixed top-20 right-4 md:right-4 left-4 md:left-auto z-[1100] space-y-2 max-w-xs w-full mx-auto md:mx-0">
+  </div>
+
   <!-- Scripts -->
-  <script src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/toast.js"></script>
 
-  <script src="./src/js/firebase-config.js"></script>
+  <script type="module" src="./src/js/firebase-config.js"></script>
   <script src="./src/js/menu.js"></script>
-  <script src="./src/js/logout.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
-  <script src="./src/js/chatbot.js"></script>
-  <script src="./src/js/checklogin.js"></script>
-
-  <script>
-    const cartList = document.getElementById("CartList");
-    const cartSummary = document.getElementById("CartSummary");
-    const totalAmount = document.getElementById("TotalAmount");
-
-    let currentCurrency = localStorage.getItem("lang") === "en" ? "USD" : "VND";
-    const exchangeRate = 24000;
-
-    function formatCurrency(amount) {
-      return currentCurrency === "USD"
-        ? `$${(amount / exchangeRate).toFixed(2)}`
-        : amount.toLocaleString("vi-VN") + " VND";
-    }
-
-    function loadCart() {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      cartList.innerHTML = "";
-      let total = 0;
-
-      if (cart.length === 0) {
-        cartList.innerHTML = `
-      <div class="bg-gray-800 text-center text-gray-300 p-6 rounded-lg shadow-md">
-        Chưa có sản phẩm nào trong giỏ hàng.
-      </div>
-    `;
-        cartSummary.classList.add("hidden");
-        return;
-      }
-
-      cart.forEach((product, index) => {
-        const imageSrc = product.picture?.trim() || "./src/img/cauculator icon.png";
-        const maxStock = typeof product.stock === "number" ? product.stock : 1;
-
-        total += product.price * product.quantity;
-
-        const itemEl = document.createElement("div");
-        itemEl.className = "flex flex-col sm:flex-row sm:items-center gap-4 bg-gray-800 p-4 rounded-lg shadow-md";
-
-        itemEl.innerHTML = `
-      <div class="flex items-start gap-4 flex-wrap sm:flex-nowrap">
-        <img src="${imageSrc}" alt="${product.name}" class="w-20 h-20 object-cover rounded-md flex-shrink-0" />
-        <div class="flex-grow max-w-[250px] sm:max-w-none break-words">
-          <h3 class="text-yellow-400 font-semibold text-lg break-words max-w-full sm:max-w-[135px]">
-            ${product.name}
-          </h3>
-          <p class="text-sm text-gray-300"><span data-i18n="cart.price">Price:</span> ${formatCurrency(product.price)}</p>
-          <p class="text-sm text-gray-400"><span data-i18n="cart.stock">Stock:</span> ${maxStock}</p>
-        </div>
-      </div>
-
-      <!-- Thanh chỉnh số lượng -->
-      <div class="flex flex-wrap justify-center sm:justify-start items-center gap-1 mt-4 text-sm">
-        <button onclick="setMin(${index})" class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs">⬅ Min</button>
-        <button onclick="changeQuantity(${index}, -10)" class="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs">-10</button>
-        <button onclick="changeQuantity(${index}, -1)" class="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded">-</button>
-        <span class="px-2 text-white">${product.quantity}</span>
-        <button onclick="changeQuantity(${index}, 1)" class="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded">+</button>
-        <button onclick="changeQuantity(${index}, 10)" class="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs">+10</button>
-        <button onclick="setMax(${index})" class="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-xs">Max ➡</button>
-      </div>
-
-      <!-- Nút mua/xóa -->
-      <div class="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
-        <button onclick="buyNow(${index})" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md w-full sm:w-auto" data-i18n="cart.buy">Buy</button>
-        <button onclick="removeFromCart(${index})" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md w-full sm:w-auto" data-i18n="cart.delete">Delete</button>
-      </div>
-    `;
-
-        cartList.appendChild(itemEl);
-      });
-
-      totalAmount.textContent = formatCurrency(total);
-      cartSummary.classList.remove("hidden");
-    }
-
-    function removeFromCart(index) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      cart.splice(index, 1);
-      localStorage.setItem("cart", JSON.stringify(cart));
-      loadCart();
-    }
-
-    function changeQuantity(index, delta) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      const item = cart[index];
-      const maxStock = typeof item.stock === "number" ? item.stock : 1;
-
-      if (delta > 0 && item.quantity >= maxStock) {
-        alert(`Sản phẩm "${item.name}" chỉ còn ${maxStock} trong kho.`);
-        return;
-      }
-
-      item.quantity += delta;
-      if (item.quantity <= 0) {
-        cart.splice(index, 1);
-      }
-
-      localStorage.setItem("cart", JSON.stringify(cart));
-      loadCart();
-    }
-
-    function buyNow(index) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      const product = cart[index];
-      const total = product.price * product.quantity;
-      alert(`Bạn đã chọn mua ${product.quantity} x ${product.name} (${formatCurrency(total)}).\n(Tính năng thanh toán sẽ được cập nhật sau.)`);
-    }
-
-    function checkoutAll() {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      const total = cart.reduce((sum, p) => sum + p.price * p.quantity, 0);
-      alert(`Bạn sẽ thanh toán tổng cộng ${formatCurrency(total)} cho ${cart.length} sản phẩm.`);
-    }
-
-    function setMin(index) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      cart[index].quantity = 1;
-      localStorage.setItem("cart", JSON.stringify(cart));
-      loadCart();
-    }
-
-    function setMax(index) {
-      const cart = JSON.parse(localStorage.getItem("cart")) || [];
-      const maxStock = typeof cart[index].stock === "number" ? cart[index].stock : 1;
-      cart[index].quantity = maxStock;
-      localStorage.setItem("cart", JSON.stringify(cart));
-      loadCart();
-    }
-
-    function changeLanguage(lang) {
-      if (lang === "en") {
-        currentCurrency = "USD";
-      } else {
-        currentCurrency = "VND";
-      }
-      loadCart();
-    }
-
-    window.onload = loadCart;
-
+  <script type="module" src="./src/js/logout.js"></script>
+  <script type="module" src="./src/js/cart.js"></script>
+  <script type="module" src="./src/js/chatbot.js"></script>
+  <script type="module">
+    import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+    enableSessionKeepAlive();
   </script>
 </body>
 

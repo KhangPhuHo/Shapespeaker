@@ -1,17 +1,25 @@
-let currentUserId = null;    // ví dụ 1 (admin) hoặc 2 (customer)
-let currentUserUid = null;   // UID dài Firebase Auth
-let currentUserRole = null;  // ví dụ "admin" hoặc "customer"
+import { auth, db } from './firebase-config.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { showToast } from './toast.js';
 
-// Sau khi đăng nhập, lấy thông tin từ Firestore:
-firebase.auth().onAuthStateChanged(async (user) => {
+let currentUserId = null;
+let currentUserUid = null;
+let currentUserRole = null;
+
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    currentUserUid = user.uid;  // UID dài thực sự
-    console.log(currentUserUid)
-    const docSnap = await firebase.firestore().collection("users").doc(user.uid).get();
-    if (docSnap.exists) {
-      const userData = docSnap.data();
-      currentUserId = userData.id; //1 or 2
-      currentUserRole = userData.role; // admin or customer
+    currentUserUid = user.uid;
+    try {
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      if (docSnap.exists()) {
+        const userData = docSnap.data();
+        currentUserId = userData.id;
+        currentUserRole = userData.role;
+      }
+    } catch (error) {
+      console.error("Lỗi khi lấy dữ liệu người dùng:", error);
+      showToast("Lỗi xác thực người dùng.", "error");
     }
   }
 });
@@ -158,7 +166,22 @@ async function processInput(text) {
   }
 }
 
-const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2"; // 👈 Admin gốc
+const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2";
+
+// ⚙️ Cập nhật session local khi đổi quyền
+function updateLocalSessionForRoleChange({ isAdmin }) {
+  const session = JSON.parse(localStorage.getItem("session"));
+  if (session) {
+    if (isAdmin) {
+      delete session.expired_at;
+      session.isAdmin = true;
+    } else {
+      session.expired_at = Date.now() + 2 * 60 * 60 * 1000;
+      session.isAdmin = false;
+    }
+    localStorage.setItem("session", JSON.stringify(session));
+  }
+}
 
 async function handleCommand(input) {
   if (currentUserId !== 1 || currentUserRole !== "admin") {
@@ -166,28 +189,32 @@ async function handleCommand(input) {
   }
 
   const parts = input.trim().split(" ");
-
   if (parts.length < 2) {
     return "⚠ Lệnh không hợp lệ. Ví dụ:\n- /cmd index.html\n- /cmd user {uid} admin\n- /cmd remove {uid} admin";
   }
 
   const command = parts[1];
 
-  // 👉 Chuyển trang
+  // 🔁 Chuyển trang
   if (command.endsWith(".html")) {
     setTimeout(() => { window.location.href = command; }, 2000);
     return `🔄 Đang chuyển đến ${command}...`;
   }
 
-  // 👉 Cấp quyền admin
-  if (command === "user" && parts.length >= 4 && parts[3] === "admin") {
+  // ✅ Cấp quyền admin
+    if (command === "user" && parts.length >= 4 && parts[3] === "admin") {
     const targetUserId = parts[2];
 
     try {
-      await firebase.firestore().collection("users").doc(targetUserId).set({
+      await setDoc(doc(db, "users", targetUserId), {
         role: "admin",
         id: 1
       }, { merge: true });
+
+      if (targetUserId === auth.currentUser.uid) {
+        updateLocalSessionForRoleChange({ isAdmin: true });
+      }
+
       return `✅ Đã cấp quyền admin cho user ${targetUserId}`;
     } catch (error) {
       console.error("❌ Lỗi khi cấp quyền admin:", error);
@@ -195,7 +222,7 @@ async function handleCommand(input) {
     }
   }
 
-  // 👉 Gỡ quyền admin (bảo vệ ADMIN GỐC)
+  // 🔒 Gỡ quyền admin
   if (command === "remove" && parts.length >= 4 && parts[3] === "admin") {
     const targetUserId = parts[2];
 
@@ -208,6 +235,11 @@ async function handleCommand(input) {
         role: "customer",
         id: 2
       }, { merge: true });
+
+      if (targetUserId === firebase.auth().currentUser.uid) {
+        updateLocalSessionForRoleChange({ isAdmin: false });
+      }
+
       return `✅ Đã gỡ quyền admin khỏi user ${targetUserId}`;
     } catch (error) {
       console.error("❌ Lỗi khi gỡ quyền admin:", error);
@@ -215,61 +247,49 @@ async function handleCommand(input) {
     }
   }
 
-  // 👉 Xoá người dùng (ban)
-  async function deleteUserFromServer(targetUserId) {
-    const response = await fetch('https://shapespeaker-production.up.railway.app/deleteUser', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        requesterUid: currentUserUid,  // chính là uid Firebase Auth của bạn đang đăng nhập
-        targetUid: targetUserId        // uid Firebase Auth của người bị xoá
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Lỗi không xác định');
-    }
-
-    return data;
-  }
-
+  // 🚫 Ban (xoá) người dùng
   if (command === "user" && parts.length >= 4 && parts[3] === "ban") {
-  console.log("Lệnh ban được kích hoạt");  // Thêm dòng này để kiểm tra
+    console.log("Lệnh ban được kích hoạt");
 
-  if (!currentUserUid) {
-    return "❗ Không xác định được UID người dùng hiện tại.";
-  }
+    const targetUserId = parts[2];
 
-  if (currentUserUid !== SUPER_ADMIN_UID) {
-    return "❌ Bạn không có quyền dùng lệnh này.";
-  }
-
-  const targetUserId = parts[2];
-
-  if (targetUserId === SUPER_ADMIN_UID) {
-    return "❌ Không thể xoá người dùng đặc biệt này.";
-  }
-
-  try {
-    const result = await deleteUserFromServer(targetUserId);
-
-    if (result.error) {
-      return "❌ " + result.error;
-    } else {
-      return result.message;
+    if (!currentUserUid) {
+      return "❗ Không xác định được UID người dùng hiện tại.";
     }
-  } catch (error) {
-    console.error(error);
-    return "❌ Lỗi không xác định khi gọi API.";
+
+    if (currentUserUid !== SUPER_ADMIN_UID) {
+      return "❌ Bạn không có quyền dùng lệnh này.";
+    }
+
+    if (targetUserId === SUPER_ADMIN_UID) {
+      return "❌ Không thể xoá người dùng đặc biệt này.";
+    }
+
+    try {
+      const response = await fetch('https://shapespeaker-production.up.railway.app/deleteUser', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requesterUid: currentUserUid,
+          targetUid: targetUserId
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return "❌ " + (data.error || "Lỗi không xác định.");
+      }
+
+      return data.message || "✅ Đã xoá người dùng.";
+    } catch (error) {
+      console.error(error);
+      return "❌ Lỗi không xác định khi gọi API.";
+    }
   }
-}
 
   return "⚠ Lệnh không hợp lệ hoặc chưa hỗ trợ.";
 }
-
-
 
 async function getWitResponse(input) {
   try {

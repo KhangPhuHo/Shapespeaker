@@ -6,18 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Store</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <link rel="website icon" type="image/png" href="./src/img/cauculator icon.png">
+  <link rel="website icon" type="image/png" href="./src/img/shapespeakicon.jpg">
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="./src/css/styles.css">
   <link rel="stylesheet" href="./src/css/menure.css">
+  <link rel="stylesheet" href="./src/css/toast.css">
   <link rel="stylesheet" href="./src/css/chatbot.css">
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <style>
     /* Scrollbar style */
@@ -99,6 +96,62 @@
     .popup::-webkit-scrollbar-thumb:hover {
       background-color: #aaa;
     }
+
+    @keyframes pillIn {
+      0% {
+        transform: translateY(8px) scale(0.8);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .animate-pill {
+      animation: pillIn 0.25s ease-out forwards;
+    }
+
+    .flip-card {
+      perspective: 1200px;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .flip-inner {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.7s ease-in-out;
+      position: relative;
+    }
+
+    .flip-inner.rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    .face {
+      backface-visibility: hidden;
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+    }
+
+    .back {
+      transform: rotateY(180deg);
+    }
+
+    @media (max-width: 640px) {
+      .face {
+        padding: 1rem;
+      }
+    }
+
+    #product-intro .absolute {
+      position: absolute;
+    }
   </style>
 </head>
 
@@ -112,20 +165,77 @@
     <div id="searchNews" class="mt-32 flex flex-col items-center gap-4">
       <!-- Ô tìm kiếm -->
       <input id="search" type="text"
-        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500" data-i18n="store.placeholder"
-        onkeyup="search(); suggest()" placeholder="Search for a book..." />
+        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        data-i18n="store.placeholder" onkeyup="search(); suggest()" placeholder="Search for a book..." />
 
       <!-- Gợi ý tìm kiếm -->
       <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-white"></div>
     </div>
 
-    <!-- Popup chi tiết sách -->
-    <div class="popup-container">
-      <div class="popup"></div>
+    <!-- ✅ Popup container bao phủ màn hình -->
+    <div class="popup-container fixed inset-0 bg-black/70 items-center justify-center z-50">
+      <!-- ✅ Popup chính (nội dung nằm trong đây) -->
+      <div
+        class="popup w-full sm:w-[90%] md:w-[600px] lg:w-[50%] max-h-[85vh] overflow-hidden bg-gray-900 text-white p-0 rounded-2xl shadow-2xl relative">
+
+        <!-- ✅ Thêm flip-card vào trong popup -->
+        <div class="flip-card w-full h-[85vh] max-h-[85vh] mx-auto">
+          <div class="flip-inner relative overflow-hidden transition-transform duration-700 w-full h-full">
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Modal preview ảnh lớn — đặt ngoài popup -->
+    <div id="image-preview-modal"
+      class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[60] backdrop-blur-sm transition-opacity duration-300 px-2 pt-[80px] pb-4 overflow-auto">
+
+      <div class="relative max-w-full max-h-full">
+        <!-- Ảnh preview -->
+        <img id="preview-image"
+          class="rounded-lg shadow-lg object-contain max-w-full max-h-[90vh] transition-transform duration-300 scale-100 mx-auto hidden"
+          src="" alt="Preview" />
+
+        <!-- Video preview -->
+        <video id="preview-video" controls
+          class="rounded-lg shadow-lg object-contain max-w-full max-h-[90vh] transition-transform duration-300 scale-100 mx-auto hidden">
+        </video>
+
+        <!-- Nút đóng -->
+        <button id="close-preview"
+          class="absolute top-0 right-0 mt-2 mr-2 bg-white rounded-full p-1 shadow hover:scale-110 transition">
+          <i class="fa-solid fa-xmark text-gray-700"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Nút lọc và container xổ -->
+    <!-- Bộ lọc giá -->
+    <div class="mt-6 px-2 flex items-center gap-2 flex-wrap">
+      <!-- Nút chính -->
+      <button id="togglePriceFilter"
+        class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-400 to-pink-400 text-white font-semibold rounded-full shadow-md hover:scale-105 transition">
+        <i class="fa-solid fa-money-bills"></i>
+        <span data-i18n="store.filter_price">Lọc giá</span>
+      </button>
+
+      <!-- Các nút lọc -->
+      <div id="priceFilter"
+        class="flex items-center gap-2 flex-wrap overflow-x-auto transition-all duration-300 ease-in-out hidden">
+        <!-- Các nút lọc sẽ được render bằng JS -->
+      </div>
+    </div>
+
+
+    <!-- Loading -->
+    <div id="product-loading" class="text-center py-8 text-white animate-pulse hidden">
+      🧸 <span data-i18n="store.loading">Loading toys for you...</span>
     </div>
 
     <!-- Danh sách sách mới -->
-    <div id="Market" class="flex flex-wrap justify-center gap-4 mt-12"></div>
+    <div id="Market" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-12">
+    </div>
   </div>
   <br><br><br><br>
 
@@ -135,7 +245,7 @@
 
       <!-- Logo & Name -->
       <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-        <img src="./src/img/cauculator icon.png" alt="logo" class="w-16 h-16 object-contain">
+        <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 object-contain">
         <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
             class="text-lg md:text-xl">ShapeSpeak</span></a>
         <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan"> TOY FOR CHILDREN</p>
@@ -174,17 +284,29 @@
       &copy; 2024 ShapeSpeak. All rights reserved.
     </div>
   </footer>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-20 right-4 z-[1100] space-y-2 max-w-xs w-full md:w-auto mx-auto md:mx-0">
+  </div>
+
   <!--file này phải có trước để load ngôn ngữ-->
-  <script src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/toast.js"></script>
+
   <!--Có rồi mới thêm các hàm còn lại-->
-  <script src="./src/js/firebase-config.js"></script>
+  <script type="module" src="./src/js/firebase-config.js"></script>
   <script src="./src/js/menu.js"></script>
   <script type="module" src="./src/js/store.js"></script>
-  <script src="./src/js/logout.js"></script>
+  <script type="module" src="./src/js/comments.js"></script>
+  <script type="module" src="./src/js/ratings.js"></script>
   <script type="module" src="./src/js/profile.js"></script>
-  <script src="./src/js/chatbot.js"></script>
-  <script src="./src/js/checklogin.js"></script>
-
+  <script type="module" src="./src/js/logout.js"></script>
+  <script type="module" src="./src/js/chatbot.js"></script>
+  <script type="module" src="./src/js/auth-check.js"></script>
+  <script type="module">
+    import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+    enableSessionKeepAlive();
+  </script>
 </body>
 
 </html>

@@ -4,17 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title data-i18n="login.login_title">Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="./src/css/login.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
+    <link rel="stylesheet" href="./src/css/toast.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="icon" type="image/png" href="./src/img/cauculator icon.png">
+    <link rel="icon" type="image/png" href="./src/img/shapespeakicon.jpg">
+    <style>
+        #lang-toggle-wrapper {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9998;
+        }
+
+        #lang-toggle-wrapper * {
+            pointer-events: auto;
+        }
+
+        .lang-button {
+            padding: 0.5rem 0.75rem;
+            background: linear-gradient(135deg, #ffd166, #ff9f1c);
+            border-radius: 9999px;
+            /* hình viên thuốc */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            outline: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .lang-button:hover {
+            transform: scale(1.1) rotate(-3deg);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+
+        .lang-button span {
+            width: 24px;
+            height: 24px;
+            border-radius: 30%;
+            display: inline-block;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Language Cycle Button -->
+    <!-- Nút chuyển ngôn ngữ -->
+    <div id="lang-toggle-wrapper" class="fixed top-4 right-4 z-50">
+        <button id="lang-toggle" class="lang-button transition-all duration-300 ease-in-out">
+            <!-- Icon cờ sẽ được gán qua JS -->
+        </button>
+    </div>
+
     <div class="wrapper">
         <!-- Login Form -->
         <div class="form-box login">
-            <h2>Welcome Back!</h2>
+            <h2 data-i18n="login.wel_back">Welcome Back!</h2>
             <form id="login-form">
                 <div class="input-box">
                     <input id="login-email" type="email" minlength="6" required>
@@ -23,38 +76,35 @@
                 <div class="input-box">
                     <input id="login-password" type="password" required><i class="fa fa-eye toggle-password"
                         aria-hidden="true"></i>
-                    <label>Password</label>
-
+                    <label data-i18n="login.password">Password</label>
                 </div>
-                <button id="login-button" type="submit">Login</button>
-                <p class="switch-form">Don't have an account?
-                    <a href="#" id="show-register">Register</a>
+                <button id="login-button" type="submit" data-i18n="login.login">Login</button>
+                <p class="switch-form"><span data-i18n="login.haven't">Don't have an account?</span>
+                    <a href="#" id="show-register" data-i18n="login.register">Register</a>
                 </p>
                 <div class="divider">
                     <hr>
-                    <span>OR</span>
+                    <span data-i18n="login.or">OR</span>
                     <hr>
                 </div>
                 <!-- Google Login Button -->
                 <div class="social-login">
                     <button id="google-login">
                         <i class="fa fa-google"></i>
-                        <span>Đăng nhập bằng Google</span>
+                        <span data-i18n="login.google_login">Login with Google</span>
                     </button>
                 </div>
                 <br>
-                <div id="logout">
-                </div>
             </form>
         </div>
 
         <!-- Register Form -->
         <div class="form-box register">
-            <h2>Join Us!</h2>
+            <h2 data-i18n="login.join_us">Join Us!</h2>
             <form id="signup-form">
                 <div class="input-box">
                     <input type="text" id="name" required>
-                    <label>Username</label>
+                    <label data-i18n="login.username">Username</label>
                 </div>
                 <div class="input-box">
                     <input id="signup-email" required>
@@ -63,32 +113,36 @@
                 <div class="input-box">
                     <input id="signup-password" type="password" required><i class="fa fa-eye toggle-password"
                         aria-hidden="true"></i>
-                    <label>Password</label>
+                    <label data-i18n="login.password">Password</label>
                 </div>
                 <div class="input-box">
                     <input type="password" id="confirm-password" required> <i class="fa fa-eye toggle-password"
                         aria-hidden="true"> </i>
-                    <label>Verify Password</label>
+                    <label data-i18n="login.verify_password">Verify Password</label>
                 </div>
-                <button type="submit" class="btn">Register</button>
-                <p class="switch-form">Already have an account?
-                    <a href="#" id="show-login">Login</a>
+                <button type="submit" class="btn" data-i18n="login.register">Register</button>
+                <p class="switch-form"><span data-i18n="login.have_account">Already have an account?</span>
+                    <a href="#" id="show-login" data-i18n="login.login">Login</a>
                 </p>
+                <br>
+                <br>
                 <h3 id="alert_signup"></h3>
             </form>
         </div>
     </div>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-storage-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.13.1/firebase-auth-compat.min.js"
-        integrity="sha512-b2PGOE6ClpdFR5WZylPqJ9NEtHyGtdXKIe5wI0qRKVg3VeH9Km8CvihpnySwf6v21TV2cMTUp/BuglUiFLB38Q=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <div id="toast-container"></div>
 
-    <script src="./src/js/language.js" defer></script>
-    <script src="./src/js/firebase-config.js"></script><!--./hocsinh/js/-->
-    <script src="./src/js/login.js"></script>
+    <script type="module" src="./src/js/language.js" defer></script>
+    <script type="module" src="./src/js/toast.js"></script>
+
+    <script type="module" src="./src/js/firebase-config.js"></script><!--./hocsinh/js/-->
+    <script type="module" src="./src/js/login.js"></script>
+    <script type="module">
+        import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+        enableSessionKeepAlive();
+    </script>
     <!--<script src="logout.js"></script><-->
     <script type="module" src="./src/js/googleprofile.js"></script>
 </body>
+
 </html>

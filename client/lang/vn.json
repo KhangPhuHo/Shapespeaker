@@ -7,8 +7,15 @@
     "my_account": "Tài khoản của bạn",
     "cart": "Giỏ hàng",
     "logout": "Đăng xuất",
-    "sign_in": "Đăng kí",
+    "sign_in": "Đăng nhập",
     "no_account": "Chưa có tài khoản"
+  },
+
+  "modal": {
+    "confirm_title": "Xác nhận xoá tài khoản",
+    "confirm_text": "Bạn có muốn xoá tài khoản không, hành động này không thể hoàn tác!",
+    "confirm": "Xoá",
+    "cancel": "Quay lại"
   },
 
   "language": {
@@ -20,6 +27,7 @@
     "created": "Tạo lúc:",
     "updated": "Cập nhật:",
     "author": "Tác giả:",
+    "loading": "Tải thông tin cho bạn...",
     "information": "Thông tin chi tiết",
     "placeholder": "Tìm kiếm thông tin..."
   },
@@ -28,8 +36,10 @@
     "price": "Giá:",
     "stock": "Còn lại:",
     "add_to_cart": "Thêm vào giỏ hàng",
+    "loading": "Tải đồ chơi cho bạn...",
     "information": "Thông tin chi tiết",
-    "placeholder": "Tìm kiếm sản phẩm..."
+    "placeholder": "Tìm kiếm sản phẩm...",
+    "filter_price": "Lọc giá"
   },
 
   "myaccount": {
@@ -51,7 +61,7 @@
     "delete": "Xoá",
     "price": "Giá:",
     "stock": "Còn lại:",
-    "total": "Tổng cộng",
+    "total": "Tổng cộng:",
     "checkoutAll": "Thanh toán toàn bộ"
   },
 
@@ -60,5 +70,20 @@
     "contact": "Liên hệ với chúng tôi",
     "find_us": "Tìm chúng tôi",
     "copyright": "2024 ShapeSpeak. Đã đăng ký bản quyền."
+  },
+
+  "login": {
+    "login_title": "Đăng nhập",
+    "wel_back": "Chào mừng trở lại!",
+    "password": "Mật khẩu",
+    "login": "Đăng nhập",
+    "verify_password": "Xác nhận lại mật khẩu",
+    "haven't": "Không có tài khoản?",
+    "register": "Đăng kí",
+    "or": "Hoặc",
+    "google_login": "Đăng nhập bằng Google",
+    "join_us": "Tham gia cùng chúng tôi!",
+    "username": "Tên người dùng",
+    "have_account": "Đã có tài khoản?"
   }
 }
