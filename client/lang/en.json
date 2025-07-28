@@ -1,4 +1,36 @@
 {
+  "toast": {
+    "session_expired": "Your session has expired. Please log in again.",
+    "cart_empty": "🛒 Your cart is empty.",
+    "confirm_buy": "🛒 Are you sure you want to buy {qty} x {name} ({total})?",
+    "confirm_checkout": "💳 Are you sure to checkout {count} items for a total of {total}?",
+    "login_required": "⚠️ Please log in to continue.",
+    "missing_user": "❌ User info not found.",
+    "missing_contact": "⚠️ Please update your phone and address.",
+    "product_not_found": "❌ Product \"{name}\" not found.",
+    "insufficient_stock": "⚠️ Product \"{name}\" has only {stock} left.",
+    "order_created": "✅ Order created for \"{name}\".",
+    "order_created_all": "✅ Order created with {count} items.",
+    "order_error": "❌ Failed to create order.",
+    "max_stock_reached": "Product \"{name}\" only has {stock} left in stock."
+  },
+  "common": {
+    "try_again_error": "Something went wrong. Please try again later.",
+    "confirm_password_prompt": "Enter your password to confirm:",
+    "password_required": "You didn't enter a password.",
+    "unsupported_login_method": "This login method is not supported.",
+    "account_deleted": "Your account has been permanently deleted.",
+    "google_cancelled": "Google reauthentication was cancelled.",
+    "wrong_password": "Incorrect password.",
+    "account_delete_error": "Could not delete account. Please try again.",
+    "logout_success": "Successfully logged out.",
+    "logout_error": "Error during logout."
+  },
+  "admin": {
+    "need_login_again": "You need to log in again to access this page.",
+    "no_permission": "You do not have permission to access this page.",
+    "error": "An error occurred. Please try again later."
+  },
   "menu": {
     "home": "Home",
     "news": "News",
@@ -6,9 +38,69 @@
     "language": "Language",
     "my_account": "My Account",
     "cart": "Cart",
+    "orders": "Orders",
     "logout": "Logout",
     "sign_in": "Signin/Login",
     "no_account": "No account"
+  },
+
+  "home": {
+    "transform_title": "Transforming Early Math Education",
+    "transform_desc": "ShapeSpeak is an educational model product for children aged 2–4, including visually impaired kids, using AI-integrated camera recognition and geometric assembly.",
+    "discover_btn": "Discover How It Works",
+    "mission_title": "Our Mission",
+    "mission_desc": "To revolutionize early childhood education by creating interactive learning tools that make math concepts accessible, engaging, and fun for all children, regardless of ability.",
+
+    "features_title": "Interactive Learning Features",
+    "features_desc": "ShapeSpeak brings math to life through multi-sensory experiences",
+    "feature_1_title": "Tactile Shape Recognition",
+    "feature_1_desc": "Each geometric block has a distinct shape and color, recognized by an AI-powered camera when placed on the base, helping children learn through visual and auditory feedback.",
+    "feature_2_title": "Creative Assembly",
+    "feature_2_desc": "Children combine shapes to create complete objects, triggering educational stories about simple arithmetic and geometric properties.",
+    "feature_3_title": "Inclusive Design",
+    "feature_3_desc": "Special textures and audio feedback make ShapeSpeak equally effective for visually impaired children, promoting inclusive education.",
+    "feature_4_title": "Companion App",
+    "feature_4_desc": "Our upcoming app will expand learning opportunities with educational games and interactive content for children and parents.",
+    "feature_5_title": "Cognitive Development",
+    "feature_5_desc": "Enhances logical thinking, shape recognition, and problem-solving skills through playful, hands-on activities.",
+    "feature_6_title": "Vibrant Colors",
+    "feature_6_desc": "Bright, attractive colors stimulate visual learning and make the experience more engaging for young children.",
+
+    "tech_title": "AI Camera Recognition Technology",
+    "tech_intro": "ShapeSpeak uses an overhead camera and AI image recognition to help children identify and combine shapes through visual cues and responsive feedback.",
+    "tech_point1": "When a shape is placed on the base, the camera captures and sends the image to an AI system to identify it and play its corresponding sound.",
+    "tech_point2": "Children can creatively assemble shapes into full objects. The AI recognizes these creations and plays encouraging sounds and educational stories.",
+    "tech_point3": "The camera setup is optimized at 24cm height above the base, ensuring accurate scanning from top-down perspective.",
+    "tech_point4": "Special textured pieces and voice feedback make this experience inclusive for visually impaired children.",
+
+    "impact_title": "Transformative Educational Impact",
+    "impact_desc": "ShapeSpeak addresses critical developmental needs during the crucial early childhood years",
+    "impact_box1_title": "Optimal Learning Age",
+    "impact_box1_desc": "Targets the critical developmental window when children's brains are most receptive to foundational math concepts",
+    "impact_box2_title": "Inclusive Design",
+    "impact_box2_desc": "Equally effective for sighted and visually impaired children, promoting equal learning opportunities",
+    "impact_box3_title": "Engagement Boost",
+    "impact_box3_desc": "Multi-sensory approach increases engagement and retention compared to traditional methods",
+    "vision_heading": "Our Vision & Values",
+    "vision_title": "Vision Statement",
+    "vision_desc": "To become the global standard in early childhood math education, transforming how children ages 2–4 develop foundational mathematical thinking through innovative, inclusive technology.",
+    "roadmap_title": "Future Roadmap",
+    "roadmap_item1": "Expand to additional STEM concepts beyond geometry",
+    "roadmap_item2": "Develop multilingual support for global accessibility",
+    "roadmap_item3": "Create adaptive learning algorithms that personalize content",
+    "roadmap_item4": "Partner with educational institutions for curriculum integration",
+    "core_values_title": "Core Values",
+    "core1_title": "Innovation",
+    "core1_desc": "We constantly push boundaries to create groundbreaking educational tools",
+    "core2_title": "Inclusivity",
+    "core2_desc": "We design for all children, ensuring no one is left behind in learning",
+    "core3_title": "Joyful Learning",
+    "core3_desc": "We believe education should be fun, engaging, and inspiring",
+    "core4_title": "Growth Mindset",
+    "core4_desc": "We foster curiosity and resilience in young learners",
+    "expert_title": "What Experts Say",
+    "expert_title_small": "Child Development Specialist",
+    "expert_quote": "ShapeSpeak represents a paradigm shift in early math education. By combining tactile, auditory, and visual learning modalities, it addresses multiple learning styles simultaneously – a game-changer for inclusive education."
   },
 
   "modal": {
@@ -17,31 +109,37 @@
     "confirm": "Delete",
     "cancel": "Cancel"
   },
-
   "language": {
     "language_title": "Language",
     "choose_language": "Choose your language"
   },
-
   "news": {
     "created": "Created:",
     "updated": "Updated:",
     "author": "Author:",
+    "sort_newest": "Newest First",
+    "sort_oldest": "Oldest First",
     "loading": "Loading news for you...",
     "information": "More information",
     "placeholder": "Search for the new..."
   },
-
   "store": {
     "price": "Price:",
     "stock": "Stock:",
     "add_to_cart": "Add To Cart",
+    "intro": "Introduction",
+    "no_intro": "(Doesn't have any information)",
+    "error_intro": "(Can't loading any information)",
     "loading": "Loading toys for you...",
     "information": "More information",
     "placeholder": "Search for a product...",
-    "filter_price": "Filter Price"
-  },
+    "filter_price": "Filter Price",
 
+    "invalid_quantity": "Invalid quantity.",
+    "limit_quantity": "You can only buy up to {max} more.",
+    "added_quantity": "Added {qty} x {name} to cart.",
+    "added_to_cart": "🌟 Added \"{name}\" to cart!"
+  },
   "myaccount": {
     "my_account_title": "My Account",
     "update_info": "Update Your Info",
@@ -53,26 +151,61 @@
     "address": "Address",
     "avatar": "Avatar (URL)",
     "submit": "Submit",
-    "your_profile": "Your Profile"
-  },
+    "your_profile": "Your Profile",
 
-  "cart":{
+    "load_error": "Failed to load your account information.",
+    "guest_view_notice": "You are viewing as a guest. Please log in to edit!",
+    "invalid_phone": "Invalid phone number. Please enter a valid Vietnamese format!",
+    "invalid_address": "Address must include: house number, street, ward/commune, district, city/province.",
+    "password_required_for_update": "You must enter your password to update email or password.",
+    "update_success": "Profile updated successfully!",
+    "update_error": "Profile update failed. Please try again."
+  },
+  "cart": {
     "buy": "Buy",
     "delete": "Delete",
     "price": "Price:",
     "stock": "Stock:",
     "total": "Total:",
+    "empty": "You don't have any goods yet.",
     "checkoutAll": "Pay out"
   },
-
   "footer": {
     "slogan": "TOY FOR CHILDREN",
     "contact": "Contact Us",
     "find_us": "Find Us",
     "copyright": "2024 ShapeSpeak. All rights reserved."
   },
+  "rating": {
+    "vote_singular": "vote",
+    "vote_plural": "votes",
+    "no_review": "No reviews yet",
 
+    "login_required": "You need to log in to rate!",
+    "thank_you": "🎉 Thank you! Your rating has been recorded."
+  },
+  "orders": {
+    "empty": "You don't have any orders yet.",
+    "productID": "productID:",
+    "date": "Date Created:",
+    "status": {
+      "pending": "⏳ Pending Confirmation",
+      "processing": "🔧 Processing",
+      "shipped": "🚚 Shipped",
+      "delivered": "✅ Delivered",
+      "cancelled": "❌ Cancelled",
+      "unknown": "❓Unknown"
+    },
+    "cancel_reason": "Reason for cancellation"
+  },
   "login": {
+    "google": {
+      "popup_closed": "You closed the login window.",
+      "account_exists": "An account already exists with a different sign-in method.",
+      "network_failed": "Network connection failed. Please check your Internet.",
+      "default_error": "An error occurred during Google login. Please try again later.",
+      "success": "Google login successful."
+    },
     "login_title": "Login",
     "wel_back": "Welcome Back!",
     "password": "Password",
@@ -84,6 +217,12 @@
     "google_login": "Login with Google",
     "join_us": "Join Us!",
     "username": "Username",
-    "have_account": "Already have an account?"
+    "have_account": "Already have an account?",
+    "fill_all_fields": "Please fill in all fields.",
+    "password_mismatch": "Passwords do not match.",
+    "signup_success": "Signup successful!",
+    "signup_failed": "Signup failed. Please try again.",
+    "login_success": "Login successful!",
+    "login_failed": "Login failed. Try again."
   }
 }

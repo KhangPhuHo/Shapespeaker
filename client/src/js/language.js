@@ -1,21 +1,31 @@
 import { showToast } from './toast.js';
 
 let currentCurrency = "VND";
+let cachedTranslations = {};
 
-function getCurrency() {
-  return currentCurrency;
-}
-
+// 🌐 Lấy bản dịch theo đường dẫn dạng "a.b.c"
 function getNestedTranslation(obj, path) {
   return path.split(".").reduce((acc, key) => acc?.[key], obj);
 }
 
+// ✅ API gọi trong JS để lấy bản dịch động
+async function getTranslation(key) {
+  const lang = localStorage.getItem("lang") || "en";
+  if (!Object.keys(cachedTranslations).length) {
+    const res = await fetch(`./lang/${lang}.json`);
+    cachedTranslations = await res.json();
+  }
+  return getNestedTranslation(cachedTranslations, key) || key;
+}
+
+// ✅ Hàm chính: đổi ngôn ngữ giao diện
 async function setLanguage(lang) {
   try {
     const res = await fetch(`./lang/${lang}.json`);
     if (!res.ok) throw new Error("Language file not found");
 
     const translations = await res.json();
+    cachedTranslations = translations;
 
     document.querySelectorAll("[data-i18n]").forEach(el => {
       const key = el.getAttribute("data-i18n");
@@ -31,13 +41,21 @@ async function setLanguage(lang) {
 
     localStorage.setItem("lang", lang);
     currentCurrency = lang === "en" ? "USD" : "VND";
+
     document.dispatchEvent(new Event("languageChanged"));
     updateCurrencyUI();
-    updateLangUI(lang); // cập nhật UI
+    updateLangUI(lang);
   } catch (error) {
     console.error("Error loading language file:", error.message);
-    showToast("Chưa thực hiện được, vui lòng thử lại sau.", "error");
+    //showToast("Chưa thực hiện được, vui lòng thử lại sau.", "error");
+    const msg = await getTranslation("common.try_again_error");
+    showToast(msg, "error");
   }
+}
+
+// 💱 Đổi tiền VND/USD
+function getCurrency() {
+  return currentCurrency;
 }
 
 function updateCurrencyUI() {
@@ -45,7 +63,7 @@ function updateCurrencyUI() {
   if (typeof displayProducts === "function") displayProducts(products);
 }
 
-// ✅ Cập nhật UI nút đổi ngôn ngữ
+// 🏳️ Cập nhật UI nút đổi ngôn ngữ (flag + tên)
 function updateLangUI(lang) {
   const flagClasses = {
     en: 'fi fi-us',
@@ -57,7 +75,7 @@ function updateLangUI(lang) {
   }
 }
 
-// ✅ Gán sự kiện đổi ngôn ngữ
+// 🔄 Toggle chuyển ngôn ngữ (nút chung)
 function setupLangToggle() {
   const langBtn = document.getElementById('lang-toggle');
   if (!langBtn) return;
@@ -70,16 +88,23 @@ function setupLangToggle() {
   });
 }
 
-// ✅ Gọi khi DOM ready
+// ✅ Tự động gọi khi DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   const savedLang = localStorage.getItem("lang") || "en";
   setLanguage(savedLang);
   setupLangToggle();
 
-  // ✅ Gán click cho ngôn ngữ nếu có flag riêng (ở language.html)
   document.getElementById("lang-en")?.addEventListener("click", () => setLanguage("en"));
   document.getElementById("lang-vn")?.addEventListener("click", () => setLanguage("vn"));
 });
 
+// 🧹 Clear cache khi đổi ngôn ngữ
+document.addEventListener("languageChanged", () => {
+  cachedTranslations = {};
+});
 
-export { setLanguage, getCurrency };
+export {
+  setLanguage,
+  getCurrency,
+  getTranslation
+};

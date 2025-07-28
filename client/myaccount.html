@@ -18,7 +18,8 @@
         }
 
         aside::-webkit-scrollbar-thumb {
-            background-color: #6366f1;
+            background-color:#F9A8D4
+;
             border-radius: 4px;
         }
 
@@ -27,7 +28,7 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background-color: #4f46e5;
+            background-color: #F9A8D4;
             border-radius: 10px;
         }
 
@@ -41,13 +42,14 @@
 </head>
 
 <body class="bg-gray-50 antialiased scroll-smooth">
+    <img id="background-img" src="./src/img/background.webp" alt="background">
 
     <div id="Menu"></div>
     <div id="bot"></div>
 
     <main class="max-w-7xl mx-auto px-4 pt-32 pb-16 flex flex-col md:flex-row gap-6">
         <button id="sidebar-toggle"
-            class="fixed top-1/2 left-0 transform -translate-y-1/2 bg-indigo-600 text-white px-3 py-2 rounded-r-lg shadow z-50 md:hidden">
+            class="fixed top-1/2 left-0 transform -translate-y-1/2 bg-pink-500 text-white px-3 py-2 rounded-r-lg shadow z-50 md:hidden">
             &#187;
         </button>
 
@@ -91,11 +93,15 @@
                             class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none"
                             placeholder="Phone Number">
                     </div>
-                    <div>
+                    <!-- Input tìm kiếm địa chỉ -->
+                    <div class="relative">
                         <label for="address" class="block mb-1" data-i18n="myaccount.address">Address</label>
-                        <textarea id="address"
-                            class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none resize-none"
-                            rows="3" placeholder="Address"></textarea>
+                        <input id="address" placeholder="Nhập địa chỉ (VD: 123 Lê Văn Việt, Hiệp Phú...)"
+                            class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none text-white"
+                            autocomplete="off" />
+                        <ul id="vn-address-suggestions"
+                            class="absolute z-50 bg-white text-black w-full mt-1 rounded shadow-lg max-h-60 overflow-auto hidden">
+                        </ul>
                     </div>
                     <div>
                         <label for="avatar" class="block mb-1" data-i18n="myaccount.avatar">Avatar (URL)</label>
@@ -105,7 +111,7 @@
                     </div>
                     <!-- ❌ XÓA onclick -->
                     <button type="button" id="submitBtn"
-                        class="w-full bg-indigo-600 hover:bg-indigo-700 transition text-white font-medium py-2 rounded"
+                        class="w-full bg-pink-300 hover:bg-pink-500 transition text-white font-medium py-2 rounded"
                         data-i18n="submit">Submit</button>
                 </form>
             </aside>
@@ -120,7 +126,7 @@
     <footer class="bg-gray-900 text-gray-300 py-8 border-t border-gray-700">
         <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-                <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 object-contain">
+                <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 aspect-square rounded-full object-cover">
                 <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
                         class="text-lg md:text-xl">ShapeSpeak</span></a>
                 <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan">TOY FOR CHILDREN</p>
@@ -162,6 +168,13 @@
     <script type="module" src="./src/js/profile.js"></script>
     <script type="module" src="./src/js/logout.js"></script>
     <script type="module" src="./src/js/chatbot.js"></script>
+    <script type="module">
+        import { setupVNAddressAutocomplete } from './src/js/address-autocomplete-vn.js';
+        // ✅ Đợi DOM sẵn sàng rồi mới gắn autocomplete
+        document.addEventListener("DOMContentLoaded", () => {
+            setupVNAddressAutocomplete("address", "vn-address-suggestions");
+        });
+    </script>
     <script type="module">
         import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
         enableSessionKeepAlive();

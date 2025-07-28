@@ -21,35 +21,40 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background-color: #4f46e5;
+      background-color: #F9A8D4;
       border-radius: 10px;
     }
   </style>
 </head>
 
-<body class="bg-gradient-to-r from-gray-800 to-gray-900 font-sans">
+<body>
+  <img id="background-img" src="./src/img/background.webp" alt="background">
+
   <div id="Menu"></div>
   <div id="bot"></div>
 
-  <div class="min-h-screen flex flex-col justify-center items-center px-4">
-    <div class="bg-black/60 backdrop-blur-md p-8 rounded-xl shadow-lg text-center max-w-xl w-full mt-32">
-      <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-yellow-400" data-i18n="language.choose_language">Choose your
-        language</h2>
+  <div class="min-h-screen flex flex-col justify-center items-center px-4 font-sans">
+    <div class="bg-gradient-to-b from-pink-200/80 to-white/20
+ backdrop-blur-md p-8 rounded-2xl shadow-xl text-center max-w-xl w-full mt-32 border border-white/20">
+      <h2 class="text-2xl sm:text-3xl font-bold mb-6 text-pink-700 drop-shadow-sm" data-i18n="language.choose_language">
+        Chọn ngôn ngữ của bạn
+      </h2>
       <div class="flex justify-center gap-10 mt-6">
         <img id="lang-en" src="https://flagicons.lipis.dev/flags/4x3/um.svg"
-          class="w-16 sm:w-20 rounded-xl shadow cursor-pointer" alt="English">
+          class="w-16 sm:w-20 rounded-xl shadow-md shadow-white/30 hover:scale-105 transition" alt="English">
         <img id="lang-vn" src="https://flagicons.lipis.dev/flags/4x3/vn.svg"
-          class="w-16 sm:w-20 rounded-xl shadow cursor-pointer" alt="Vietnamese">
+          class="w-16 sm:w-20 rounded-xl shadow-md shadow-white/30 hover:scale-105 transition" alt="Vietnamese">
       </div>
     </div>
   </div>
+
   <!-- Footer -->
   <footer class="bg-gray-900 text-gray-300 py-8 border-t border-gray-700">
     <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
 
       <!-- Logo & Name -->
       <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-        <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 object-contain">
+        <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 aspect-square rounded-full object-cover">
         <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
             class="text-lg md:text-xl">ShapeSpeak</span></a>
         <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan"> TOY FOR CHILDREN</p>

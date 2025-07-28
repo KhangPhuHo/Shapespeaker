@@ -9,7 +9,7 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { setLanguage } from './language.js';
+import { setLanguage, getTranslation } from './language.js';
 import { showToast } from './toast.js';
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -57,12 +57,10 @@ function setupLogoutButtons() {
 
   if (!modal || !confirmBtn || !cancelBtn || !logoutMainBtn) return;
 
-  // Hiện modal xác nhận khi bấm "Log out"
   logoutMainBtn.addEventListener("click", () => {
     modal.classList.remove("hidden");
   });
 
-  // 👉 Xoá tài khoản
   confirmBtn.onclick = async () => {
     const user = auth.currentUser;
     if (!user) return;
@@ -71,9 +69,10 @@ function setupLogoutButtons() {
       const providerId = user.providerData[0]?.providerId;
 
       if (providerId === "password") {
-        const password = prompt("Nhập lại mật khẩu để xác nhận:");
+        const password = prompt(await getTranslation("common.confirm_password_prompt"));
         if (!password) {
-          showToast("Bạn chưa nhập mật khẩu.", "error");
+          const msg = await getTranslation("common.password_required");
+          showToast(msg, "error");
           return;
         }
 
@@ -84,7 +83,8 @@ function setupLogoutButtons() {
         const provider = new GoogleAuthProvider();
         await reauthenticateWithPopup(user, provider);
       } else {
-        showToast("Không hỗ trợ kiểu đăng nhập này.", "error");
+        const msg = await getTranslation("common.unsupported_login_method");
+        showToast(msg, "error");
         return;
       }
 
@@ -92,36 +92,42 @@ function setupLogoutButtons() {
       await deleteUser(user);
 
       localStorage.removeItem("user_session");
-      showToast("Tài khoản đã bị xóa hoàn toàn.", "success");
+      const msg = await getTranslation("common.account_deleted");
+      showToast(msg, "success");
       window.location.href = "login.html";
+
     } catch (error) {
       console.error("Lỗi khi xoá:", error.message);
+
       if (error.code === "auth/popup-closed-by-user") {
-        showToast("Bạn đã huỷ xác thực Google.", "info");
+        const msg = await getTranslation("common.google_cancelled");
+        showToast(msg, "info");
       } else if (error.code === "auth/wrong-password") {
-        showToast("Mật khẩu không chính xác.", "error");
+        const msg = await getTranslation("common.wrong_password");
+        showToast(msg, "error");
       } else {
-        showToast("Không thể xoá tài khoản. Vui lòng thử lại.", "error");
+        const msg = await getTranslation("common.account_delete_error");
+        showToast(msg, "error");
       }
     }
   };
 
-  // 👉 Đăng xuất
   cancelBtn.onclick = () => {
     modal.classList.add("hidden");
     signOut(auth)
-      .then(() => {
+      .then(async () => {
         localStorage.removeItem("user_session");
-        showToast("Đã đăng xuất thành công.", "success");
+        const msg = await getTranslation("common.logout_success");
+        showToast(msg, "success");
         window.location.href = "login.html";
       })
-      .catch((error) => {
+      .catch(async (error) => {
         console.error("Lỗi khi đăng xuất:", error.message);
-        showToast("Lỗi khi đăng xuất.", "error");
+        const msg = await getTranslation("common.logout_error");
+        showToast(msg, "error");
       });
   };
 
-  // 👉 Huỷ modal
   cancelModalBtn?.addEventListener("click", () => {
     modal.classList.add("hidden");
   });

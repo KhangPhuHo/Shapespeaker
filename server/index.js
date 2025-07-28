@@ -38,6 +38,9 @@ app.use(cors({
   allowedHeaders: ["Content-Type"],
 }));
 
+// ✅ Bắt tất cả OPTIONS request để không bị block bởi preflight
+app.options("*", cors());
+
 app.use(express.json());
 
 // ✅ Route test

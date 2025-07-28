@@ -23,7 +23,7 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background-color: #4f46e5;
+      background-color: #F9A8D4;
       border-radius: 10px;
     }
 
@@ -71,7 +71,7 @@
 
       /* Scrollbar custom */
       scrollbar-width: thin;
-      scrollbar-color: #6366f1 transparent;
+      scrollbar-color: #F9A8D4 transparent;
       /* Firefox */
     }
 
@@ -86,7 +86,7 @@
     }
 
     .popup::-webkit-scrollbar-thumb {
-      background-color: #6366f1;
+      background-color: #F9A8D4;
       border-radius: 10px;
       border: 2px solid transparent;
       /* để tạo khoảng cách giữa track */
@@ -155,7 +155,8 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-br from-[#232526] to-[#414345] min-h-screen">
+<body class=" min-h-screen">
+  <img id="background-img" src="./src/img/background.webp" alt="background">
 
   <div id="Menu"></div>
   <div id="bot"></div>
@@ -163,13 +164,12 @@
   <div id="content9" class="relative z-10 px-4 max-w-7xl mx-auto">
     <!-- Tìm kiếm + Suggest -->
     <div id="searchNews" class="mt-32 flex flex-col items-center gap-4">
-      <!-- Ô tìm kiếm -->
+      <!-- Ô tìm kiếm có viền gradient-->
       <input id="search" type="text"
-        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-white placeholder-gray-300 border border-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        class="w-full sm:w-[80%] md:w-[500px] px-4 py-2 rounded-full bg-white/10 text-black placeholder-gray-900 border border-yellow-400 focus:outline-none focus:ring-2 focus:ring-orange-400"
         data-i18n="news.placeholder" onkeyup="search(); suggest()" placeholder="Search for the news..." />
 
-      <!-- Gợi ý tìm kiếm -->
-      <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-white"></div>
+      <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-gray-900 bg-white rounded-xl shadow"></div>
     </div>
 
     <!-- ✅ Popup container bao phủ màn hình -->
@@ -214,16 +214,17 @@
     <button id="sortToggle"
       class="px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-400 text-white font-semibold rounded-full shadow-md flex items-center gap-2 hover:scale-105 hover:rotate-1 transition duration-300">
       <i id="sortIcon" class="fa-solid fa-retweet transition-transform duration-500"></i>
-      <span id="sortLabel">Newest First</span>
+      <span id="sortLabel" data-i18n="news.sort_newest">Newest First</span>
     </button>
 
     <!-- Loading -->
-    <div id="product-loading" class="text-center py-8 text-white animate-pulse hidden">
+    <div id="product-loading" class="text-center py-8 text-black animate-pulse hidden">
       <i class="fa-solid fa-newspaper"></i> <span data-i18n="news.loading">Loading news for you...</span>
     </div>
 
     <!-- Danh sách sách mới -->
-    <div id="Lastestnews" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-12">
+    <div id="Lastestnews"
+      class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-12">
     </div>
   </div>
   <br><br><br><br>
@@ -234,7 +235,7 @@
 
       <!-- Logo & Name -->
       <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-3">
-        <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 object-contain">
+        <img src="./src/img/shapespeakicon.jpg" alt="logo" class="w-16 h-16 aspect-square rounded-full object-cover">
         <a href="home.html" class="flex items-center font-extrabold space-x-2"><span
             class="text-lg md:text-xl">ShapeSpeak</span></a>
         <p class="text-sm text-gray-400 font-semibold" data-i18n="footer.slogan"> TOY FOR CHILDREN</p>
@@ -290,7 +291,6 @@
   <script type="module" src="./src/js/profile.js"></script>
   <script type="module" src="./src/js/logout.js"></script>
   <script type="module" src="./src/js/chatbot.js"></script>
-  <script type="module" src="./src/js/auth-check.js"></script>
   <script type="module">
     import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
     enableSessionKeepAlive();

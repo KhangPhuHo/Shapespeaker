@@ -1,13 +1,14 @@
 // ✅ store.js - Tối ưu hoá rating & UI + popup flip mặt sau
 import { db } from './firebase-config.js';
 import { collection, getDocs, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { setLanguage, getCurrency } from './language.js';
+import { setLanguage, getCurrency, getTranslation } from './language.js';
 import { loadRatingUI } from './ratings.js';
 import { loadComments, setupCommentSubmit } from './comments.js';
 import { showToast } from './toast.js';
 
 // 👉 Gọi khi DOM ready
 document.addEventListener("DOMContentLoaded", () => {
+  renderBuyNowPopup();
   listenToProductRatings();
 });
 
@@ -75,23 +76,33 @@ function renderProductCard(product, topRatedId = null) {
   const isTopRated = topRatedId && product.id === topRatedId;
 
   const card = document.createElement("div");
-  card.className = `bg-gray-800 text-white rounded-2xl shadow-lg overflow-hidden 
+  card.className = `bg-rose-300/80 text-white rounded-2xl shadow-lg overflow-hidden 
     transition-all duration-300 transform hover:scale-105 hover:-rotate-1 p-3 relative`;
 
-  card.innerHTML = `
-    <div class="relative">
-      <img src="${imageSrc}" alt="${product.name || 'product'}"
-        class="w-full h-40 object-cover rounded-lg border border-gray-700 mb-3" loading="lazy" />
-      ${isTopRated ? `
-        <div class="absolute top-2 right-2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full shadow" title="Sản phẩm được đánh giá cao nhất">
-          ⭐ Best
-        </div>` : ""}
+  if (product.stock <= 0) {
+    card.classList.add("opacity-40", "pointer-events-none");
+    card.innerHTML += `
+    <div class="absolute inset-0 bg-black/70 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+      <span class="text-red-300 font-semibold text-sm">Out of Stock</span>
     </div>
-    <h3 class="text-yellow-400 font-semibold text-base truncate mb-1">${product.name || 'No name'}</h3>
-    <p class="text-sm text-center text-gray-300">
-      <span class="text-white font-medium" data-i18n="store.price">Price:</span> ${formatCurrency(product.price)}
-    </p>
   `;
+  }
+
+  card.innerHTML = `
+  <div class="relative">
+    <img src="${imageSrc}" alt="${product.name || 'product'}"
+      class="w-full h-40 object-cover rounded-lg mb-3" loading="lazy" />
+    ${isTopRated ? `
+      <div class="absolute top-2 right-2 bg-[#f9c5d1] text-[#1e1e20] text-[10px] font-bold px-2 py-0.5 animate-bounce rounded-full shadow" title="Sản phẩm được đánh giá cao nhất">
+        ⭐ Best
+      </div>` : ""}
+  </div>
+  <h3 class="text-yellow-600 font-semibold text-base truncate mb-1">${product.name || 'No name'}</h3>
+  <p class="text-sm text-center text-gray-900">
+    <span class="text-white font-medium" data-i18n="store.price">Price:</span> ${formatCurrency(product.price)}
+  </p>
+`;
+
 
   const lang = localStorage.getItem("lang") || "en";
   setLanguage(lang);
@@ -107,7 +118,9 @@ async function loadProductIntro(productId) {
   try {
     const snap = await getDoc(doc(db, "productIntros", productId));
     if (!snap.exists()) {
-      container.textContent = "(Chưa có giới thiệu)";
+      //container.textContent = "(Chưa có giới thiệu)";
+      container.setAttribute("data-i18n", "store.no_intro");
+      setLanguage(localStorage.getItem("lang") || "en");
       return;
     }
 
@@ -167,7 +180,8 @@ async function loadProductIntro(productId) {
 
   } catch (err) {
     console.error("❌ Lỗi khi tải giới thiệu sản phẩm:", err);
-    container.textContent = "(Lỗi khi tải giới thiệu)";
+    container.setAttribute("data-i18n", "store.error_intro");
+    setLanguage(localStorage.getItem("lang") || "en");
   }
 }
 
@@ -175,40 +189,55 @@ async function showPopup(product) {
   const imageSrc = product.picture?.trim() || "./src/img/shapespeakicon.jpg";
   const postId = product.id || product.postId;
 
+  if (product.stock <= 0) {
+    const buyBtn = popup.querySelector('[data-i18n="cart.buy"]');
+    const cartBtn = popup.querySelector('[data-i18n="store.add_to_cart"]');
+    buyBtn.disabled = true;
+    cartBtn.disabled = true;
+
+    buyBtn.classList.add("opacity-50", "cursor-not-allowed");
+    cartBtn.classList.add("opacity-50", "cursor-not-allowed");
+
+    buyBtn.innerText = "Hết hàng";
+    cartBtn.innerText = "Hết hàng";
+  }
+
   // Tạo thẻ chứa flip-card bên trong popup
   popup.innerHTML = `
     <div class="flip-card w-full max-w-2xl h-[700px] sm:h-[90vh] mx-auto relative">
-      <div class="flip-inner relative w-full h-full transition-transform duration-700">
-        
-        <!-- MẶT TRƯỚC -->
-        <div class="face front absolute inset-0 w-full h-full bg-gray-900 text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
-          <button class="close-popup absolute top-2 right-3 text-red-400 hover:text-white text-xl z-10">
-            <i class="fa-solid fa-circle-xmark"></i>
-          </button>
-          <img src="${imageSrc}" alt="${product.name}" class="w-full h-60 object-cover rounded-lg border border-gray-600" />
-          <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
-          <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>
-          <div id="rating-summary" class="mt-2"></div>
-          <div class="flex justify-around items-center text-sm mb-4 mt-3 space-x-24">
-            <div class="text-center">
-              <p class="text-gray-400"><span data-i18n="store.price">Price</span></p>
-              <p class="text-base text-amber-300 font-semibold">${formatCurrency(product.price)}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-gray-400"><span data-i18n="store.stock">Stock</span></p>
-              <p class="text-base text-emerald-400 font-semibold">${product.stock}</p>
-            </div>
-          </div>
-          <div class="flex flex-col gap-3 mt-4 w-full">
-            <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition" data-i18n="cart.buy">Mua ngay</button>
-            <button onclick='addToCart(${JSON.stringify(product)})' class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-2 px-4 rounded-full transition" data-i18n="store.add_to_cart">Thêm vào giỏ hàng</button>
-            <button id="flip-to-back" class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-full transition" data-i18n="store.information">Thông tin chi tiết</button>
-          </div>
-          <!-- Bình luận và đánh giá -->
+  <div class="flip-inner relative w-full h-full transition-transform duration-700">
+
+    <!-- MẶT TRƯỚC -->
+    <div class="face front absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
+      <button class="close-popup absolute top-2 right-3 text-red-400 hover:text-white text-xl z-10">
+        <i class="fa-solid fa-circle-xmark"></i>
+      </button>
+      <img src="${imageSrc}" alt="${product.name}" class="w-full h-60 object-cover rounded-lg border border-[#2e2e33]" />
+      <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
+      <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>
+      <div id="rating-summary" class="mt-2"></div>
+
+      <div class="flex justify-around items-center text-sm mb-4 mt-3 space-x-24">
+        <div class="text-center">
+          <p class="text-gray-400" data-i18n="store.price">Price</p>
+          <p class="text-base text-yellow-300 font-semibold">${formatCurrency(product.price)}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-gray-400" data-i18n="store.stock">Stock</p>
+          <p class="text-base text-emerald-400 font-semibold">${product.stock}</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 mt-4 w-full">
+        <button onclick='showBuyNowPopup(${JSON.stringify(product)})' class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-full transition" data-i18n="cart.buy">Mua ngay</button>
+        <button onclick='addToCart(${JSON.stringify(product)})' class="w-full bg-[#f9c5d1] hover:bg-[#f7a6bb] text-black font-semibold py-2 px-4 rounded-full transition" data-i18n="store.add_to_cart">Thêm vào giỏ hàng</button>
+        <button id="flip-to-back" class="w-full bg-[#2e2e33] hover:bg-gray-600 text-white py-2 px-4 rounded-full transition" data-i18n="store.information">Thông tin chi tiết</button>
+      </div>
+
+      <!-- Bình luận -->
       <div class="w-full max-w-md mt-4 bg-white/5 rounded-xl p-2 text-white flex flex-col h-[550px]">
         <div id="admin-pinned-wrapper" data-visible="true" class="relative mb-2">
-          <button id="pinned-toggle-btn" onclick="togglePinned()" title="Ẩn/Hiện ghim"
-            class="absolute top-0 right-0 z-10 bg-indigo-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-indigo-600 transition text-xs">
+          <button id="pinned-toggle-btn" onclick="togglePinned()" title="Ẩn/Hiện ghim" class="absolute top-0 right-0 z-10 bg-indigo-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-indigo-600 transition text-xs">
             <i class="fa-solid fa-map-pin"></i>
           </button>
           <div id="admin-pinned" class="mt-2 max-h-[100px] overflow-y-auto pr-1 scroll-smooth"></div>
@@ -224,11 +253,10 @@ async function showPopup(product) {
             </label>
             <input type="file" name="media" id="comment-image" accept="image/*,video/mp4" multiple class="hidden" />
 
-            <textarea id="comment-input" rows="1" placeholder="Write a message..."
-              class="flex-1 resize-none bg-transparent text-white text-sm placeholder-gray-300 focus:outline-none"></textarea>
+            <textarea id="comment-input" rows="1" placeholder="Write a message..." class="flex-1 resize-none bg-transparent text-white text-sm placeholder-gray-300 focus:outline-none"></textarea>
 
             <button type="button" id="emoji-toggle" class="text-yellow-400 text-xl hover:text-yellow-500">😊</button>
-            <button type="submit" id="submit-comment" class="text-blue-400 hover:text-blue-600 text-xl">
+            <button type="submit" id="submit-comment" class="text-[#85d7ff] hover:text-blue-600 text-xl">
               <i class="fa-solid fa-paper-plane"></i>
             </button>
           </div>
@@ -247,19 +275,19 @@ async function showPopup(product) {
         </div>
       </div>
       <br>
-        </div>
-
-        <!-- MẶT SAU -->
-        <div class="face back absolute inset-0 w-full h-full bg-gray-900 text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
-          <button id="flip-to-front" class="absolute top-2 left-2 text-blue-400 hover:text-white text-xl z-10">
-            <i class="fa-solid fa-arrow-left"></i>
-          </button>
-          <h2 class="text-center text-2xl font-bold text-yellow-400 mb-3">Giới thiệu sản phẩm</h2>
-          <div id="product-intro" class="relative whitespace-pre-line text-sm text-gray-200"></div>
-        </div>
-
-      </div>
     </div>
+
+    <!-- MẶT SAU -->
+    <div class="face back absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
+      <button id="flip-to-front" class="absolute top-2 left-2 text-blue-400 hover:text-white text-xl z-10">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <h2 class="text-center text-2xl font-bold text-yellow-400 mb-3" data-i18n="store.intro">Giới thiệu sản phẩm</h2>
+      <div id="product-intro" class="relative whitespace-pre-line text-sm text-gray-200"></div>
+    </div>
+
+  </div>
+</div>
   `;
 
   popupContainer.style.display = "flex";
@@ -283,6 +311,90 @@ async function showPopup(product) {
   loadProductIntro(postId);
 }
 
+//Popup của Buy now
+function renderBuyNowPopup() {
+  const popupHTML = `
+  <div id="buy-now-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white dark:bg-gray-900 text-black dark:text-white p-6 rounded-xl shadow-lg w-[300px]">
+      <h2 class="text-xl font-bold mb-4">Chọn số lượng</h2>
+      <div class="mb-4">
+        <input id="buy-now-qty" type="number" min="1" value="1"
+          class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none" />
+        <small id="buy-now-stock" class="text-sm text-gray-500"></small>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="hideBuyNowPopup()"
+          class="px-4 py-1 rounded bg-gray-400 hover:bg-gray-500 text-white">Hủy</button>
+        <button onclick="confirmBuyNow()"
+          class="px-4 py-1 rounded bg-indigo-600 hover:bg-indigo-700 text-white">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+  `;
+  document.body.insertAdjacentHTML("beforeend", popupHTML);
+}
+
+let selectedProduct = null;
+
+window.showBuyNowPopup = function (product) {
+  selectedProduct = product;
+  document.getElementById("buy-now-qty").value = 1;
+  document.getElementById("buy-now-stock").innerText = `Còn lại: ${product.stock}`;
+  document.getElementById("buy-now-popup").classList.remove("hidden");
+};
+
+window.hideBuyNowPopup = function () {
+  selectedProduct = null;
+  document.getElementById("buy-now-popup").classList.add("hidden");
+};
+
+window.confirmBuyNow = function () {
+  const qty = parseInt(document.getElementById("buy-now-qty").value);
+  if (!selectedProduct || isNaN(qty) || qty < 1) {
+    //showToast("Số lượng không hợp lệ", "error");
+    getTranslation("store.invalid_quantity").then(msg => showToast(msg, "error"));
+    return;
+  }
+
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const existing = cart.find(item => item.id === selectedProduct.id);
+  const currentQty = existing ? existing.quantity : 0;
+  const totalQty = currentQty + qty;
+
+  if (totalQty > selectedProduct.stock) {
+    //showToast(`Bạn chỉ có thể mua tối đa ${selectedProduct.stock - currentQty} sản phẩm nữa`, "warning");
+    const remaining = selectedProduct.stock - currentQty;
+    getTranslation("store.limit_quantity").then(msg =>
+      showToast(msg.replace("{max}", remaining), "warning")
+    );
+    return;
+  }
+
+  if (existing) {
+    existing.quantity = totalQty;
+  } else {
+    cart.push({
+      id: selectedProduct.id,
+      name: selectedProduct.name,
+      picture: selectedProduct.picture,
+      price: selectedProduct.price,
+      quantity: qty,
+      stock: selectedProduct.stock
+    });
+  }
+
+  localStorage.setItem("cart", JSON.stringify(cart));
+  //showToast(`Đã thêm ${qty} x ${selectedProduct.name} vào giỏ hàng`, "success");
+  getTranslation("store.added_quantity").then(msg =>
+    showToast(msg.replace("{qty}", qty).replace("{name}", selectedProduct.name), "success")
+  );
+
+  hideBuyNowPopup();
+  setTimeout(() => (window.location.href = "cart.html"), 1000);
+
+};
+
+//Giá tiền
 popupContainer.addEventListener("click", e => {
   if (e.target === popupContainer) popupContainer.style.display = "none";
 });
@@ -418,7 +530,11 @@ window.addToCart = function (product) {
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
-  showToast(`\uD83C\uDF1F Đã thêm \"${product.name}\" vào giỏ hàng!`, "success");
+  //showToast(`\uD83C\uDF1F Đã thêm \"${product.name}\" vào giỏ hàng!`, "success");
+  getTranslation("store.added_to_cart").then(msg =>
+    showToast(msg.replace("{name}", product.name), "success")
+  );
+
 };
 
 function changeLanguage(lang) {

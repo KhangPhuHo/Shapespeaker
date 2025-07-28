@@ -1,19 +1,18 @@
 // auth-check.js
+import { getTranslation } from "./language.js"; // ✅ Thêm dòng này
 import { showToast } from "./toast.js";
-import { auth } from "./firebase-config.js"; // Nếu bạn dùng modular Firebase SDK
+import { auth } from "./firebase-config.js";
 
-function checkLogin() {
-  auth.onAuthStateChanged((user) => {
+async function checkLogin() {
+  auth.onAuthStateChanged(async (user) => {
     const session = JSON.parse(localStorage.getItem("session"));
     const now = Date.now();
     const isAdmin = session?.isAdmin === true;
 
     if (user && session) {
-      // ✅ Nếu là admin hoặc session còn hạn => OK
       if (isAdmin || now < session.expired_at) return;
     }
 
-    // ❌ Session hết hạn hoặc không hợp lệ
     localStorage.removeItem("session");
     localStorage.removeItem("user_session");
 
@@ -21,7 +20,9 @@ function checkLogin() {
     if (content) content.innerHTML = "";
 
     auth.signOut();
-    showToast("Your session has expired. Please log in again.", "info");
+
+    const message = await getTranslation("toast.session_expired"); // 🔑 Key từ file lang
+    showToast(message, "info");
 
     setTimeout(() => {
       window.location.href = "home.html";

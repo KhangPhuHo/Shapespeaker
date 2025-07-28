@@ -17,12 +17,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: rgba(205, 173, 77, 0.801);
+    background-image: none;
     font-family: Arial, sans-serif;
 }
 
 .wrapper {
     position: relative;
+    z-index: 2; /* thêm dòng này */
     width: 450px;
     height: 550px;
     background: var(--white);

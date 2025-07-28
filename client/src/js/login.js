@@ -10,9 +10,10 @@ import {
   getDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { showToast } from "./toast.js"; // Nếu bạn tách riêng showToast
+import { showToast } from "./toast.js";
+import { getTranslation } from "./language.js"; // ✅ Thêm dòng này
 
-// Phần xử lý DOM
+// DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   const signupForm = document.getElementById("signup-form");
   const loginBtn = document.getElementById("login-button");
@@ -22,7 +23,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   showHidePassword();
 
-  // ✅ Thêm xử lý chuyển form:
   const wrapper = document.querySelector('.wrapper');
   const showRegister = document.getElementById('show-register');
   const showLogin = document.getElementById('show-login');
@@ -40,8 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-
-// ✅ Đăng ký
+// Đăng ký
 async function handleSignup(event) {
   event.preventDefault();
 
@@ -51,12 +50,14 @@ async function handleSignup(event) {
   const confirmPassword = document.getElementById("confirm-password").value;
 
   if (!name || !email || !password || !confirmPassword) {
-    showToast("Please fill in all fields", "error");
+    const msg = await getTranslation("login.fill_all_fields");
+    showToast(msg, "error");
     return;
   }
 
   if (password !== confirmPassword) {
-    showToast("Passwords do not match", "error");
+    const msg = await getTranslation("login.password_mismatch");
+    showToast(msg, "error");
     return;
   }
 
@@ -72,15 +73,17 @@ async function handleSignup(event) {
       createdAt: serverTimestamp()
     });
 
-    showToast("Signup successful!", "success");
+    const msg = await getTranslation("login.signup_success");
+    showToast(msg, "success");
 
   } catch (error) {
     console.error("Signup error:", error.message);
-    showToast("Signup failed. Please try again.", "error");
+    const msg = await getTranslation("login.signup_failed");
+    showToast(msg, "error");
   }
 }
 
-// ✅ Đăng nhập
+// Đăng nhập
 async function handleLogin(event) {
   event.preventDefault();
 
@@ -88,7 +91,8 @@ async function handleLogin(event) {
   const password = document.getElementById("login-password").value;
 
   if (!email || !password) {
-    showToast("Please fill in all fields.", "error");
+    const msg = await getTranslation("login.fill_all_fields");
+    showToast(msg, "error");
     return;
   }
 
@@ -111,18 +115,21 @@ async function handleLogin(event) {
     localStorage.setItem("session", JSON.stringify(session));
     localStorage.setItem("user_session", JSON.stringify(session));
 
-    showToast("Login successful!", "success");
+    const msg = await getTranslation("login.login_success");
+    showToast(msg, "success");
+
     document.body.style.transition = "opacity 0.5s";
     document.body.style.opacity = 0;
     setTimeout(() => (window.location.href = "home.html"), 500);
 
   } catch (error) {
     console.error("Login error:", error.message);
-    showToast("Login failed. Try again.", "error");
+    const msg = await getTranslation("login.login_failed");
+    showToast(msg, "error");
   }
 }
 
-// ✅ Hiển thị/ẩn mật khẩu
+// Hiển thị/ẩn mật khẩu
 function showHidePassword() {
   document.querySelectorAll('.toggle-password').forEach(icon => {
     icon.addEventListener("click", () => {

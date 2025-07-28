@@ -9,9 +9,20 @@
     <link rel="stylesheet" href="./src/css/login.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flag-icons/css/flag-icons.min.css">
     <link rel="stylesheet" href="./src/css/toast.css">
+    <link rel="stylesheet" href="./src/css/mascot.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="icon" type="image/png" href="./src/img/shapespeakicon.jpg">
     <style>
+        /* Style the video to cover the entire window */
+        #background-img {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+        }
+
         #lang-toggle-wrapper {
             position: fixed;
             top: 1rem;
@@ -56,6 +67,7 @@
 </head>
 
 <body>
+    <img id="background-img" src="./src/img/background.webp" alt="background">
     <!-- Language Cycle Button -->
     <!-- Nút chuyển ngôn ngữ -->
     <div id="lang-toggle-wrapper" class="fixed top-4 right-4 z-50">
@@ -67,7 +79,7 @@
     <div class="wrapper">
         <!-- Login Form -->
         <div class="form-box login">
-            <h2 data-i18n="login.wel_back">Welcome Back!</h2>
+            <h2 class="text-2xl font-bold text-center" data-i18n="login.wel_back">Welcome Back!</h2>
             <form id="login-form">
                 <div class="input-box">
                     <input id="login-email" type="email" minlength="6" required>
@@ -100,7 +112,7 @@
 
         <!-- Register Form -->
         <div class="form-box register">
-            <h2 data-i18n="login.join_us">Join Us!</h2>
+            <h2 class="text-2xl font-bold text-center" data-i18n="login.join_us">Join Us!</h2>
             <form id="signup-form">
                 <div class="input-box">
                     <input type="text" id="name" required>
@@ -134,14 +146,16 @@
 
     <script type="module" src="./src/js/language.js" defer></script>
     <script type="module" src="./src/js/toast.js"></script>
-
+    
     <script type="module" src="./src/js/firebase-config.js"></script><!--./hocsinh/js/-->
     <script type="module" src="./src/js/login.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.17.1/build/matter.min.js"></script>
+    <script src="./src/js/floating-shapes.js" defer></script>
+    <script type="module" src="./src/js/mascot.js" defer></script>
     <script type="module">
         import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
         enableSessionKeepAlive();
     </script>
-    <!--<script src="logout.js"></script><-->
     <script type="module" src="./src/js/googleprofile.js"></script>
 </body>
 

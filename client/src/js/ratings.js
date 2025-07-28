@@ -1,5 +1,6 @@
 // ✅ ratings.js
 import { db, auth } from './firebase-config.js';
+import { getTranslation } from './language.js';
 import {
   doc, getDoc, setDoc, collection,
   onSnapshot, query, getDocs
@@ -38,6 +39,7 @@ export function loadRatingUI(productId) {
   // Listen to updates
   const ratingsRef = collection(db, `shapespeakitems/${productId}/ratings`);
   onSnapshot(ratingsRef, snap => {
+  (async () => {
     const ratings = snap.docs.map(doc => doc.data());
     const total = ratings.length;
     const avg = total > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / total : 0;
@@ -48,10 +50,17 @@ export function loadRatingUI(productId) {
         : "fa-regular fa-star text-yellow-400";
     });
 
-    statusText.innerHTML = total
-      ? `⭐ ${avg.toFixed(1)} / 5 (${total} ${total === 1 ? "vote" : "votes"})`
-      : `Chưa có đánh giá`;
-  });
+    if (total > 0) {
+      const voteText = await getTranslation(
+        total === 1 ? "rating.vote_singular" : "rating.vote_plural"
+      );
+      statusText.innerHTML = `⭐ ${avg.toFixed(1)} / 5 (${total} ${voteText})`;
+    } else {
+      const noReviewText = await getTranslation("rating.no_review");
+      statusText.innerHTML = noReviewText;
+    }
+  })();
+});
 
   // Highlight user's rating
   onAuthStateChanged(auth, async user => {
@@ -74,7 +83,8 @@ export function loadRatingUI(productId) {
 async function submitRating(productId, ratingValue) {
   const user = auth.currentUser;
   if (!user) {
-    showToast("Bạn cần đăng nhập để đánh giá!", "info");
+    //showToast("Bạn cần đăng nhập để đánh giá!", "info");
+    showToast(await getTranslation("rating.login_required"), "info");
     return;
   }
 
@@ -85,5 +95,6 @@ async function submitRating(productId, ratingValue) {
     timestamp: Date.now()
   });
 
-  showToast("🎉 Đánh giá của bạn đã được ghi nhận!", "success");
+  //showToast("🎉 Đánh giá của bạn đã được ghi nhận!", "success");
+  showToast(await getTranslation("rating.thank_you"), "success");
 }

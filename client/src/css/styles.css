@@ -1,12 +1,16 @@
-/* Style the video to cover the entire window */
-#background-video {
+/* Style the image to cover the entire window */
+#background-img {
     position: fixed;
     right: 0;
     bottom: 0;
+    top: 0;
+    left: 0;
     min-width: 100%;
     min-height: 100%;
     z-index: -1;
-}
+    pointer-events: none;
+    opacity: 0.2; /* nếu muốn nền nhẹ hơn */
+} 
 
 /* Style the content over the video */
 form {

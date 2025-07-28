@@ -12,7 +12,7 @@ import {
   updatePassword,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
-import { setLanguage } from './language.js';
+import { setLanguage, getTranslation } from './language.js';
 import { showToast } from './toast.js';
 
 // Sidebar toggle
@@ -62,11 +62,31 @@ onAuthStateChanged(auth, async (user) => {
       }
     } catch (error) {
       console.error("Lỗi khi lấy dữ liệu:", error);
-      showToast("Lỗi khi tải thông tin.", "error");
+      //showToast("Lỗi khi tải thông tin.", "error");
+      showToast(await getTranslation("myaccount.load_error"), "error");
     }
   } else {
-    showToast("Please login to access!", "info");
-    window.location.href = "login.html";
+    //showToast("Bạn đang xem với tư cách khách. Hãy đăng nhập để chỉnh sửa!", "info");
+    showToast(await getTranslation("myaccount.guest_view_notice"), "info");
+
+    // Disable tất cả input
+    ["name", "email", "password", "phone", "address", "avatar", "currentPassword"].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) input.disabled = true;
+    });
+
+    // Disable nút cập nhật
+    const submitBtn = document.getElementById("submitBtn");
+    if (submitBtn) submitBtn.disabled = true;
+
+    // Optional: làm mờ toàn bộ form
+    const form = document.getElementById("accountForm");
+    if (form) {
+      form.classList.add("opacity-50", "pointer-events-none");
+    }
+
+    // Optional: nếu vẫn muốn hiển thị avatar và thông tin trống
+    renderProfile(null, "Guest", "", "", "");
   }
 });
 
@@ -106,9 +126,22 @@ export async function addInfo() {
   const needsReauth = (email && email !== user.email) || password;
 
   try {
+
+    // 🔹 Kiểm tra định dạng số điện thoại Việt Nam (bắt đầu bằng 0 hoặc +84, tổng cộng 10 số)
+    const phoneRegexVN = /^(?:\+84|0)(?:\d){9}$/;
+    if (phone && !phoneRegexVN.test(phone)) {
+      showToast(await getTranslation("myaccount.invalid_phone"), "warning");
+      return;
+    }
+
+    if (!address.includes(",") || address.split(",").length < 3) {
+      showToast(await getTranslation("myaccount.invalid_address"), "warning");
+      return;
+    }
+
     if (needsReauth) {
       if (!currentPassword) {
-        showToast("You must fill in your entire password for rewrite email or password", "info");
+        showToast(await getTranslation("myaccount.password_required_for_update"), "info");
         return;
       }
 
@@ -132,11 +165,11 @@ export async function addInfo() {
       avatar
     });
 
-    showToast("Update successfully!", "success");
+    showToast(await getTranslation("myaccount.update_success"), "success");
     renderProfile(avatar, name, email, phone, address);
   } catch (error) {
     console.error("Update error:", error);
-    showToast("Update unsuccessfully", "error");
+    showToast(await getTranslation("myaccount.update_error"), "error");
   }
 }
 

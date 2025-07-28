@@ -33,14 +33,18 @@ if (currentUser.uid) {
         const userData = userSnap.data();
         currentUser.name = userData.name || currentUser.name;
         currentUser.avatar = userData.avatar || currentUser.avatar;
-        currentUser.role = userData.role || currentUser.role; // ✅ Ưu tiên lấy từ Firestore
+        currentUser.role = userData.role || currentUser.role;
       }
     } catch (err) {
       console.warn("Không thể tải thông tin người dùng:", err);
     }
   })();
+} else {
+  // ✅ Nếu không đăng nhập, chặn input/comment UI
+  document.getElementById("comment-input").placeholder = "Bạn cần đăng nhập để bình luận.";
+  document.getElementById("comment-input").disabled = true;
+  document.getElementById("submit-comment").disabled = true;
 }
-
 
 function formatTime(timestamp) {
   const date = timestamp?.toDate?.();
@@ -86,13 +90,24 @@ async function loadComments(postId) {
       const comment = { id: docSnap.id, ...docSnap.data() };
       try {
         const userSnap = await getDoc(doc(db, "users", comment.uid));
-        const userData = userSnap.exists() ? userSnap.data() : {};
-        comment.name = userData.name || "Anonymous";
-        comment.avatar = userData.avatar || "";
-        comment.role = userData.role || "customer";
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          comment.name = userData.name || "Anonymous";
+          comment.avatar = userData.avatar || "";
+          comment.role = userData.role || "customer";
+          comment.isDeletedUser = false;
+        } else {
+          // User đã bị xoá
+          comment.name = "🗑 Tài khoản đã bị xoá";
+          comment.avatar = ""; // hoặc avatar mặc định
+          comment.role = "deleted";
+          comment.text = "Tin nhắn đã bị xoá";
+          comment.isDeletedUser = true;
+        }
       } catch (err) {
         console.warn("Không thể lấy user:", err);
         comment.role = "customer";
+        comment.isDeletedUser = false;
       }
       return comment;
     }));
@@ -150,6 +165,8 @@ function scrollToPinned() {
 function renderComment(comment) {
   const isMe = comment.uid === currentUser?.uid;
   const isAdmin = comment.role === 'admin';
+  const isDeletedUser = comment.isDeletedUser === true;
+
   const avatar = comment.avatar || 'https://www.gravatar.com/avatar?d=mp&s=200';
   const sideClass = isMe ? 'justify-end' : 'justify-start';
   const messageAlign = isMe ? 'flex-row-reverse' : 'flex-row';
@@ -169,6 +186,22 @@ function renderComment(comment) {
   const container = document.createElement("div");
   container.className = `flex ${sideClass}`;
   container.title = comment.name;
+
+  // Nếu user đã xoá, đổi style và ẩn phần reaction, emoji
+  if (isDeletedUser) {
+    container.innerHTML = `
+      <div class="flex ${messageAlign} gap-2 max-w-[80%] opacity-50 italic text-gray-400 select-none pointer-events-none">
+        <img src="https://www.gravatar.com/avatar?d=mp&s=200" class="w-8 h-8 rounded-full object-cover self-end" />
+        <div class="bg-white/10 p-2 rounded-lg border border-gray-500 text-sm relative">
+          <p class="font-semibold">${comment.name}</p>
+          <p>${comment.text || ""}</p>
+        </div>
+      </div>
+    `;
+    return container;
+  }
+
+  // Nếu bình luận bình thường, render bình thường (giữ nguyên code bạn có)
   container.innerHTML = `
     <div class="flex ${messageAlign} gap-2 max-w-[80%]">
       <img src="${avatar}" class="w-8 h-8 rounded-full object-cover self-end" />
@@ -187,7 +220,8 @@ function renderComment(comment) {
         <div class="hidden emoji-dropdown bg-white text-black rounded shadow absolute left-0 bottom-[-45px] z-10 px-2 py-1"></div>
         <div class="reaction-group flex gap-2 mt-1"></div>
       </div>
-    </div>`;
+    </div>
+  `;
 
   const emojiBtn = container.querySelector(".emoji-toggle");
   const dropdown = container.querySelector(".emoji-dropdown");
@@ -239,6 +273,19 @@ function setupCommentSubmit(postId) {
   const submitBtn = document.getElementById("submit-comment");
   const stickers = document.querySelectorAll(".sticker-option");
   const previewBox = document.getElementById("media-preview");
+
+    // ✅ Ngăn người chưa đăng nhập
+  if (!currentUser.uid) {
+    input.placeholder = "Bạn cần đăng nhập để bình luận.";
+    input.disabled = true;
+    submitBtn.disabled = true;
+    // ❌ Không gán sự kiện sticker nếu chưa đăng nhập
+    stickers?.forEach(btn => {
+      btn.disabled = true;
+      btn.classList.add("opacity-50", "cursor-not-allowed");
+    });
+    return;
+  }
 
   let sending = false;
   let selectedFiles = [];
@@ -292,26 +339,32 @@ function setupCommentSubmit(postId) {
   }
 
   // ✅ Gửi sticker
-  stickers?.forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const stickerUrl = btn.dataset.url;
-      await addDoc(collection(db, "comments"), {
-        postId,
-        uid: currentUser.uid,
-        name: currentUser.name,
-        avatar: currentUser.avatar,
-        role: currentUser.role,
-        text: "",
-        media: [{ url: stickerUrl, type: "image" }],
-        createdAt: serverTimestamp(),
-      });
+stickers?.forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const stickerUrl = btn.dataset.url;
+    await addDoc(collection(db, "comments"), {
+      postId,
+      uid: currentUser.uid,
+      name: currentUser.name,
+      avatar: currentUser.avatar,
+      role: currentUser.role,
+      text: "",
+      media: [{ url: stickerUrl, type: "image" }],
+      createdAt: serverTimestamp(),
     });
   });
+});
+
 
   // ✅ Gửi bình luận
   form.onsubmit = async (e) => {
     e.preventDefault();
     if (sending) return;
+
+    if (!currentUser.uid) {
+      showToast("Bạn cần đăng nhập để gửi bình luận.", "error");
+      return; // dừng gửi
+    }
 
     const text = input.value.trim();
     const files = selectedFiles;
@@ -327,7 +380,7 @@ function setupCommentSubmit(postId) {
         if (file.size > 150 * 1024 * 1024) throw new Error(`File ${file.name} quá 150MB`);
         const formData = new FormData();
         formData.append("media", file);
-        const res = await fetch("https://shapespeaker-production.up.railway.app/upload", { method: "POST", body: formData });
+        const res = await fetch("https://shapespeaker.onrender.com/upload", { method: "POST", body: formData });
         const result = await res.json();
         if (!result?.data?.secure_url) throw new Error("Upload thất bại");
         return { url: result.data.secure_url, type: file.type.startsWith("video") ? "video" : "image" };

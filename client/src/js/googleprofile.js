@@ -1,4 +1,3 @@
-// ✅ login-google.js (type="module")
 import { auth, db } from "./firebase-config.js";
 import {
   GoogleAuthProvider,
@@ -10,20 +9,23 @@ import {
   setDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
-import { showToast } from "./toast.js"; // ✅ Nhớ export showToast trong toast.js
+import { getTranslation } from "./language.js"; // ✅ thêm dòng này
+import { showToast } from "./toast.js";
+
 
 const googleLoginBtn = document.getElementById('google-login');
 
-const userFriendlyMessage = (code) => {
+// ✅ Dùng async để dịch
+const userFriendlyMessage = async (code) => {
   switch (code) {
     case "auth/popup-closed-by-user":
-      return "Bạn đã đóng cửa sổ đăng nhập.";
+      return await getTranslation("login.google.popup_closed") || "Bạn đã đóng cửa sổ đăng nhập.";
     case "auth/account-exists-with-different-credential":
-      return "Tài khoản đã tồn tại với phương thức đăng nhập khác.";
+      return await getTranslation("login.google.account_exists") || "Tài khoản đã tồn tại với phương thức đăng nhập khác.";
     case "auth/network-request-failed":
-      return "Không thể kết nối mạng. Vui lòng kiểm tra Internet.";
+      return await getTranslation("login.google.network_failed") || "Không thể kết nối mạng. Vui lòng kiểm tra Internet.";
     default:
-      return "Đã xảy ra lỗi khi đăng nhập bằng Google. Vui lòng thử lại sau.";
+      return await getTranslation("login.google.default_error") || "Đã xảy ra lỗi khi đăng nhập bằng Google. Vui lòng thử lại sau.";
   }
 };
 
@@ -62,7 +64,8 @@ googleLoginBtn.addEventListener('click', async () => {
       userSession.expired_at = Date.now() + 2 * 60 * 60 * 1000;
     }
 
-    showToast("Đăng nhập Google thành công.", "success");
+    const successMsg = await getTranslation("login.google.success") || "Đăng nhập Google thành công.";
+    showToast(successMsg, "success");
 
     localStorage.setItem("session", JSON.stringify(userSession));
     localStorage.setItem("user_session", JSON.stringify(userSession));
@@ -73,7 +76,8 @@ googleLoginBtn.addEventListener('click', async () => {
       window.location.href = "home.html";
     }, 1000);
   } catch (error) {
-    showToast(userFriendlyMessage(error.code), "error");
+    const msg = await userFriendlyMessage(error.code);
+    showToast(msg, "error");
     console.error("Google login error:", error.code, error.message);
   } finally {
     googleLoginBtn.disabled = false;

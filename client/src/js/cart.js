@@ -1,4 +1,7 @@
-import { setLanguage, getCurrency } from './language.js';
+import { db } from './firebase-config.js';
+import { collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { getCurrency, getTranslation } from './language.js';
 import { showToast } from './toast.js';
 
 const cartList = document.getElementById("CartList");
@@ -61,7 +64,7 @@ function loadCart() {
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2 mt-4 sm:mt-0 sm:ml-auto w-full sm:w-auto justify-center sm:justify-end">
-        <button onclick="buyNow(${index})" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-md w-full sm:w-auto" data-i18n="cart.buy">Buy</button>
+        <button onclick="buyNow(${index})" class="bg-pink-300 hover:bg-pink-500 text-white px-4 py-2 rounded-md w-full sm:w-auto" data-i18n="cart.buy">Buy</button>
         <button onclick="removeFromCart(${index})" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md w-full sm:w-auto" data-i18n="cart.delete">Delete</button>
       </div>
     `;
@@ -102,7 +105,7 @@ function removeFromCart(index) {
   loadCart();
 }
 
-function changeQuantity(index, delta) {
+async function changeQuantity(index, delta) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const item = cart[index];
   const maxStock = typeof item.stock === "number" ? item.stock : 1;
@@ -113,7 +116,14 @@ function changeQuantity(index, delta) {
   if (delta > 0) {
     const maxCanAdd = maxStock - item.quantity;
     if (maxCanAdd <= 0) {
-      showToast(`Sản phẩm "${item.name}" chỉ còn ${maxStock} trong kho.`, "error");
+      //showToast(`Sản phẩm "${item.name}" chỉ còn ${maxStock} trong kho.`, "error");
+      const msgTemplate = await getTranslation("toast.max_stock_reached");
+      const message = msgTemplate
+        .replace("{name}", item.name)
+        .replace("{stock}", maxStock);
+
+      showToast(message, "error");
+
       return;
     }
     delta = Math.min(delta, maxCanAdd);
@@ -143,17 +153,201 @@ function changeQuantity(index, delta) {
 }
 
 
-function buyNow(index) {
+async function buyNow(index) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const product = cart[index];
+  if (!product) return;
+
   const total = product.price * product.quantity;
-  showToast(`Bạn đã chọn mua ${product.quantity} x ${product.name} (${formatCurrency(total)}).\n(Tính năng thanh toán sẽ được cập nhật sau.)`, "info");
+  //const confirmBuy = confirm(`🛒 Bạn có chắc muốn mua ${product.quantity} x ${product.name} (${formatCurrency(total)}) không?`);
+  const confirmMsg = await getTranslation("toast.confirm_buy");
+  const confirmBuy = confirm(`${confirmMsg.replace("{name}", product.name).replace("{qty}", product.quantity).replace("{total}", formatCurrency(total))}`);
+
+  if (!confirmBuy) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    //showToast("⚠️ Vui lòng đăng nhập để mua hàng.", "error");
+    const msg = await getTranslation("toast.login_required");
+    showToast(msg, "error");
+    return;
+  }
+
+  try {
+    // ✅ Lấy thông tin user từ Firestore
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      //showToast("❌ Không tìm thấy thông tin người dùng.", "error");
+      const msg = await getTranslation("toast.missing_user");
+      showToast(msg, "error");
+      return;
+    }
+
+    const userData = userSnap.data();
+    const { phone, address } = userData;
+
+    if (!phone || !address) {
+      //showToast("⚠️ Vui lòng cập nhật số điện thoại và địa chỉ trước khi mua hàng.", "warning");
+      const msg = await getTranslation("toast.missing_contact");
+      showToast(msg, "warning");
+      return;
+    }
+
+    // ✅ Kiểm tra tồn kho sản phẩm
+    const productRef = doc(db, "shapespeakitems", product.id);
+    const productSnap = await getDoc(productRef);
+    if (!productSnap.exists()) throw new Error(`Không tìm thấy sản phẩm ${product.name}`);
+
+    const productData = productSnap.data();
+    if (productData.stock < product.quantity) {
+      //showToast(`❌ Sản phẩm "${product.name}" chỉ còn ${productData.stock}`, "error");
+        const msgTemplate = await getTranslation("toast.insufficient_stock");
+        const message = msgTemplate
+          .replace("{name}", item.name)
+          .replace("{stock}", productData.stock);
+        showToast(message, "error");
+      return;
+    }
+
+    // ✅ Cập nhật tồn kho
+    await updateDoc(productRef, {
+      stock: productData.stock - product.quantity
+    });
+
+    // ✅ Tạo đơn hàng (thêm phone và address)
+    await addDoc(collection(db, "orders"), {
+      uid: user.uid,
+      date: serverTimestamp(),
+      status: "pending",
+      items: [product],
+      phone,
+      address
+    });
+
+    //showToast(`✅ Đã tạo đơn hàng cho "${product.name}".`, "success");
+    const msgTemplate = await getTranslation("toast.order_created");
+    const message = msgTemplate.replace("{name}", product.name); // ✅ đúng giá trị
+    showToast(message, "success");
+
+    // ✅ Cập nhật giỏ hàng
+    cart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+  } catch (err) {
+    console.error(err);
+    //showToast("❌ Lỗi khi tạo đơn hàng.", "error");
+    const msg = await getTranslation("toast.order_error");
+    showToast(msg, "error");
+  }
 }
 
-function checkoutAll() {
+async function checkoutAll() {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  if (cart.length === 0) {
+    //showToast("🛒 Giỏ hàng đang trống.", "warning");
+    const msg = await getTranslation("toast.cart_empty");
+    showToast(msg, "info");
+    return;
+  }
+
   const total = cart.reduce((sum, p) => sum + p.price * p.quantity, 0);
-  showToast(`Bạn sẽ thanh toán tổng cộng ${formatCurrency(total)} cho ${cart.length} sản phẩm.`, "info");
+  //const confirmCheckout = confirm(`💳 Bạn có chắc muốn thanh toán ${cart.length} sản phẩm với tổng tiền ${formatCurrency(total)} không?`);
+  const confirmTemplate = await getTranslation("toast.confirm_checkout");
+  const confirmMsg = confirmTemplate
+    .replace("{count}", cart.length)
+    .replace("{total}", formatCurrency(total));
+
+  const confirmCheckout = confirm(confirmMsg);
+
+  if (!confirmCheckout) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    //showToast("⚠️ Vui lòng đăng nhập để thanh toán.", "error");
+    const msg = await getTranslation("toast.login_required");
+    showToast(msg, "warning");
+    return;
+  }
+
+  try {
+    // ✅ Lấy thông tin user từ Firestore
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    if (!userSnap.exists()) {
+      //showToast("❌ Không tìm thấy thông tin người dùng.", "error");
+      const msg = await getTranslation("toast.missing_user");
+      showToast(msg, "error");
+      return;
+    }
+
+    const userData = userSnap.data();
+    const { phone, address } = userData;
+
+    if (!phone || !address) {
+      //showToast("⚠️ Vui lòng cập nhật số điện thoại và địa chỉ trước khi thanh toán.", "warning");
+      const msg = await getTranslation("toast.missing_contact");
+      showToast(msg, "warning");
+      return;
+    }
+
+    // 🔁 Check từng sản phẩm
+    for (const item of cart) {
+      const productRef = doc(db, "shapespeakitems", item.id);
+      const productSnap = await getDoc(productRef);
+
+      if (!productSnap.exists()) {
+        //showToast(`❌ Không tìm thấy sản phẩm "${item.name}"`, "error");
+        const msgTemplate = await getTranslation("toast.product_not_found");
+        const message = msgTemplate.replace("{name}", item.name);
+        showToast(message, "error");
+
+        return;
+      }
+
+      const productData = productSnap.data();
+      if (productData.stock < item.quantity) {
+        //showToast(`⚠️ Sản phẩm "${item.name}" chỉ còn ${productData.stock} trong kho.`, "error");
+        const msgTemplate = await getTranslation("toast.insufficient_stock");
+        const message = msgTemplate
+          .replace("{name}", item.name)
+          .replace("{stock}", productData.stock);
+        showToast(message, "error");
+
+        return;
+      }
+
+      // ✏️ Trừ stock
+      await updateDoc(productRef, {
+        stock: productData.stock - item.quantity
+      });
+    }
+
+    // ✅ Tạo đơn hàng (thêm phone và address)
+    await addDoc(collection(db, "orders"), {
+      uid: user.uid,
+      date: serverTimestamp(),
+      status: "pending",
+      items: cart,
+      phone,
+      address
+    });
+
+    //showToast(`✅ Đã tạo đơn hàng với ${cart.length} sản phẩm.`, "success");
+    const msgTemplate = await getTranslation("toast.order_created_all");
+    const message = msgTemplate.replace("{count}", cart.length);
+    showToast(message, "success");
+
+    localStorage.removeItem("cart");
+    loadCart();
+  } catch (err) {
+    console.error(err);
+    //showToast("❌ Lỗi khi tạo đơn hàng.", "error");
+    const msg = await getTranslation("toast.order_error");
+    showToast(msg, "error");
+  }
 }
 
 function setMin(index) {
