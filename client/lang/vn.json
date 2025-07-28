@@ -44,6 +44,14 @@
     "no_account": "Chưa có tài khoản"
   },
 
+  "logout": {
+    "logout_modal_title": "Bạn muốn làm gì?",
+    "logout_modal_subtitle": "Xoá tài khoản sẽ không thể khôi phục. Đăng xuất sẽ giữ lại tài khoản của bạn.",
+    "logout_delete_btn": "🗑️ Xoá tài khoản",
+    "logout_signout_btn": "🔄 Đăng xuất",
+    "logout_cancel_btn": "❌ Huỷ"
+  },
+
   "home": {
     "transform_title": "Biến đổi giáo dục toán học sớm",
     "transform_desc": "ShapeSpeak là sản phẩm mô hình toán học dành cho trẻ 2–4 tuổi, bao gồm cả trẻ khiếm thị, kết hợp công nghệ nhận diện hình ảnh và lắp ráp hình học.",

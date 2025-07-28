@@ -44,6 +44,14 @@
     "no_account": "No account"
   },
 
+  "logout": {
+    "logout_modal_title": "What would you like to do?",
+    "logout_modal_subtitle": "Deleting your account is permanent. Signing out keeps your account safe.",
+    "logout_delete_btn": "🗑️ Delete Account",
+    "logout_signout_btn": "🔄 Sign Out",
+    "logout_cancel_btn": "❌ Cancel"
+  },
+
   "home": {
     "transform_title": "Transforming Early Math Education",
     "transform_desc": "ShapeSpeak is an educational model product for children aged 2–4, including visually impaired kids, using AI-integrated camera recognition and geometric assembly.",

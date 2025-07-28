@@ -40,10 +40,18 @@ if (currentUser.uid) {
     }
   })();
 } else {
-  // ✅ Nếu không đăng nhập, chặn input/comment UI
-  document.getElementById("comment-input").placeholder = "Bạn cần đăng nhập để bình luận.";
-  document.getElementById("comment-input").disabled = true;
-  document.getElementById("submit-comment").disabled = true;
+  // ✅ Nếu không đăng nhập, chặn input/comment UI (phải kiểm tra tồn tại trước)
+  const input = document.getElementById("comment-input");
+  const submit = document.getElementById("submit-comment");
+
+  if (input) {
+    input.placeholder = "Bạn cần đăng nhập để bình luận.";
+    input.disabled = true;
+  }
+
+  if (submit) {
+    submit.disabled = true;
+  }
 }
 
 function formatTime(timestamp) {

@@ -48,26 +48,34 @@ function renderMenu() {
   </header>
 
   <!-- Modal xác nhận xóa tài khoản -->
-  <div id="logout-confirm-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 hidden">
-    <div class="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center animate-fadeIn">
-      <div class="mb-4">
-        <div class="text-4xl mb-2">⚠️</div>
-        <h2 class="text-xl font-semibold mb-2">Bạn muốn làm gì?</h2>
-        <p class="text-sm text-gray-600">Xoá tài khoản sẽ không thể khôi phục. Đăng xuất sẽ giữ lại tài khoản của bạn.</p>
-      </div>
-      <div class="flex justify-center gap-3 mt-6 flex-wrap">
-        <button id="confirmDeleteBtn" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition">
-          🗑️ Xoá tài khoản
-        </button>
-        <button id="cancelBtn" class="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition">
-          🔄 Đăng xuất
-        </button>
-        <button id="cancelModalBtn" class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition">
-          ❌ Huỷ
-        </button>
-      </div>
+<div id="logout-confirm-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 hidden">
+  <div class="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center animate-fadeIn">
+    <div class="mb-4">
+      <div class="text-4xl mb-2">⚠️</div>
+      <h2 class="text-xl font-semibold mb-2" data-i18n="logout.logout_modal_title">Bạn muốn làm gì?</h2>
+      <p class="text-sm text-gray-600" data-i18n="logout.logout_modal_subtitle">
+        Xoá tài khoản sẽ không thể khôi phục. Đăng xuất sẽ giữ lại tài khoản của bạn.
+      </p>
     </div>
+    <div class="flex justify-center gap-3 mt-6 flex-wrap">
+  <button id="confirmDeleteBtn"
+    class="min-w-[140px] px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition text-sm font-medium"
+    data-i18n="logout.logout_delete_btn">
+    🗑️ Delete Account
+  </button>
+  <button id="cancelBtn"
+    class="min-w-[140px] px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 transition text-sm font-medium"
+    data-i18n="logout.logout_signout_btn">
+    🔄 Sign Out
+  </button>
+  <button id="cancelModalBtn"
+    class="min-w-[140px] px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 transition text-sm font-medium"
+    data-i18n="logout.logout_cancel_btn">
+    ❌ Cancel
+  </button>
+</div>
   </div>
+</div>
   `;
 
   // Gán sự kiện toggle menu mobile
