@@ -10,8 +10,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 import { showToast } from './toast.js';
 
-
-export function loadRatingUI(productId) {
+export function loadRatingUI(productId, containerEl = null) {
   const container = document.createElement("div");
   container.id = "rating-section";
   container.className = "text-center my-3";
@@ -33,34 +32,40 @@ export function loadRatingUI(productId) {
   container.appendChild(starsDiv);
   container.appendChild(statusText);
 
-  const popup = document.querySelector(".face.front");
-  popup.appendChild(container);
+  // Nếu có containerEl (do mình chỉ định), gắn vào đó
+  if (containerEl) {
+    containerEl.appendChild(container);
+  } else {
+    // Mặc định: gắn vào popup mặt trước
+    const popup = document.querySelector(".face.front");
+    if (popup) popup.appendChild(container);
+  }
 
   // Listen to updates
   const ratingsRef = collection(db, `shapespeakitems/${productId}/ratings`);
   onSnapshot(ratingsRef, snap => {
-  (async () => {
-    const ratings = snap.docs.map(doc => doc.data());
-    const total = ratings.length;
-    const avg = total > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / total : 0;
+    (async () => {
+      const ratings = snap.docs.map(doc => doc.data());
+      const total = ratings.length;
+      const avg = total > 0 ? ratings.reduce((sum, r) => sum + r.rating, 0) / total : 0;
 
-    starsDiv.querySelectorAll("i").forEach((star, i) => {
-      star.className = i < Math.round(avg)
-        ? "fa-solid fa-star text-yellow-400"
-        : "fa-regular fa-star text-yellow-400";
-    });
+      starsDiv.querySelectorAll("i").forEach((star, i) => {
+        star.className = i < Math.round(avg)
+          ? "fa-solid fa-star text-yellow-400"
+          : "fa-regular fa-star text-yellow-400";
+      });
 
-    if (total > 0) {
-      const voteText = await getTranslation(
-        total === 1 ? "rating.vote_singular" : "rating.vote_plural"
-      );
-      statusText.innerHTML = `⭐ ${avg.toFixed(1)} / 5 (${total} ${voteText})`;
-    } else {
-      const noReviewText = await getTranslation("rating.no_review");
-      statusText.innerHTML = noReviewText;
-    }
-  })();
-});
+      if (total > 0) {
+        const voteText = await getTranslation(
+          total === 1 ? "rating.vote_singular" : "rating.vote_plural"
+        );
+        statusText.innerHTML = `⭐ ${avg.toFixed(1)} / 5 (${total} ${voteText})`;
+      } else {
+        const noReviewText = await getTranslation("rating.no_review");
+        statusText.innerHTML = noReviewText;
+      }
+    })();
+  });
 
   // Highlight user's rating
   onAuthStateChanged(auth, async user => {

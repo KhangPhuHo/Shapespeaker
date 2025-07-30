@@ -8,10 +8,18 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom font & style adjustments */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        /*@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');*/
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800;900&family=Poppins:wght@400;600;700&display=swap');
+
 
         body {
             font-family: 'Poppins', sans-serif;
+        }
+
+        .heading {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            font-weight: 800;
+            /* hoặc 900 nếu bạn muốn nét dày hơn */
         }
 
         /* Custom font for headings similar to the sample */
@@ -99,8 +107,10 @@
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./src/css/menure.css">
     <link rel="stylesheet" href="./src/css/styles.css">
+    <link rel="stylesheet" href="./src/css/shapegame.css">
     <link rel="stylesheet" href="./src/css/toast.css">
     <link rel="stylesheet" href="./src/css/chatbot.css">
     <!-- Thêm vào <head> -->
@@ -119,19 +129,26 @@
     <br><br><br>
 
 
-    <section id="impact" class="bg-pink-300/80 text-white py-20 px-6" data-aos="fade-up">
+    <section class="bg-pink-300/80 text-white py-20 px-6" data-aos="fade-up">
         <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-3xl md:text-4xl font-extrabold max-w-4xl mx-auto leading-tight"
-                data-i18n="home.transform_title">
+            <h2 class="heading text-pink-500 text-3xl md:text-4xl max-w-4xl mx-auto leading-tight" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;" data-i18n="home.transform_title">
                 Transforming Early Math Education
             </h2>
-            <p class="mt-6 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed font-normal"
+            <p class="text-pink-950 font-bold mt-6 text-lg sm:text-xl max-w-3xl mx-auto leading-relaxed font-normal"
                 data-i18n="home.transform_desc">
                 ShapeSpeak is an educational model product for children aged 2–4, including visually impaired kids,
                 using AI-integrated camera recognition and geometric assembly.
             </p>
             <button
-                class="mt-10 bg-white text-pink-300 font-semibold text-lg sm:text-xl rounded-full px-8 py-3 inline-flex items-center gap-2 hover:bg-gray-100 transition"
+                class="discover-btn mt-10 bg-white text-pink-300 font-semibold text-lg sm:text-xl rounded-full px-8 py-3 inline-flex items-center gap-2 hover:bg-gray-100 transition"
                 type="button"> <span data-i18n="home.discover_btn">
                     Discover How It Works</span>
                 <i class="fa fa-arrow-right" aria-hidden="true"></i>
@@ -139,9 +156,71 @@
         </div>
     </section>
 
+    <section id="top-rated-products" class="hidden py-16 bg-white text-gray-900 " data-aos="fade-up">
+        <div class="max-w-6xl mx-auto text-center px-4">
+            <h2 class="text-3xl font-bold text-pink-500 mb-6" data-i18n="store.top_rated">Top Rated Products</h2>
+
+            <div id="product-loading" class="text-center py-8 text-black animate-pulse hidden">
+                🧸 <span data-i18n="store.loading">Loading toys for you...</span>
+            </div>
+
+            <div id="top-products-container"
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 justify-items-center">
+            </div>
+        </div>
+    </section>
+
+    <section id="shape-game" class="hidden py-16 bg-gray-50 text-gray-800" data-aos="fade-up">
+        <div class="max-w-4xl mx-auto text-center">
+            <h3 class="text-4xl heading font-bold mb-4 text-pink-500" data-i18n="game.title">Shape Matching Game</h3>
+            <p class="mb-6 text-lg" data-i18n="game.description">
+                Drag each shape into the correct slot. You have 30 turns to score at least 200 points!
+            </p>
+
+            <label for="muteToggle" class="mr-2 font-medium" data-i18n="game.mute_label">Mute</label>
+            <button id="muteToggle">🔇</button>
+
+            <label for="speakModeSelect" class="ml-4 font-medium" data-i18n="game.speak_mode_label">🗣️ Speak
+                Mode:</label>
+            <select id="speakModeSelect">
+                <option value="target" data-i18n="game.speak_mode_target">Đọc tên ô</option>
+                <option value="dragged" data-i18n="game.speak_mode_dragged">Đọc hình kéo</option>
+            </select>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6 justify-items-center mb-10">
+                <div class="drop-zone" data-shape="circle" data-i18n="shapes.circle">Drop: Circle</div>
+                <div class="drop-zone" data-shape="square" data-i18n="shapes.square">Drop: Square</div>
+                <div class="drop-zone" data-shape="triangle" data-i18n="shapes.triangle">Drop: Triangle</div>
+                <div class="drop-zone" data-shape="rectangle" data-i18n="shapes.rectangle">Drop: Rectangle</div>
+                <div class="drop-zone" data-shape="oval" data-i18n="shapes.oval">Drop: Oval</div>
+                <div class="drop-zone" data-shape="hexagon" data-i18n="shapes.hexagon">Drop: Hexagon</div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4 mb-6" id="shapes-container"></div>
+
+            <div class="text-center mt-6 space-y-2">
+                <p class="text-lg font-semibold" data-i18n="game.goal">🎯 Goal: 200 points</p>
+                <p class="text-xl">
+                    <span data-i18n="game.score">Score:</span> <span id="score">0</span> |
+                    <span data-i18n="game.turns_left">Turns left:</span> <span id="turns">30</span>
+                </p>
+                <p id="game-result" class="text-2xl font-bold text-pink-600 mt-2"></p>
+
+                <button id="restartBtn"
+                    class="hidden mt-4 px-4 py-2 bg-yellow-500 text-white font-semibold rounded hover:bg-yellow-600 transition"
+                    data-i18n="game.restart">
+                    🔄 Play Again
+                </button>
+            </div>
+
+            <audio id="winSound" src="./src/sounds/win.mp3"></audio>
+            <audio id="loseSound" src="./src/sounds/lose.mp3"></audio>
+        </div>
+    </section>
+
     <!-- Mission Section -->
     <section class="py-16 px-6 max-w-4xl mx-auto text-center" data-aos="fade-up">
-        <h2 class="text-3xl md:text-4xl font-extrabold mb-4" data-i18n="home.mission_title">Our Mission</h2>
+        <h2 class="heading text-3xl md:text-4xl mb-4" data-i18n="home.mission_title">Our Mission</h2>
         <p class="text-gray-600 max-w-xl mx-auto text-lg md:text-xl" data-i18n="home.mission_desc">
             To revolutionize early childhood education by creating interactive learning tools that make math concepts
             accessible, engaging, and fun for all children, regardless of ability.
@@ -150,7 +229,7 @@
 
     <!-- Features Section -->
     <section id="features" class="py-16 px-6 bg-gray-50 max-w-7xl mx-auto" data-aos="fade-up">
-        <h2 class="text-3xl md:text-4xl font-extrabold text-center mb-4" data-i18n="home.features_title">Interactive
+        <h2 class="heading text-3xl md:text-4xl text-center mb-4" data-i18n="home.features_title">Interactive
             Learning Features</h2>
         <p class="text-center text-gray-600 mb-12 max-w-3xl mx-auto text-lg md:text-xl" data-i18n="home.features_desc">
             ShapeSpeak brings math to life through multi-sensory experiences
@@ -218,7 +297,7 @@
     <section id="technology" class="py-16 px-6 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12"
         data-aos="fade-up">
         <div class="md:w-1/2">
-            <h2 class="text-3xl font-extrabold mb-4 max-w-lg" data-i18n="home.tech_title">
+            <h2 class="heading text-3xl mb-4 max-w-lg" data-i18n="home.tech_title">
                 AI Camera Recognition Technology
             </h2>
             <p class="text-gray-700 mb-6 max-w-lg text-lg leading-relaxed" data-i18n="home.tech_intro">
@@ -265,34 +344,93 @@
     <!-- Impact Section -->
     <section id="impact" class="bg-pink-300/80 text-white py-20 px-6" data-aos="fade-up">
         <div class="max-w-7xl mx-auto text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-extrabold max-w-4xl mx-auto leading-tight"
-                data-i18n="home.impact_title">
+
+            <h2 class="heading text-pink-500 text-3xl md:text-4xl max-w-4xl mx-auto leading-tight text-center" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;" data-i18n="home.impact_title">
                 Transformative Educational Impact
             </h2>
-            <p class="mt-4 max-w-3xl mx-auto text-lg leading-relaxed font-normal" data-i18n="home.impact_desc">
+
+            <p class="text-pink-950 font-bold mt-4 max-w-3xl mx-auto text-xl md:text-2xl leading-relaxed text-center"
+                data-i18n="home.impact_desc">
                 ShapeSpeak addresses critical developmental needs during the crucial early childhood years
             </p>
+
         </div>
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
             <div class="bg-pink-200/80 rounded-lg p-8 space-y-3">
-                <h3 class="text-5xl font-extrabold leading-none">2–4</h3>
-                <h4 class="text-xl font-extrabold" data-i18n="home.impact_box1_title">Optimal Learning Age</h4>
-                <p class="text-pink-100/80 font-normal text-lg leading-relaxed" data-i18n="home.impact_box1_desc">
+                <h3 class="text-5xl text-pink-400 font-extrabold leading-none" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;">2–4</h3>
+                <h4 class="heading text-xl text-pink-400" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;" data-i18n="home.impact_box1_title">Optimal Learning Age</h4>
+                <p class="text-pink-950 font-bold text-lg leading-relaxed" data-i18n="home.impact_box1_desc">
                     Targets the critical developmental window when children's brains are most receptive to foundational
                     math concepts
                 </p>
             </div>
             <div class="bg-pink-200/80 rounded-lg p-8 space-y-3">
-                <h3 class="text-5xl font-extrabold leading-none">100%</h3>
-                <h4 class="text-xl font-extrabold" data-i18n="home.impact_box2_title">Inclusive Design</h4>
-                <p class="text-pink-100/80 font-normal text-lg leading-relaxed" data-i18n="home.impact_box2_desc">
+                <h3 class="text-5xl text-pink-400 font-extrabold leading-none" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;">100%</h3>
+                <h4 class="heading text-xl text-pink-400" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;" data-i18n="home.impact_box2_title">Inclusive Design</h4>
+                <p class="text-pink-950 font-bold text-lg leading-relaxed" data-i18n="home.impact_box2_desc">
                     Equally effective for sighted and visually impaired children, promoting equal learning opportunities
                 </p>
             </div>
             <div class="bg-pink-200/80 rounded-lg p-8 space-y-3">
-                <h3 class="text-5xl font-extrabold leading-none">5x</h3>
-                <h4 class="text-xl font-extrabold" data-i18n="home.impact_box3_title">Engagement Boost</h4>
-                <p class="text-pink-100/80 font-normal text-lg leading-relaxed" data-i18n="home.impact_box3_desc">
+                <h3 class="text-5xl text-pink-400 font-extrabold leading-none" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;">5x</h3>
+                <h4 class="heading text-xl text-pink-400" style="text-shadow:
+  -1px -1px 0 #fff,
+   1px -1px 0 #fff,
+  -1px  1px 0 #fff,
+   1px  1px 0 #fff,
+  -2px  0px 0 #fff,
+   2px  0px 0 #fff,
+   0px -2px 0 #fff,
+   0px  2px 0 #fff;" data-i18n="home.impact_box3_title">Engagement Boost</h4>
+                <p class="text-pink-950 font-bold text-lg leading-relaxed" data-i18n="home.impact_box3_desc">
                     Multi-sensory approach increases engagement and retention compared to traditional methods
                 </p>
             </div>
@@ -302,7 +440,7 @@
     <main class="max-w-6xl mx-auto px-6 md:px-12 py-16">
         <!-- Our Vision & Values Heading -->
         <section class="mb-24" data-aos="fade-up">
-            <h2 class="text-center text-3xl font-extrabold mb-12 text-slate-900" data-i18n="home.vision_heading">
+            <h2 class="heading text-center text-3xl  mb-12 text-slate-900" data-i18n="home.vision_heading">
                 Our Vision &amp; Values
             </h2>
 
@@ -375,7 +513,7 @@
 
         <!-- What Experts Say -->
         <section data-aos="fade-up">
-            <h2 class="text-center text-3xl font-extrabold mb-10 text-slate-900" data-i18n="home.expert_title">What
+            <h2 class="heading text-center text-3xl mb-10 text-slate-900" data-i18n="home.expert_title">What
                 Experts Say</h2>
             <div class="max-w-3xl bg-white rounded-xl shadow-md p-8 mx-auto">
                 <div class="flex items-center space-x-5 mb-4">
@@ -462,7 +600,28 @@
     <script src="./src/js/menu.js"></script>
     <script type="module" src="./src/js/profile.js"></script>
     <script type="module" src="./src/js/logout.js"></script>
+    <script type="module" src="./src/js/home.js"></script>
+    <script type="module" src="./src/js/shapegame.js"></script>
     <script type="module" src="./src/js/chatbot.js"></script>
+    <script>
+        // ✅ Bắt sự kiện khi bấm nút Discover
+        document.querySelector('.discover-btn')?.addEventListener('click', () => {
+            const topRated = document.getElementById("top-rated-products");
+            const shapeGame = document.getElementById("shape-game");
+
+            [topRated, shapeGame].forEach(el => {
+                if (el) {
+                    el.classList.remove("hidden");
+                    el.classList.add("transition", "duration-500", "opacity-0", "translate-y-10");
+
+                    setTimeout(() => {
+                        el.classList.remove("opacity-0", "translate-y-10");
+                    }, 10);
+                }
+            });
+        });
+    </script>
+    
     <script type="module">
         import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
         enableSessionKeepAlive();

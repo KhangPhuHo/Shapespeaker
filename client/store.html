@@ -37,12 +37,6 @@
       transform: translateY(-50%);
     }
 
-    #suggestions div:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      cursor: pointer;
-      border-radius: 6px;
-    }
-
     .popup-container {
       display: none;
       /* Mặc định ẩn */
@@ -86,7 +80,7 @@
     }
 
     .popup::-webkit-scrollbar-thumb {
-      background-color:#F9A8D4;
+      background-color: #F9A8D4;
       border-radius: 10px;
       border: 2px solid transparent;
       /* để tạo khoảng cách giữa track */
@@ -143,6 +137,23 @@
       transform: rotateY(180deg);
     }
 
+    .suggestion-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background-color 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+      background-color: rgba(251, 207, 232, 0.8);
+      /* giống bg-pink-200/80 */
+    }
+
+    .suggestion-item.selected {
+      background-color: rgba(251, 207, 232, 1);
+      /* giống bg-pink-200 */
+    }
+
     @media (max-width: 640px) {
       .face {
         padding: 1rem;
@@ -172,7 +183,7 @@
       data-i18n="store.placeholder" onkeyup="search(); suggest()" placeholder="Search for a product..." />
 
     <!-- Gợi ý tìm kiếm -->
-    <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-gray-900 bg-white rounded-xl shadow"></div>
+    <div id="suggestions" class="w-full sm:w-[80%] md:w-[500px] text-gray-900  bg-white rounded-xl shadow"></div>
   </div>
 
   <!-- ✅ Popup container bao phủ màn hình -->

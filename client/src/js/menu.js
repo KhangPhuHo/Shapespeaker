@@ -12,7 +12,7 @@ function renderMenu() {
       <button id="menu-toggle" class="md:hidden text-xl">
         <i class="fa fa-bars"></i>
       </button>
-      <a href="home.html" class="flex items-center text-pink-300/80 font-extrabold space-x-2">
+      <a href="home.html" class="flex items-center text-pink-400 font-extrabold space-x-2">
         <img src="./src/img/shapespeakicon.jpg" class="w-10 h-10 aspect-square rounded-full object-cover" alt="shapespeak">
         <span class="text-lg md:text-xl">ShapeSpeak</span>
       </a>

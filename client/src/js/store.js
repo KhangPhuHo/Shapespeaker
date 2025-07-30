@@ -9,7 +9,20 @@ import { showToast } from './toast.js';
 // 👉 Gọi khi DOM ready
 document.addEventListener("DOMContentLoaded", () => {
   renderBuyNowPopup();
-  listenToProductRatings();
+
+  listenToProductRatings(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get("productId");
+    if (productId) {
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        showPopup(product);
+
+        // ✅ Xoá productId khỏi URL sau khi hiển thị
+        history.replaceState(null, "", "store.html");
+      }
+    }
+  });
 });
 
 let products = [];
@@ -30,16 +43,15 @@ function formatCurrency(amount) {
     : `${amount.toLocaleString()} VND`;
 }
 
-function listenToProductRatings() {
-  loadingDiv.classList.remove("hidden");
-  productList.innerHTML = "";
+function listenToProductRatings(callback = null) {
+  if (loadingDiv) loadingDiv.classList.remove("hidden");
+  if (productList) productList.innerHTML = "";
 
   getDocs(collection(db, "shapespeakitems")).then(snapshot => {
     products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
     products.forEach(product => {
       const ratingsRef = collection(db, `shapespeakitems/${product.id}/ratings`);
-
       onSnapshot(ratingsRef, snap => {
         const ratings = snap.docs.map(d => d.data());
         const avg = ratings.length > 0
@@ -52,11 +64,13 @@ function listenToProductRatings() {
         const topRatedId = sorted[0]?.avgRating > 0 ? sorted[0].id : null;
 
         displayProducts(sorted, topRatedId);
+
+        if (callback) callback(); // ✅ Gọi callback sau khi load
       });
     });
 
     renderPriceFilters();
-    loadingDiv.classList.add("hidden");
+    if (loadingDiv) loadingDiv.classList.add("hidden");
   });
 }
 
@@ -336,19 +350,21 @@ function renderBuyNowPopup() {
 
 let selectedProduct = null;
 
-window.showBuyNowPopup = function (product) {
+function showBuyNowPopup(product) {
   selectedProduct = product;
   document.getElementById("buy-now-qty").value = 1;
   document.getElementById("buy-now-stock").innerText = `Còn lại: ${product.stock}`;
   document.getElementById("buy-now-popup").classList.remove("hidden");
 };
+window.showBuyNowPopup = showBuyNowPopup;
 
-window.hideBuyNowPopup = function () {
+function hideBuyNowPopup() {
   selectedProduct = null;
   document.getElementById("buy-now-popup").classList.add("hidden");
 };
+window.hideBuyNowPopup = hideBuyNowPopup;
 
-window.confirmBuyNow = function () {
+function confirmBuyNow() {
   const qty = parseInt(document.getElementById("buy-now-qty").value);
   if (!selectedProduct || isNaN(qty) || qty < 1) {
     //showToast("Số lượng không hợp lệ", "error");
@@ -393,6 +409,7 @@ window.confirmBuyNow = function () {
   setTimeout(() => (window.location.href = "cart.html"), 1000);
 
 };
+window.confirmBuyNow = confirmBuyNow;
 
 //Giá tiền
 popupContainer.addEventListener("click", e => {
@@ -503,16 +520,23 @@ window.suggest = function () {
     const item = document.createElement("div");
     item.className = "suggestion-item";
     item.textContent = product.name;
-    item.onclick = () => {
+
+    item.addEventListener("click", () => {
+      suggestionsDiv.querySelectorAll(".suggestion-item").forEach(el => {
+        el.classList.remove("selected");
+      });
+
+      item.classList.add("selected");
       searchInput.value = product.name;
       search();
       suggestionsDiv.innerHTML = "";
-    };
+    });
+
     suggestionsDiv.appendChild(item);
   });
 };
 
-window.addToCart = function (product) {
+function addToCart (product) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const existing = cart.find(item => item.id === product.id);
 
@@ -536,6 +560,7 @@ window.addToCart = function (product) {
   );
 
 };
+window.addToCart = addToCart;
 
 function changeLanguage(lang) {
   localStorage.setItem("lang", lang);
@@ -547,4 +572,3 @@ const vnBtn = document.getElementById("lang-vn");
 const enBtn = document.getElementById("lang-en");
 if (vnBtn) vnBtn.addEventListener("click", () => changeLanguage("vn"));
 if (enBtn) enBtn.addEventListener("click", () => changeLanguage("en"));
-

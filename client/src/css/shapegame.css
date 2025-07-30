@@ -1,0 +1,42 @@
+.drop-zone {
+    width: 120px;
+    height: 120px;
+    border: 2px dashed #f472b6;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    background-color: #fff0f6;
+    color: #db2777;
+  }
+
+  .shape {
+    width: 80px;
+    height: 80px;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shape[data-shape="circle"] { border-radius: 50%; background-color: #f87171; }
+  .shape[data-shape="square"] { background-color: #60a5fa; }
+  .shape[data-shape="triangle"] {
+    width: 0; height: 0;
+    border-left: 40px solid transparent;
+    border-right: 40px solid transparent;
+    border-bottom: 80px solid #34d399;
+    background: none;
+  }
+  .shape[data-shape="rectangle"] { background-color: #fbbf24; width: 100px; height: 60px; }
+  .shape[data-shape="oval"] {
+    background-color: #a78bfa;
+    border-radius: 50%;
+    width: 100px;
+    height: 60px;
+  }
+  .shape[data-shape="hexagon"] {
+    background-color: #f472b6;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
