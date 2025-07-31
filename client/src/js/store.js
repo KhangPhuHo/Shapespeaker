@@ -111,9 +111,9 @@ function renderProductCard(product, topRatedId = null) {
         ⭐ Best
       </div>` : ""}
   </div>
-  <h3 class="text-yellow-600 font-semibold text-base truncate mb-1">${product.name || 'No name'}</h3>
+  <h3 class="text-rose-600 font-semibold text-base truncate mb-1">${product.name || 'No name'}</h3>
   <p class="text-sm text-center text-gray-900">
-    <span class="text-white font-medium" data-i18n="store.price">Price:</span> ${formatCurrency(product.price)}
+    <span class="text-white font-bold" data-i18n="store.price">Price:</span> ${formatCurrency(product.price)}
   </p>
 `;
 

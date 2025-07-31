@@ -70,11 +70,11 @@ hover:shadow-xl transition-all duration-300 p-3 transform hover:scale-105 hover:
     class="w-full h-40 object-cover rounded-t-xl border-b border-pink-200" loading="lazy" />
     
   <div class="p-3 space-y-1">
-    <h3 class="text-base font-semibold text-yellow-600 truncate">${product.name || 'No name'}</h3>
+    <h3 class="text-base font-semibold text-rose-600 truncate">${product.name || 'No name'}</h3>
 
     <p class="text-xs sm:text-sm text-gray-700 flex flex-wrap gap-x-2 justify-center">
-      <span><span data-i18n="news.created">Created:</span> ${createdAt}</span>
-      <span><span data-i18n="news.updated">Updated:</span> ${updatedAt || 'Not updated'}</span>
+      <span class="font-bold"><span data-i18n="news.created">Created:</span> ${createdAt}</span>
+      <span class="font-bold"><span data-i18n="news.updated">Updated:</span> ${updatedAt || 'Not updated'}</span>
     </p>
   </div>
     `;
