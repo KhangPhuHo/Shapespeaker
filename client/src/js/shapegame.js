@@ -1,4 +1,5 @@
 import { getTranslation } from './language.js';
+import interact from 'https://cdn.jsdelivr.net/npm/@interactjs/interactjs/index.js';
 import {
     getSpeakMode,
     isMuted,
@@ -83,18 +84,25 @@ async function speakShape(shapeKey, correctKey) {
 }
 
 // 🌟 Vẽ 1 hình ngẫu nhiên
-let currentPreview = null;
-
 function renderShape() {
     const shapeType = shapes[Math.floor(Math.random() * shapes.length)];
     const shape = document.createElement("div");
     shape.classList.add("shape");
-    shape.setAttribute("draggable", true);
     shape.dataset.shape = shapeType;
     shape.style.backgroundColor = shapeColors[shapeType] || "#ccc";
-    shape.style.margin = "0 auto";
+    shape.style.position = "absolute";
+    shape.style.top = "50%";
+    shape.style.left = "50%";
+    shape.style.transform = "translate(-50%, -50%)";
+    shape.style.touchAction = "none";
+    shape.style.zIndex = "10";
+    shape.style.transition = "transform 0.2s ease";
 
-    // 🎨 Style theo từng loại hình
+    // 👇 Reset ban đầu
+    shape.setAttribute('data-x', 0);
+    shape.setAttribute('data-y', 0);
+
+    // Style theo hình
     switch (shapeType) {
         case "circle":
             shape.style.width = "80px";
@@ -130,75 +138,74 @@ function renderShape() {
             break;
     }
 
-    // 👉 Gán drag event
-    shape.addEventListener("dragstart", (e) => {
-        e.dataTransfer.setData("shape", shapeType);
-
-        // 🧼 Xóa preview cũ nếu còn
-        if (currentPreview) {
-            currentPreview.remove();
-            currentPreview = null;
-        }
-
-        // ✅ Tạo preview trong suốt
-        const transparentPreview = document.createElement("div");
-        transparentPreview.style.width = "1px";
-        transparentPreview.style.height = "1px";
-        transparentPreview.style.opacity = "0"; // hoàn toàn trong suốt
-        transparentPreview.style.position = "fixed";
-        transparentPreview.style.top = "0";
-        transparentPreview.style.left = "0";
-        transparentPreview.style.zIndex = "-9999"; // để không ảnh hưởng UI
-
-        document.body.appendChild(transparentPreview);
-        currentPreview = transparentPreview;
-
-        // ✅ Dùng preview trong suốt làm drag image
-        e.dataTransfer.setDragImage(transparentPreview, 0, 0);
-
-        // ✅ Tạo hình preview thật sự để theo chuột (tuỳ chọn nếu bạn vẫn muốn hiệu ứng)
-        const floatingPreview = shape.cloneNode(true);
-        floatingPreview.style.position = "fixed";
-        floatingPreview.style.pointerEvents = "none";
-        floatingPreview.style.opacity = "0.8";
-        floatingPreview.style.transform = "scale(1.1)";
-        floatingPreview.style.zIndex = "9999";
-        document.body.appendChild(floatingPreview);
-
-        const moveHandler = (event) => {
-            floatingPreview.style.left = `${event.clientX - 50}px`;
-            floatingPreview.style.top = `${event.clientY - 50}px`;
-        };
-        document.addEventListener("dragover", moveHandler);
-
-        // 🧹 Dọn dẹp sau khi drag
-        shape.addEventListener("dragend", () => {
-            document.removeEventListener("dragover", moveHandler);
-            if (floatingPreview) floatingPreview.remove();
-            if (currentPreview) currentPreview.remove();
-            currentPreview = null;
-        }, { once: true });
-    });
-
-    // 🧹 Xoá hình cũ & render hình mới
+    // Xoá hình cũ
     container.innerHTML = "";
     container.appendChild(shape);
-}
 
-// 🌟 Xử lý kéo thả
-document.querySelectorAll(".drop-zone").forEach((zone) => {
-    zone.addEventListener("dragover", e => e.preventDefault());
-    zone.addEventListener("drop", async (e) => {
-        e.preventDefault();
-        const draggedShape = e.dataTransfer.getData("shape");
-        const correctShape = zone.dataset.shape;
-        turns--;
+    // 👉 Reset tương tác trước đó
+    interact('.shape').unset();
 
-        if (draggedShape === correctShape) score += 10;
-        await speakShape(draggedShape, correctShape);
-        updateGameState();
+    // 🧲 Setup kéo thả
+    interact('.shape').draggable({
+        inertia: false,
+        modifiers: [
+            interact.modifiers.restrict({
+                restriction: document.body, // giới hạn trong body
+                endOnly: true
+            })
+        ],
+        listeners: {
+            move(event) {
+                const target = event.target;
+                const dx = event.dx;
+                const dy = event.dy;
+
+                const x = (parseFloat(target.getAttribute('data-x')) || 0) + dx;
+                const y = (parseFloat(target.getAttribute('data-y')) || 0) + dy;
+
+                target.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+                target.setAttribute('data-x', x);
+                target.setAttribute('data-y', y);
+            },
+            end(event) {
+                const dragged = event.target;
+                const draggedShape = dragged.dataset.shape;
+                const shapeRect = dragged.getBoundingClientRect();
+                const dropZones = document.querySelectorAll('.drop-zone');
+
+                let droppedCorrectly = false;
+
+                (async () => {
+                    for (const zone of dropZones) {
+                        const zoneRect = zone.getBoundingClientRect();
+                        const isOverlapping =
+                            shapeRect.left < zoneRect.right &&
+                            shapeRect.right > zoneRect.left &&
+                            shapeRect.top < zoneRect.bottom &&
+                            shapeRect.bottom > zoneRect.top;
+
+                        if (isOverlapping) {
+                            const correctShape = zone.dataset.shape;
+                            turns--;
+                            if (draggedShape === correctShape) score += 10;
+                            await speakShape(draggedShape, correctShape);
+                            updateGameState();
+                            droppedCorrectly = true;
+                            break;
+                        }
+                    }
+
+                    if (!droppedCorrectly) {
+                        // 👉 Reset vị trí về giữa
+                        dragged.setAttribute('data-x', 0);
+                        dragged.setAttribute('data-y', 0);
+                        dragged.style.transform = "translate(-50%, -50%)";
+                    }
+                })();
+            }
+        }
     });
-});
+}
 
 // 🌟 Cập nhật game
 async function updateGameState() {

@@ -254,7 +254,7 @@ async function showPopup(product) {
             class="sticker-option cursor-pointer w-12 h-12 rounded hover:scale-110 transition" />
         </div>
       </div>
-      <br><br>
+      <br><br><br><br>
     </div>
 
     <!-- BACK FACE -->
