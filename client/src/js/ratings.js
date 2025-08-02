@@ -13,7 +13,7 @@ import { showToast } from './toast.js';
 export function loadRatingUI(productId, containerEl = null) {
   const container = document.createElement("div");
   container.id = "rating-section";
-  container.className = "text-center my-3";
+  container.className = "text-center my-3 mb-12";
 
   const starsDiv = document.createElement("div");
   starsDiv.className = "flex justify-center gap-1 text-yellow-400 text-2xl mb-1";
