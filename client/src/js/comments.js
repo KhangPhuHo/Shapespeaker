@@ -400,7 +400,7 @@ stickers?.forEach(btn => {
       sending = false;
       return;
     }
-
+    
     await addDoc(collection(db, "comments"), {
       postId,
       uid: currentUser.uid,

@@ -40,6 +40,7 @@ async function loadProducts(container) {
     <td>${coffee.details}</td>
     <td>${coffee.price} VND</td>
     <td>${coffee.stock}</td>
+    <td>${coffee.category}</td>
     <td>
       <button onclick="location.href='edit-product-intro.html?productId=${coffeeId}'"
         class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
@@ -66,7 +67,7 @@ async function loadProducts(container) {
   } catch (error) {
     showToast("❌ Lỗi khi tải sản phẩm", "error");
     console.error("Error fetching products:", error);
-    container.innerHTML = "<tr><td colspan='5'>Lỗi khi tải danh sách sản phẩm.</td></tr>";
+    container.innerHTML = `<tr><td colspan='9'>Lỗi khi tải danh sách sản phẩm.</td></tr>`;
   }
 }
 
@@ -97,6 +98,7 @@ window.getOneProduct = async (productId) => {
       document.getElementById("edit-details").value = productItem.details;
       document.getElementById("edit-price").value = productItem.price;
       document.getElementById("edit-stock").value = productItem.stock;
+      document.getElementById("edit-category").value = productItem.category;
       document.getElementById("form-edit-product").dataset.productId = productId;
       openModal2();
     } else {
@@ -118,6 +120,7 @@ window.updateProduct = async (event) => {
     details: document.getElementById("edit-details").value,
     price: Number(document.getElementById("edit-price").value),
     stock: Number(document.getElementById("edit-stock").value),
+    category: document.getElementById("edit-category").value,
   };
 
   if (picture) {
@@ -168,6 +171,7 @@ async function handleAddProduct() {
     details: document.getElementById("details").value,
     price: Number(document.getElementById("price").value),
     stock: Number(document.getElementById("stock").value),
+    category: document.getElementById("category").value,
   };
 
   if (picture) {

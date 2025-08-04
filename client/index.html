@@ -21,6 +21,7 @@
     <div id="Menu"></div><br><br><br>
     <div id="bot"></div>
     <div id="wrapper">
+        <!--Danh sách thêm mới sản phẩm -->
         <h1 class="text-2xl font-bold text-center text-pink-300">Danh sách Sản Phẩm</h1>
         <button id="themmoi" onclick="openModal()">+ Thêm mới sản phẩm</button>
         <div id="tableinfo" style="overflow-x:auto;">
@@ -32,6 +33,7 @@
                         <th>Chi tiết</th>
                         <th>Giá</th>
                         <th>Số lượng</th>
+                        <th>Danh mục</th>
                         <th>Giới thiệu</th>
                         <th>Action</th>
                         <th>Edit</th>
@@ -73,6 +75,16 @@
                         <label for="stock">Số lượng</label>
                         <input type="number" id="stock" name="stock" required />
                     </div>
+                    <div class="form-group">
+                        <label for="category">Danh mục</label>
+                        <select id="category" name="category" required>
+                            <option value="" disabled selected>Chọn danh mục</option>
+                            <option value="đồ chơi">Đồ chơi</option>
+                            <option value="giáo dục">Giáo dục</option>
+                            <option value="toán">Toán học</option>
+                            <option value="thẻ">Thẻ</option>
+                        </select>
+                    </div>
                     <button type="submit">Tạo sản phẩm</button>
                 </form>
             </div>
@@ -111,6 +123,17 @@
                         <label for="stock">Số lượng</label>
                         <input type="number" id="edit-stock" name="stock" required>
                     </div>
+                    <div class="form-group">
+                        <label for="edit-category">Danh mục</label>
+                        <select id="edit-category" name="category" required>
+                            <option value="" disabled selected>Chọn danh mục</option>
+                            <option value="đồ chơi">Đồ chơi</option>
+                            <option value="giáo dục">Giáo dục</option>
+                            <option value="toán">Toán học</option>
+                            <option value="thẻ">Thẻ</option>
+                        </select>
+                    </div>
+
                     <button id="submit" type="submit">Xác nhận sửa sản phẩm</button>
                 </form>
             </div>

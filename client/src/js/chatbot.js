@@ -129,7 +129,7 @@ async function speakFPT(text) {
     // URL file audio async
     const audioUrl = data.async;
     // Đợi 3 giây rồi phát audio
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 1000));
     const audio = new Audio(audioUrl);
     await audio.play();
   } else if (data.data) {
@@ -202,7 +202,7 @@ async function handleCommand(input) {
   }
 
   // ✅ Cấp quyền admin
-    if (command === "user" && parts.length >= 4 && parts[3] === "admin") {
+  if (command === "user" && parts.length >= 4 && parts[3] === "admin") {
     const targetUserId = parts[2];
 
     try {
@@ -295,7 +295,7 @@ async function getWitResponse(input) {
   try {
     const res = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
       headers: {
-        Authorization: `Bearer ${accessToken}`, // 👉 giữ nguyên token Wit.ai của bạn
+        Authorization: `Bearer ${accessToken}`,
       },
     });
     const data = await res.json();
@@ -308,19 +308,81 @@ async function getWitResponse(input) {
     switch (intent) {
       case 'greeting':
         return 'Xin chào! Tôi có thể giúp gì cho bạn?';
+
       case 'ask_product':
-        return 'Hiện tại chúng tôi có nhiều sản phẩm hấp dẫn, bạn quan tâm sản phẩm nào?';
+        // 🔁 Gọi về server Node.js để lấy sản phẩm thật từ Firestore
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/get-product-info", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể lấy thông tin sản phẩm lúc này.";
+        }
+
+      case 'get_price_of_product':
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/product-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input }), // 👈 gửi input gốc
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể lấy thông tin giá sản phẩm lúc này.";
+        }
+
+      case 'check_stock':
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/check-stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input }), // 👈 gửi input gốc
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể kiểm tra tồn kho lúc này.";
+        }
+
+      case 'compare_price':
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/compare-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể so sánh giá lúc này.";
+        }
+
       case 'buy_product':
         return 'Vậy bạn hãy chọn vào sản phẩm, sau đó chọn vào nút mua ngay hoặc giỏ hàng, thêm thông tin là được';
+
       case 'ask_features':
         return 'Tôi có chức năng trò chuyện, giải đáp các thắc mắc của bạn về sản phẩm và dịch vụ bên chúng tôi';
+
       case 'thank':
         return 'Cảm ơn bạn vì đã tin tưởng dịch vụ bên mình';
+
       case 'goodbye':
         return 'Cảm ơn bạn, hẹn gặp lại!';
+
       default:
         return 'Tôi chưa hiểu rõ ý bạn, bạn có thể nói lại không?';
     }
+
   } catch (error) {
     console.error('Lỗi gọi Wit.ai:', error);
     return 'Xin lỗi, có lỗi khi xử lý yêu cầu của bạn.';
