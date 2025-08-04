@@ -168,6 +168,21 @@ input {
   transition: border 0.2s;
 }
 
+#category {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  color: black;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border 0.2s;
+}
+
+#category:focus {
+  border-color: #ffca28;
+  outline: none;
+}
+
 input:focus {
   border-color: #ffca28;
   outline: none;

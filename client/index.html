@@ -77,13 +77,45 @@
                     </div>
                     <div class="form-group">
                         <label for="category">Danh mục</label>
-                        <select id="category" name="category" required>
-                            <option value="" disabled selected>Chọn danh mục</option>
-                            <option value="đồ chơi">Đồ chơi</option>
-                            <option value="giáo dục">Giáo dục</option>
-                            <option value="toán">Toán học</option>
-                            <option value="thẻ">Thẻ</option>
-                        </select>
+                        <div class="relative inline-block w-64" id="multi-select-category">
+                            <button id="dropdownToggle" type="button"
+                                class="w-full bg-white border border-gray-300 rounded px-4 py-2 text-left flex justify-between items-center">
+                                <span id="selectedText">Chọn danh mục</span>
+                                <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <ul id="dropdownMenu"
+                                class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-md hidden max-h-60 overflow-auto">
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="đồ chơi" class="category-option" />
+                                        <span>Đồ chơi</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="giáo dục" class="category-option" />
+                                        <span>Giáo dục</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="toán" class="category-option" />
+                                        <span>Toán học</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="thẻ" class="category-option" />
+                                        <span>Thẻ</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <button type="submit">Tạo sản phẩm</button>
                 </form>
@@ -125,13 +157,45 @@
                     </div>
                     <div class="form-group">
                         <label for="edit-category">Danh mục</label>
-                        <select id="edit-category" name="category" required>
-                            <option value="" disabled selected>Chọn danh mục</option>
-                            <option value="đồ chơi">Đồ chơi</option>
-                            <option value="giáo dục">Giáo dục</option>
-                            <option value="toán">Toán học</option>
-                            <option value="thẻ">Thẻ</option>
-                        </select>
+                        <div class="relative w-full" id="multi-select-edit-category">
+                            <button id="editCategoryDropdownBtn" type="button"
+                                class="w-full bg-white border border-gray-300 rounded px-4 py-2 text-left flex justify-between items-center">
+                                <span id="editCategorySelectedText">Chọn danh mục</span>
+                                <svg class="w-4 h-4 ml-2" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.08 1.04l-4.25 4.25a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <ul id="editCategoryDropdown"
+                                class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-md hidden max-h-60 overflow-auto">
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="đồ chơi" class="edit-category-option" />
+                                        <span>Đồ chơi</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="giáo dục" class="edit-category-option" />
+                                        <span>Giáo dục</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="toán" class="edit-category-option" />
+                                        <span>Toán học</span>
+                                    </label>
+                                </li>
+                                <li class="p-2 hover:bg-gray-100">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" value="thẻ" class="edit-category-option" />
+                                        <span>Thẻ</span>
+                                    </label>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     <button id="submit" type="submit">Xác nhận sửa sản phẩm</button>

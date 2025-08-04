@@ -14,18 +14,13 @@ import {
 
 const API_BASE_URL = "https://shapespeaker.onrender.com";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("content");
-  loadProducts(container);
-});
-
 // ✅ Load danh sách sản phẩm
 async function loadProducts(container) {
   let htmls = "";
   try {
     const querySnapshot = await getDocs(collection(db, "shapespeakitems"));
     if (querySnapshot.empty) {
-      container.innerHTML = "<tr><td colspan='5'>Không có sản phẩm nào.</td></tr>";
+      container.innerHTML = "<tr><td colspan='9'>Không có sản phẩm nào.</td></tr>";
       return;
     }
 
@@ -40,7 +35,7 @@ async function loadProducts(container) {
     <td>${coffee.details}</td>
     <td>${coffee.price} VND</td>
     <td>${coffee.stock}</td>
-    <td>${coffee.category}</td>
+    <td>${Array.isArray(coffee.category) ? coffee.category.join(", ") : coffee.category}</td>
     <td>
       <button onclick="location.href='edit-product-intro.html?productId=${coffeeId}'"
         class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
@@ -98,7 +93,21 @@ window.getOneProduct = async (productId) => {
       document.getElementById("edit-details").value = productItem.details;
       document.getElementById("edit-price").value = productItem.price;
       document.getElementById("edit-stock").value = productItem.stock;
-      document.getElementById("edit-category").value = productItem.category;
+      const categories = Array.isArray(productItem.category)
+        ? productItem.category
+        : [productItem.category];
+
+      document.querySelectorAll(".edit-category-option").forEach(cb => {
+        cb.checked = categories.includes(cb.value);
+      });
+      const updateEditText = () => {
+        const checked = Array.from(document.querySelectorAll(".edit-category-option:checked"))
+          .map(cb => cb.value);
+        document.getElementById("editCategorySelectedText").textContent =
+          checked.length > 0 ? checked.join(", ") : "Chọn danh mục";
+      };
+      updateEditText();
+
       document.getElementById("form-edit-product").dataset.productId = productId;
       openModal2();
     } else {
@@ -120,7 +129,8 @@ window.updateProduct = async (event) => {
     details: document.getElementById("edit-details").value,
     price: Number(document.getElementById("edit-price").value),
     stock: Number(document.getElementById("edit-stock").value),
-    category: document.getElementById("edit-category").value,
+    category: Array.from(document.querySelectorAll(".edit-category-option:checked"))
+      .map(cb => cb.value),
   };
 
   if (picture) {
@@ -166,12 +176,19 @@ async function AddProduct(newProduct) {
 // ✅ Xử lý thêm sản phẩm
 async function handleAddProduct() {
   let picture = document.getElementById("picture").files[0];
+
+
+  // ✅ Lấy các danh mục được chọn
+  const selectedCategories = Array.from(
+    document.querySelectorAll(".category-option:checked")
+  ).map(cb => cb.value);
+
   let newProduct = {
     name: document.getElementById("name").value,
     details: document.getElementById("details").value,
     price: Number(document.getElementById("price").value),
     stock: Number(document.getElementById("stock").value),
-    category: document.getElementById("category").value,
+    category: selectedCategories, // ✅ Gán mảng danh mục
   };
 
   if (picture) {
@@ -198,4 +215,55 @@ async function handleAddProduct() {
 document.getElementById("form-new-product").addEventListener("submit", (e) => {
   e.preventDefault();
   handleAddProduct();
+});
+
+// ✅ Cuối file index.js
+
+function initMultiSelectDropdown(wrapperId, toggleBtnId, dropdownId, selectedTextId, checkboxClass) {
+  const wrapper = document.getElementById(wrapperId);
+  const toggleBtn = document.getElementById(toggleBtnId);
+  const dropdown = document.getElementById(dropdownId);
+  const selectedText = document.getElementById(selectedTextId);
+
+  toggleBtn.addEventListener("click", () => {
+    dropdown.classList.toggle("hidden");
+  });
+
+  function updateText() {
+    const checked = Array.from(document.querySelectorAll(`.${checkboxClass}:checked`)).map(cb => cb.value);
+    selectedText.textContent = checked.length > 0 ? checked.join(", ") : "Chọn danh mục";
+  }
+
+  document.querySelectorAll(`.${checkboxClass}`).forEach(cb =>
+    cb.addEventListener("change", updateText)
+  );
+
+  document.addEventListener("click", (e) => {
+    if (!wrapper.contains(e.target)) {
+      dropdown.classList.add("hidden");
+    }
+  });
+
+  updateText(); // Initial
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("content");
+  loadProducts(container);
+
+  initMultiSelectDropdown(
+    "multi-select-category",
+    "dropdownToggle",
+    "dropdownMenu",
+    "selectedText",
+    "category-option"
+  );
+
+  initMultiSelectDropdown(
+    "multi-select-edit-category",
+    "editCategoryDropdownBtn",
+    "editCategoryDropdown",
+    "editCategorySelectedText",
+    "edit-category-option"
+  );
 });
