@@ -345,15 +345,15 @@ async function getWitResponse(input) {
             body: JSON.stringify({ input }),
           });
 
-          const text = await res.text();  // 👈 đọc raw text
+          const text = await res.text();
           console.log("🧾 Server trả về:", text);
 
-          const json = JSON.parse(text);  // 👈 rồi parse thủ công
+          const json = JSON.parse(text);
           return json.reply;
 
         } catch (err) {
           console.error("❌ Lỗi ask_product:", err);
-          return "Xin lỗi, không thể lấy thông tin sản phẩm lúc này.";
+          return "🐢 Ơ... bạn ơi, hệ thống đang hơi chậm. Bạn thử lại sau một chút nhé!";
         }
       }
 

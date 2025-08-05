@@ -154,27 +154,28 @@ app.post("/wit/get-product-info", async (req, res) => {
       .get();
 
     if (snapshot.empty) {
+      const reply = "🐰 Ơ... Hiện tại chưa có sản phẩm nào cả. Bạn quay lại sau nhé!";
       console.warn("⚠️ Không có sản phẩm nào");
-      const reply = "Hiện chưa có sản phẩm nào trong hệ thống.";
       return res.json({ reply });
     }
 
     const products = [];
     snapshot.forEach(doc => {
       const d = doc.data();
-      const name = d.name || "Không rõ tên";
-      const price = typeof d.price === 'number' ? `${d.price} VND` : "Không rõ giá";
-      products.push(`${name} - ${price}`);
+      const name = d.name || "Sản phẩm chưa đặt tên";
+      const price = typeof d.price === 'number' ? `${d.price.toLocaleString()} VND` : "Chưa có giá";
+      products.push(`🎁 ${name} — 💰 ${price}`);
     });
 
-    const reply = `📦 Một số sản phẩm bên mình:\n- ${products.join('\n- ')}\nBạn có thể gõ tên sản phẩm hoặc chọn trực tiếp để xem thêm nhé.`;
+    const reply = `🎉 Đây là một số món đồ chơi thú vị nè:\n\n${products.join('\n')}\n\n🌟 Bạn có thể gõ tên sản phẩm để xem thêm nhé!`;
     console.log("✅ Trả về:", reply);
 
     return res.json({ reply });
 
   } catch (error) {
     console.error("❌ Lỗi get-product-info:", error);
-    return res.status(500).json({ reply: "❌ Không thể lấy thông tin sản phẩm." });
+    const reply = "😢 Ôi không! Có lỗi xảy ra khi lấy danh sách sản phẩm. Bạn đợi một lát nhé.";
+    return res.status(500).json({ reply });
   }
 });
 
@@ -218,31 +219,38 @@ app.post("/wit/products-by-category", async (req, res) => {
 });
 
 // ✅ /wit/product-price - hỗ trợ entity product
+const removeDiacritics = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
 app.post("/wit/product-price", async (req, res) => {
-  const { input, entities } = req.body;
+  const { input, entities, fallbackProduct } = req.body;
   if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung câu hỏi." });
 
   try {
-    const normalizedInput = input.toLowerCase();
-    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+    const normInput = removeDiacritics(input.toLowerCase());
+    const entityProduct = removeDiacritics(entities?.["product:product"]?.[0]?.value?.toLowerCase() || fallbackProduct || "");
 
-    const entityProduct = entities?.product?.[0]?.value?.toLowerCase();
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
     let matchedProduct = null;
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      const productName = data.name?.toLowerCase();
-      if (productName && (normalizedInput.includes(productName) || (entityProduct && productName.includes(entityProduct)))) {
+      const productName = removeDiacritics(data.name?.toLowerCase() || "");
+
+      const match = productName.includes(entityProduct) ||
+                    entityProduct.includes(productName) ||
+                    normInput.includes(productName);
+
+      if (match && !matchedProduct) {
         matchedProduct = { ...data, id: doc.id };
       }
     });
 
     if (!matchedProduct) {
-      return res.json({ reply: "❌ Mình không tìm thấy sản phẩm bạn đang hỏi. Vui lòng kiểm tra lại tên nhé." });
+      return res.json({ reply: "😕 Mình chưa tìm thấy sản phẩm bạn hỏi. Bạn thử nhập tên đầy đủ hơn nhé!" });
     }
 
     return res.json({
-      reply: `🔍 Giá của ${matchedProduct.name} là ${matchedProduct.price.toLocaleString()} VND.`,
+      reply: `💰 Giá của **${matchedProduct.name}** là **${matchedProduct.price.toLocaleString()} VND**.`,
       productId: matchedProduct.id
     });
 
@@ -251,6 +259,7 @@ app.post("/wit/product-price", async (req, res) => {
     return res.status(500).json({ reply: "❌ Có lỗi xảy ra khi tìm giá sản phẩm." });
   }
 });
+
 
 // ✅ /wit/check-stock - hỗ trợ entity product & quantity
 app.post("/wit/check-stock", async (req, res) => {
