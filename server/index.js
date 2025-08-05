@@ -230,29 +230,33 @@ app.post("/wit/product-price", async (req, res) => {
     const entityProduct = removeDiacritics(entities?.["product:product"]?.[0]?.value?.toLowerCase() || fallbackProduct || "");
 
     const snapshot = await admin.firestore().collection("shapespeakitems").get();
-    let matchedProduct = null;
+    const matchedProducts = [];
 
     snapshot.forEach(doc => {
       const data = doc.data();
       const productName = removeDiacritics(data.name?.toLowerCase() || "");
 
       const match = productName.includes(entityProduct) ||
-                    entityProduct.includes(productName) ||
-                    normInput.includes(productName);
+        entityProduct.includes(productName) ||
+        normInput.includes(productName);
 
-      if (match && !matchedProduct) {
-        matchedProduct = { ...data, id: doc.id };
+      if (match) {
+        matchedProducts.push({ ...data, id: doc.id });
       }
     });
 
-    if (!matchedProduct) {
+    if (matchedProducts.length === 0) {
       return res.json({ reply: "😕 Mình chưa tìm thấy sản phẩm bạn hỏi. Bạn thử nhập tên đầy đủ hơn nhé!" });
     }
 
-    return res.json({
-      reply: `💰 Giá của **${matchedProduct.name}** là **${matchedProduct.price.toLocaleString()} VND**.`,
-      productId: matchedProduct.id
-    });
+    // Format kết quả
+    const list = matchedProducts.map(p =>
+      `- ${p.name} – **${p.price.toLocaleString()} VND**`
+    ).join('\n');
+
+    const reply = `💡 Mình tìm thấy các sản phẩm liên quan:\n${list}\nBạn muốn xem chi tiết sản phẩm nào thì có thể gõ tên cụ thể nhé.`;
+
+    return res.json({ reply });
 
   } catch (error) {
     console.error("❌ Lỗi xử lý hỏi giá:", error);
@@ -260,56 +264,71 @@ app.post("/wit/product-price", async (req, res) => {
   }
 });
 
-
 // ✅ /wit/check-stock - hỗ trợ entity product & quantity
 app.post("/wit/check-stock", async (req, res) => {
-  const { input, entities } = req.body;
+  const { input, entities, fallbackProduct } = req.body;
   if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung để kiểm tra tồn kho." });
 
   try {
-    const normalized = input.toLowerCase();
-    const snapshot = await admin.firestore().collection("shapespeakitems").get();
-
-    const entityProduct = entities?.product?.[0]?.value?.toLowerCase();
-    const entityQty = entities?.['wit$number:quantity']?.[0]?.value;
+    const normInput = removeDiacritics(input.toLowerCase());
+    const entityProduct = removeDiacritics(entities?.["product:product"]?.[0]?.value?.toLowerCase() || fallbackProduct || "");
+    const entityQty = entities?.["wit$number:number"]?.[0]?.value;  // 🔄 fix đúng entity
     let askedQty = entityQty ? parseInt(entityQty) : null;
 
-    // fallback nếu entity không có
+    // fallback nếu Wit.ai không tách số
     if (!askedQty) {
       const quantityMatch = input.match(/\b(\d+)\b/);
       askedQty = quantityMatch ? parseInt(quantityMatch[1]) : null;
     }
 
-    let matchedProduct = null;
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+    const matchedProducts = [];
+
     snapshot.forEach(doc => {
       const data = doc.data();
-      const name = data.name?.toLowerCase();
-      if (name && (normalized.includes(name) || (entityProduct && name.includes(entityProduct)))) {
-        matchedProduct = data;
+      const name = removeDiacritics(data.name?.toLowerCase() || "");
+
+      const match = name.includes(entityProduct) ||
+                    entityProduct.includes(name) ||
+                    normInput.includes(name);
+
+      if (match) {
+        matchedProducts.push({ ...data, id: doc.id });
       }
     });
 
-    if (!matchedProduct) {
-      return res.json({ reply: "❌ Không tìm thấy sản phẩm để kiểm tra tồn kho." });
+    if (matchedProducts.length === 0) {
+      return res.json({ reply: "😕 Mình chưa tìm thấy sản phẩm bạn hỏi. Bạn thử nhập rõ tên hơn nhé!" });
     }
 
+    // Nếu có nhiều thì chọn sản phẩm đầu tiên (hoặc bạn có thể cải thiện theo độ gần khớp sau)
+    const product = matchedProducts[0];
+
+    // Phản hồi theo số lượng hỏi
     if (askedQty !== null) {
-      if (matchedProduct.stock >= askedQty) {
-        return res.json({ reply: `✅ Có đủ ${askedQty} cái "${matchedProduct.name}". Hiện còn ${matchedProduct.stock} cái.` });
+      if (product.stock >= askedQty) {
+        return res.json({
+          reply: `✅ Có đủ **${askedQty}** cái **"${product.name}"**. Hiện còn **${product.stock}** cái trong kho.`,
+          productId: product.id
+        });
       } else {
-        return res.json({ reply: `❌ Hiện chỉ còn ${matchedProduct.stock} cái "${matchedProduct.name}", không đủ ${askedQty} cái.` });
+        return res.json({
+          reply: `⚠️ Chỉ còn **${product.stock}** cái **"${product.name}"**, không đủ **${askedQty}** cái rồi.`,
+          productId: product.id
+        });
       }
     }
 
-    const reply = matchedProduct.stock > 0
-      ? `✅ Sản phẩm "${matchedProduct.name}" hiện còn ${matchedProduct.stock} cái.`
-      : `❌ Sản phẩm "${matchedProduct.name}" hiện đã hết hàng.`;
+    // Nếu không hỏi cụ thể số lượng
+    const reply = product.stock > 0
+      ? `📦 Sản phẩm **"${product.name}"** hiện còn **${product.stock}** cái.`
+      : `❌ Sản phẩm **"${product.name}"** hiện đã hết hàng.`
 
-    return res.json({ reply });
+    return res.json({ reply, productId: product.id });
 
   } catch (error) {
     console.error("❌ Lỗi kiểm tra tồn kho:", error);
-    return res.status(500).json({ reply: "❌ Lỗi khi kiểm tra tồn kho." });
+    return res.status(500).json({ reply: "❌ Có lỗi xảy ra khi kiểm tra tồn kho." });
   }
 });
 
