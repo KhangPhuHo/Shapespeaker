@@ -94,27 +94,54 @@ app.post("/upload", (req, res) => {
   });
 });
 
-// 🔐 Wit proxy: gọi Wit API từ backend để giấu token
+// 🔐 Proxy gọi Wit.ai API để giấu token và phân tích thông minh hơn
 app.post("/wit/message", async (req, res) => {
   const { input } = req.body;
 
-  if (!input) {
-    return res.status(400).json({ error: "Thiếu input" });
+  if (!input || typeof input !== 'string') {
+    return res.status(400).json({ error: "❌ Thiếu hoặc sai định dạng input" });
   }
 
   try {
-    const response = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
+    const witURL = `https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}&n=3&verbose=true&include=all`;
+
+    const response = await fetch(witURL, {
       headers: {
         Authorization: `Bearer ${process.env.WIT_ACCESS_TOKEN}`,
+        "Content-Type": "application/json"
       },
     });
 
     const data = await response.json();
-    return res.json(data);
+
+    // 🔍 Ghi log để theo dõi dễ huấn luyện thêm
+    console.log("🧠 [Wit.ai] Text:", data.text);
+    console.log("➡️ Intents:", data.intents?.map(i => `${i.name} (${i.confidence})`).join(", ") || "None");
+    console.log("🔎 Entities:", JSON.stringify(data.entities || {}, null, 2));
+
+    const topIntent = data.intents?.[0];
+
+    // ✅ Nếu độ tin cậy thấp thì cảnh báo
+    if (!topIntent || topIntent.confidence < 0.4) {
+      return res.json({
+        text: data.text,
+        intent: "unknown",
+        confidence: topIntent?.confidence || 0,
+        reply: "❓ Tôi chưa hiểu rõ ý bạn, bạn có thể nói lại rõ hơn không?",
+        entities: data.entities || {}
+      });
+    }
+
+    return res.json({
+      text: data.text,
+      intent: topIntent.name,
+      confidence: topIntent.confidence,
+      entities: data.entities || {}
+    });
 
   } catch (error) {
     console.error("❌ Lỗi gọi Wit.ai:", error);
-    return res.status(500).json({ error: "Lỗi khi gọi Wit.ai" });
+    return res.status(500).json({ error: "❌ Lỗi khi gọi Wit.ai" });
   }
 });
 
