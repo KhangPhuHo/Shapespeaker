@@ -177,6 +177,7 @@
 
     "invalid_quantity": "Invalid quantity.",
     "limit_quantity": "You can only buy up to {max} more.",
+    "out_of_stock": "{name} is out of stock",
     "added_quantity": "Added {qty} x {name} to cart.",
     "added_to_cart": "🌟 Added \"{name}\" to cart!"
   },

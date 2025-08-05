@@ -413,7 +413,7 @@ async function getWitResponse(input) {
           const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/compare-price", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input }),
+            body: JSON.stringify({ input, entities }), // 👈 gửi cả entities nếu có
           });
           const witData = await witServerRes.json();
           return witData.reply;
@@ -424,9 +424,49 @@ async function getWitResponse(input) {
 
       case 'buy_product':
         if (conversationContext.lastProduct && conversationContext.lastQuantity) {
-          return `✅ Đã ghi nhận bạn muốn mua ${conversationContext.lastQuantity} cái ${conversationContext.lastProduct}. Vui lòng vào trang chi tiết để hoàn tất.`;
+          try {
+            const res = await fetch("https://shapespeaker.onrender.com/wit/products");
+            const allProducts = await res.json();
+
+            const inputName = conversationContext.lastProduct.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            const qty = parseInt(conversationContext.lastQuantity);
+
+            const found = allProducts.find(p => {
+              const name = p.name?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+              return name.includes(inputName) || inputName.includes(name);
+            });
+
+            if (!found) {
+              return `❌ Không tìm thấy sản phẩm "${conversationContext.lastProduct}" để thêm vào giỏ.`;
+            }
+
+            // ✅ Tạo object để thêm
+            const productToAdd = {
+              ...found,
+              quantity: qty,
+              fromConversation: true // ⚠ để không toast trong addToCart()
+            };
+
+            const result = window.addToCart?.(productToAdd);
+
+            if (!result || !result.success) {
+              return result?.message || "❌ Không thể thêm vào giỏ. Vui lòng thử lại.";
+            }
+
+            setTimeout(() => {
+              window.location.href = "cart.html";
+            }, 1000);
+
+            return result.message + " Đang chuyển đến giỏ hàng...";
+
+          } catch (err) {
+            console.error("❌ Lỗi xử lý mua hàng:", err);
+            return "❌ Có lỗi xảy ra khi xử lý yêu cầu mua hàng.";
+          }
         }
-        return 'Vậy bạn hãy chọn vào sản phẩm, sau đó chọn vào nút mua ngay hoặc giỏ hàng, thêm thông tin là được';
+
+        return "🤔 Bạn muốn mua sản phẩm gì và bao nhiêu cái? Hãy nói rõ hơn nhé!";
+
 
       case 'ask_features':
         return 'Tôi có chức năng trò chuyện, giải đáp các thắc mắc của bạn về sản phẩm và dịch vụ bên chúng tôi';

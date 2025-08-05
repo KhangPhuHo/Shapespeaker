@@ -333,41 +333,66 @@ app.post("/wit/check-stock", async (req, res) => {
 });
 
 // ✅ /wit/compare-price - hỗ trợ entity product
+// Map category sang emoji
+const categoryEmoji = {
+  "giáo dục": "📘",
+  "đồ chơi": "🧸",
+  "thẻ": "🃏",
+  "hình học": "🧩",
+};
+
 app.post("/wit/compare-price", async (req, res) => {
   const { input, entities } = req.body;
   if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung để so sánh." });
 
   try {
-    const normalized = input.toLowerCase();
-    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+    const normInput = removeDiacritics(input.toLowerCase());
+    const productNames = (entities?.["product:product"] || []).map(p =>
+      removeDiacritics(p.value.toLowerCase())
+    );
 
-    const productNames = entities?.product?.map(p => p.value.toLowerCase()) || [];
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
     const matched = [];
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      const name = data.name?.toLowerCase();
-      if (name && (normalized.includes(name) || productNames.some(p => name.includes(p)))) {
-        matched.push(data);
-      }
+      const name = removeDiacritics(data.name?.toLowerCase() || "");
+      const match = normInput.includes(name) || productNames.some(p => name.includes(p));
+      if (match) matched.push({ ...data, id: doc.id });
     });
 
     if (matched.length < 2) {
-      return res.json({ reply: "❌ Cần ít nhất 2 sản phẩm để so sánh giá." });
+      return res.json({ reply: "😅 Cần ít nhất **2 sản phẩm** để thực hiện so sánh." });
     }
 
-    const [a, b] = matched.slice(0, 2);
-    let result = `💸 Giá của \"${a.name}\" là ${a.price.toLocaleString()} VND.\n📦 Giá của \"${b.name}\" là ${b.price.toLocaleString()} VND.\n`;
+    // Sắp xếp theo giá tăng dần
+    matched.sort((a, b) => a.price - b.price);
 
-    result += a.price === b.price
-      ? "🟰 Hai sản phẩm có cùng mức giá."
-      : `🔻 \"${a.price < b.price ? a.name : b.name}\" có giá rẻ hơn.`;
+    const lines = matched.map((p, idx) => {
+      const emoji = p.category?.find(c => categoryEmoji[c.toLowerCase()]) || "";
+      const icon = categoryEmoji[emoji.toLowerCase()] || "📦";
+      return `${idx === 0 ? "🔻" : "•"} ${icon} **${p.name}** – ${p.price.toLocaleString()} VND`;
+    });
 
-    return res.json({ reply: result });
+    const reply = `📊 So sánh giá các sản phẩm bạn hỏi:\n${lines.join('\n')}\n\n👉 **"${matched[0].name}"** là sản phẩm rẻ nhất.`;
+
+    return res.json({ reply });
 
   } catch (error) {
-    console.error("❌ Lỗi so sánh giá:", error);
+    console.error("❌ Lỗi nâng cấp so sánh giá:", error);
     return res.status(500).json({ reply: "❌ Lỗi khi so sánh giá sản phẩm." });
+  }
+});
+
+// 🔐 GET all products for chatbot
+app.get("/wit/products", async (req, res) => {
+  try {
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(products);
+  } catch (err) {
+    console.error("❌ Lỗi lấy danh sách sản phẩm:", err);
+    res.status(500).json({ error: "Lỗi khi lấy sản phẩm" });
   }
 });
 
