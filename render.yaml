@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: shapespeaker-backend
+    env: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: node index.js  # Hoặc đổi thành server.js nếu cần
+    envVars:
+      - key: WIT_ACCESS_TOKEN
+        sync: false
+
+      - key: FIREBASE_TYPE
+        sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_CLIENT_ID
+        sync: false
+      - key: FIREBASE_AUTH_URI
+        sync: false
+      - key: TOKEN_URI
+        sync: false
+      - key: FIREBASE_AUTH_PROVIDER_X509_CERT_URL
+        sync: false
+      - key: FIREBASE_CLIENT_X509_CERT_URL
+        sync: false
