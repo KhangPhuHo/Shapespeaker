@@ -388,7 +388,13 @@ app.post("/wit/compare-price", async (req, res) => {
 app.get("/wit/products", async (req, res) => {
   try {
     const snapshot = await admin.firestore().collection("shapespeakitems").get();
-    const products = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const products = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id, // Đây là uid nếu bạn dùng doc ID làm mã định danh
+        ...data
+      };
+    });
     res.json(products);
   } catch (err) {
     console.error("❌ Lỗi lấy danh sách sản phẩm:", err);

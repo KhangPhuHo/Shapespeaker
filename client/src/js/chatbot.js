@@ -442,9 +442,13 @@ async function getWitResponse(input) {
 
             // ✅ Tạo object để thêm
             const productToAdd = {
-              ...found,
+              id: found.id, // Hoặc found.uid nếu bạn dùng uid riêng
+              name: found.name,
+              picture: found.picture,
+              price: found.price,
+              stock: found.stock,
               quantity: qty,
-              fromConversation: true // ⚠ để không toast trong addToCart()
+              fromConversation: true
             };
 
             const result = window.addToCart?.(productToAdd);
