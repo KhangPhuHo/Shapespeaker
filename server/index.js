@@ -78,7 +78,7 @@ app.post("/upload", (req, res) => {
       resource_type: "auto", // ✅ Cho phép Cloudinary tự nhận diện ảnh/video
     }, (err, result) => {
       // ✅ Xoá file tạm (dù có lỗi hay không)
-      fs.unlink(req.file.path, () => {});
+      fs.unlink(req.file.path, () => { });
 
       if (err) {
         console.error("❌ Lỗi Cloudinary:", err);
@@ -92,6 +92,170 @@ app.post("/upload", (req, res) => {
       });
     });
   });
+});
+
+// ✅ /wit/products-by-category - hỗ trợ entity category
+app.post("/wit/products-by-category", async (req, res) => {
+  const { input, entities } = req.body;
+  if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung câu hỏi." });
+
+  try {
+    const inputLower = input.toLowerCase();
+    const knownCategories = ['đồ chơi', 'giáo dục', 'toán', 'thẻ'];
+
+    let matchedCategory = entities?.category || knownCategories.find(cat => inputLower.includes(cat));
+
+    if (!matchedCategory) {
+      return res.json({ reply: "❌ Không xác định được danh mục từ câu hỏi. Bạn thử nói rõ hơn nhé." });
+    }
+
+    const snap = await admin.firestore().collection("shapespeakitems")
+      .where("category", "==", matchedCategory).get();
+
+    if (snap.empty) {
+      return res.json({ reply: `❌ Không có sản phẩm nào thuộc danh mục "${matchedCategory}".` });
+    }
+
+    const productList = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      productList.push(`${d.name} (${d.price.toLocaleString()} VND)`);
+    });
+
+    return res.json({
+      reply: `🧾 Các sản phẩm thuộc danh mục "${matchedCategory}":\n- ${productList.slice(0, 3).join('\n- ')}`
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi truy vấn theo category:", error);
+    return res.status(500).json({ reply: "❌ Có lỗi khi tìm theo danh mục." });
+  }
+});
+
+// ✅ /wit/product-price - hỗ trợ entity product
+app.post("/wit/product-price", async (req, res) => {
+  const { input, entities } = req.body;
+  if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung câu hỏi." });
+
+  try {
+    const normalizedInput = input.toLowerCase();
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+
+    const entityProduct = entities?.product?.[0]?.value?.toLowerCase();
+    let matchedProduct = null;
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const productName = data.name?.toLowerCase();
+      if (productName && (normalizedInput.includes(productName) || (entityProduct && productName.includes(entityProduct)))) {
+        matchedProduct = { ...data, id: doc.id };
+      }
+    });
+
+    if (!matchedProduct) {
+      return res.json({ reply: "❌ Mình không tìm thấy sản phẩm bạn đang hỏi. Vui lòng kiểm tra lại tên nhé." });
+    }
+
+    return res.json({
+      reply: `🔍 Giá của ${matchedProduct.name} là ${matchedProduct.price.toLocaleString()} VND.`,
+      productId: matchedProduct.id
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi xử lý hỏi giá:", error);
+    return res.status(500).json({ reply: "❌ Có lỗi xảy ra khi tìm giá sản phẩm." });
+  }
+});
+
+// ✅ /wit/check-stock - hỗ trợ entity product & quantity
+app.post("/wit/check-stock", async (req, res) => {
+  const { input, entities } = req.body;
+  if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung để kiểm tra tồn kho." });
+
+  try {
+    const normalized = input.toLowerCase();
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+
+    const entityProduct = entities?.product?.[0]?.value?.toLowerCase();
+    const entityQty = entities?.['wit$number:quantity']?.[0]?.value;
+    let askedQty = entityQty ? parseInt(entityQty) : null;
+
+    // fallback nếu entity không có
+    if (!askedQty) {
+      const quantityMatch = input.match(/\b(\d+)\b/);
+      askedQty = quantityMatch ? parseInt(quantityMatch[1]) : null;
+    }
+
+    let matchedProduct = null;
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const name = data.name?.toLowerCase();
+      if (name && (normalized.includes(name) || (entityProduct && name.includes(entityProduct)))) {
+        matchedProduct = data;
+      }
+    });
+
+    if (!matchedProduct) {
+      return res.json({ reply: "❌ Không tìm thấy sản phẩm để kiểm tra tồn kho." });
+    }
+
+    if (askedQty !== null) {
+      if (matchedProduct.stock >= askedQty) {
+        return res.json({ reply: `✅ Có đủ ${askedQty} cái "${matchedProduct.name}". Hiện còn ${matchedProduct.stock} cái.` });
+      } else {
+        return res.json({ reply: `❌ Hiện chỉ còn ${matchedProduct.stock} cái "${matchedProduct.name}", không đủ ${askedQty} cái.` });
+      }
+    }
+
+    const reply = matchedProduct.stock > 0
+      ? `✅ Sản phẩm "${matchedProduct.name}" hiện còn ${matchedProduct.stock} cái.`
+      : `❌ Sản phẩm "${matchedProduct.name}" hiện đã hết hàng.`;
+
+    return res.json({ reply });
+
+  } catch (error) {
+    console.error("❌ Lỗi kiểm tra tồn kho:", error);
+    return res.status(500).json({ reply: "❌ Lỗi khi kiểm tra tồn kho." });
+  }
+});
+
+// ✅ /wit/compare-price - hỗ trợ entity product
+app.post("/wit/compare-price", async (req, res) => {
+  const { input, entities } = req.body;
+  if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung để so sánh." });
+
+  try {
+    const normalized = input.toLowerCase();
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+
+    const productNames = entities?.product?.map(p => p.value.toLowerCase()) || [];
+    const matched = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const name = data.name?.toLowerCase();
+      if (name && (normalized.includes(name) || productNames.some(p => name.includes(p)))) {
+        matched.push(data);
+      }
+    });
+
+    if (matched.length < 2) {
+      return res.json({ reply: "❌ Cần ít nhất 2 sản phẩm để so sánh giá." });
+    }
+
+    const [a, b] = matched.slice(0, 2);
+    let result = `💸 Giá của \"${a.name}\" là ${a.price.toLocaleString()} VND.\n📦 Giá của \"${b.name}\" là ${b.price.toLocaleString()} VND.\n`;
+
+    result += a.price === b.price
+      ? "🟰 Hai sản phẩm có cùng mức giá."
+      : `🔻 \"${a.price < b.price ? a.name : b.name}\" có giá rẻ hơn.`;
+
+    return res.json({ reply: result });
+
+  } catch (error) {
+    console.error("❌ Lỗi so sánh giá:", error);
+    return res.status(500).json({ reply: "❌ Lỗi khi so sánh giá sản phẩm." });
+  }
 });
 
 // ✅ Xoá user trong Firebase Auth + Firestore

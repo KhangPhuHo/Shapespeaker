@@ -291,6 +291,22 @@ async function handleCommand(input) {
   return "⚠ Lệnh không hợp lệ hoặc chưa hỗ trợ.";
 }
 
+// 🧠 Bộ nhớ context đơn giản tại client
+let conversationContext = {
+  lastIntent: null,
+  lastProduct: null,
+  lastQuantity: null,
+};
+
+// 👉 Tách hàm ra để dễ dùng lại
+function extractEntities(entities) {
+  return {
+    product: entities['product:product']?.[0]?.value || null,
+    quantity: entities['wit$number:number']?.[0]?.value || null,
+    category: entities['category:category']?.[0]?.value || null,
+  };
+}
+
 async function getWitResponse(input) {
   try {
     const res = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
@@ -305,18 +321,23 @@ async function getWitResponse(input) {
       intent = data.intents[0].name;
     }
 
+    const entities = data.entities || {};
+    const { product, quantity, category } = extractEntities(entities);
+
+    // ✅ Cập nhật context nếu có dữ liệu mới
+    if (product) conversationContext.lastProduct = product;
+    if (quantity) conversationContext.lastQuantity = quantity;
+    conversationContext.lastIntent = intent;
+
     switch (intent) {
       case 'greeting':
         return 'Xin chào! Tôi có thể giúp gì cho bạn?';
 
       case 'ask_product':
-        // 🔁 Gọi về server Node.js để lấy sản phẩm thật từ Firestore
         try {
           const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/get-product-info", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           });
           const witData = await witServerRes.json();
           return witData.reply;
@@ -325,18 +346,36 @@ async function getWitResponse(input) {
           return "Xin lỗi, không thể lấy thông tin sản phẩm lúc này.";
         }
 
-      case 'get_price_of_product':
+      case 'products_by_category':
         try {
-          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/product-price", {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/products-by-category", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input }), // 👈 gửi input gốc
+            body: JSON.stringify({ input, entities }),
           });
           const witData = await witServerRes.json();
           return witData.reply;
         } catch (error) {
           console.error("❌ Lỗi gọi server:", error);
-          return "Xin lỗi, không thể lấy thông tin giá sản phẩm lúc này.";
+          return "Xin lỗi, không thể lấy sản phẩm theo danh mục lúc này.";
+        }
+
+      case 'get_price_of_product':
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/product-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input,
+              entities,
+              fallbackProduct: conversationContext.lastProduct,
+            }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi lấy giá:", error);
+          return "Xin lỗi, không thể lấy giá sản phẩm lúc này.";
         }
 
       case 'check_stock':
@@ -344,12 +383,17 @@ async function getWitResponse(input) {
           const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/check-stock", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ input }), // 👈 gửi input gốc
+            body: JSON.stringify({
+              input,
+              entities,
+              fallbackProduct: conversationContext.lastProduct,
+              fallbackQuantity: conversationContext.lastQuantity,
+            }),
           });
           const witData = await witServerRes.json();
           return witData.reply;
         } catch (error) {
-          console.error("❌ Lỗi gọi server:", error);
+          console.error("❌ Lỗi kiểm tra tồn kho:", error);
           return "Xin lỗi, không thể kiểm tra tồn kho lúc này.";
         }
 
@@ -363,11 +407,14 @@ async function getWitResponse(input) {
           const witData = await witServerRes.json();
           return witData.reply;
         } catch (error) {
-          console.error("❌ Lỗi gọi server:", error);
+          console.error("❌ Lỗi so sánh giá:", error);
           return "Xin lỗi, không thể so sánh giá lúc này.";
         }
 
       case 'buy_product':
+        if (conversationContext.lastProduct && conversationContext.lastQuantity) {
+          return `✅ Đã ghi nhận bạn muốn mua ${conversationContext.lastQuantity} cái ${conversationContext.lastProduct}. Vui lòng vào trang chi tiết để hoàn tất.`;
+        }
         return 'Vậy bạn hãy chọn vào sản phẩm, sau đó chọn vào nút mua ngay hoặc giỏ hàng, thêm thông tin là được';
 
       case 'ask_features':
