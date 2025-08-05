@@ -150,7 +150,6 @@ app.post("/wit/get-product-info", async (req, res) => {
 
     const snapshot = await admin.firestore()
       .collection("shapespeakitems")
-      .orderBy("createdAt", "desc")
       .limit(3)
       .get();
 
