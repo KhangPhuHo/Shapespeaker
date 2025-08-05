@@ -10,6 +10,7 @@ services:
       - key: WIT_ACCESS_TOKEN
         sync: false
 
+      # Firebase
       - key: FIREBASE_TYPE
         sync: false
       - key: FIREBASE_PROJECT_ID
@@ -29,4 +30,12 @@ services:
       - key: FIREBASE_AUTH_PROVIDER_X509_CERT_URL
         sync: false
       - key: FIREBASE_CLIENT_X509_CERT_URL
+        sync: false
+
+      # ✅ Cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_SECRET_KEY
         sync: false

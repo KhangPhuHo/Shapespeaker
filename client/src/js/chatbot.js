@@ -309,10 +309,12 @@ function extractEntities(entities) {
 
 async function getWitResponse(input) {
   try {
-    const res = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
+    const res = await fetch("https://shapespeaker.onrender.com/wit/message", {
+      method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
       },
+      body: JSON.stringify({ input }),
     });
     const data = await res.json();
 

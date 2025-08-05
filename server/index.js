@@ -31,11 +31,11 @@ app.use(cors({
   origin: [
     "http://localhost:5500",
     "http://127.0.0.1:5500",
-    //"https://shapespeaker-dh3kestrb-grr20091s-projects.vercel.app"
     "https://shapespeaker.vercel.app"
   ],
   methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
+  allowedHeaders: ["Content-Type", "Authorization", "Origin", "Accept"],
+  credentials: true,
 }));
 
 // ✅ Bắt tất cả OPTIONS request để không bị block bởi preflight
@@ -92,6 +92,30 @@ app.post("/upload", (req, res) => {
       });
     });
   });
+});
+
+// 🔐 Wit proxy: gọi Wit API từ backend để giấu token
+app.post("/wit/message", async (req, res) => {
+  const { input } = req.body;
+
+  if (!input) {
+    return res.status(400).json({ error: "Thiếu input" });
+  }
+
+  try {
+    const response = await fetch(`https://api.wit.ai/message?v=20230616&q=${encodeURIComponent(input)}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.WIT_ACCESS_TOKEN}`,
+      },
+    });
+
+    const data = await response.json();
+    return res.json(data);
+
+  } catch (error) {
+    console.error("❌ Lỗi gọi Wit.ai:", error);
+    return res.status(500).json({ error: "Lỗi khi gọi Wit.ai" });
+  }
 });
 
 // ✅ /wit/products-by-category - hỗ trợ entity category
