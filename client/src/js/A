@@ -161,3 +161,33 @@ app.post("/wit/message", async (req, res) => {
     return res.status(500).json({ error: "Lỗi khi gọi Wit.ai" });
   }
 });
+
+
+app.post("/wit/get-product-info", async (req, res) => {
+  try {
+    console.log("📥 [get-product-info] Nhận request:", req.body); // log input
+
+    const snapshot = await admin.firestore().collection("shapespeakitems")
+      .orderBy("createdAt", "desc")
+      .limit(3)
+      .get();
+
+    if (snapshot.empty) {
+      return res.json({ reply: "Hiện chưa có sản phẩm nào trong hệ thống." });
+    }
+
+    const products = [];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      products.push(`${d.name} - ${d.price.toLocaleString()} VND`);
+    });
+
+    return res.json({
+      reply: `📦 Một số sản phẩm bên mình:\n- ${products.join('\n- ')}\nBạn có thể gõ tên sản phẩm hoặc chọn trực tiếp để xem thêm nhé.`
+    });
+
+  } catch (error) {
+    console.error("❌ Lỗi get-product-info:", error);
+    return res.status(500).json({ reply: "❌ Không thể lấy thông tin sản phẩm." });
+  }
+});

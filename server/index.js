@@ -120,28 +120,62 @@ app.post("/wit/message", async (req, res) => {
     console.log("🔎 Entities:", JSON.stringify(data.entities || {}, null, 2));
 
     const topIntent = data.intents?.[0];
+    const confidence = topIntent?.confidence || 0;
 
-    // ✅ Nếu độ tin cậy thấp thì cảnh báo
-    if (!topIntent || topIntent.confidence < 0.4) {
-      return res.json({
-        text: data.text,
-        intent: "unknown",
-        confidence: topIntent?.confidence || 0,
-        reply: "❓ Tôi chưa hiểu rõ ý bạn, bạn có thể nói lại rõ hơn không?",
-        entities: data.entities || {}
-      });
+    const responsePayload = {
+      text: data.text,
+      intent: topIntent?.name || "unknown",
+      confidence,
+      entities: data.entities || {},
+    };
+
+    // ⚠️ Nếu độ tin cậy thấp, thêm cảnh báo
+    if (confidence < 0.4) {
+      console.warn("⚠️ Confidence thấp:", confidence);
+      responsePayload.warning = "⚠️ Đây là dự đoán với độ tin cậy thấp, có thể không đúng ý bạn.";
     }
 
-    return res.json({
-      text: data.text,
-      intent: topIntent.name,
-      confidence: topIntent.confidence,
-      entities: data.entities || {}
-    });
+    return res.json(responsePayload);
 
   } catch (error) {
     console.error("❌ Lỗi gọi Wit.ai:", error);
     return res.status(500).json({ error: "❌ Lỗi khi gọi Wit.ai" });
+  }
+});
+
+// ✅ /wit/get-product-info - giả sử trả 3 sản phẩm nổi bật
+app.post("/wit/get-product-info", async (req, res) => {
+  try {
+    console.log("📥 Nhận request /wit/get-product-info");
+
+    const snapshot = await admin.firestore()
+      .collection("shapespeakitems")
+      .orderBy("createdAt", "desc")
+      .limit(3)
+      .get();
+
+    if (snapshot.empty) {
+      console.warn("⚠️ Không có sản phẩm nào");
+      const reply = "Hiện chưa có sản phẩm nào trong hệ thống.";
+      return res.json({ reply });
+    }
+
+    const products = [];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      const name = d.name || "Không rõ tên";
+      const price = typeof d.price === 'number' ? `${d.price} VND` : "Không rõ giá";
+      products.push(`${name} - ${price}`);
+    });
+
+    const reply = `📦 Một số sản phẩm bên mình:\n- ${products.join('\n- ')}\nBạn có thể gõ tên sản phẩm hoặc chọn trực tiếp để xem thêm nhé.`;
+    console.log("✅ Trả về:", reply);
+
+    return res.json({ reply });
+
+  } catch (error) {
+    console.error("❌ Lỗi get-product-info:", error);
+    return res.status(500).json({ reply: "❌ Không thể lấy thông tin sản phẩm." });
   }
 });
 
@@ -151,17 +185,18 @@ app.post("/wit/products-by-category", async (req, res) => {
   if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung câu hỏi." });
 
   try {
-    const inputLower = input.toLowerCase();
     const knownCategories = ['đồ chơi', 'giáo dục', 'toán', 'thẻ'];
-
-    let matchedCategory = entities?.category || knownCategories.find(cat => inputLower.includes(cat));
+    const inputLower = input.toLowerCase();
+    const entityCategory = entities?.['category:category']?.[0]?.value?.toLowerCase();
+    let matchedCategory = entityCategory || knownCategories.find(cat => inputLower.includes(cat));
 
     if (!matchedCategory) {
       return res.json({ reply: "❌ Không xác định được danh mục từ câu hỏi. Bạn thử nói rõ hơn nhé." });
     }
 
     const snap = await admin.firestore().collection("shapespeakitems")
-      .where("category", "==", matchedCategory).get();
+      .where("category", "array-contains", matchedCategory)
+      .get();
 
     if (snap.empty) {
       return res.json({ reply: `❌ Không có sản phẩm nào thuộc danh mục "${matchedCategory}".` });

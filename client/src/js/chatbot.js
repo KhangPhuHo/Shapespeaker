@@ -318,10 +318,12 @@ async function getWitResponse(input) {
     });
     const data = await res.json();
 
-    let intent = 'none';
-    if (data.intents && data.intents.length > 0) {
-      intent = data.intents[0].name;
+    if (data.warning) {
+      console.warn("🤖 BOT CẢNH BÁO:", data.warning);
+      // Có thể hiển thị alert nhẹ cho người dùng
     }
+
+    const intent = data.intent || 'none';  // ✅ an toàn và đúng hơn
 
     const entities = data.entities || {};
     const { product, quantity, category } = extractEntities(entities);
@@ -335,18 +337,25 @@ async function getWitResponse(input) {
       case 'greeting':
         return 'Xin chào! Tôi có thể giúp gì cho bạn?';
 
-      case 'ask_product':
+      case 'ask_product': {
         try {
-          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/get-product-info", {
+          const res = await fetch("https://shapespeaker.onrender.com/wit/get-product-info", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input }),
           });
-          const witData = await witServerRes.json();
-          return witData.reply;
-        } catch (error) {
-          console.error("❌ Lỗi gọi server:", error);
+
+          const text = await res.text();  // 👈 đọc raw text
+          console.log("🧾 Server trả về:", text);
+
+          const json = JSON.parse(text);  // 👈 rồi parse thủ công
+          return json.reply;
+
+        } catch (err) {
+          console.error("❌ Lỗi ask_product:", err);
           return "Xin lỗi, không thể lấy thông tin sản phẩm lúc này.";
         }
+      }
 
       case 'products_by_category':
         try {
