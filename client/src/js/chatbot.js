@@ -298,85 +298,143 @@ let conversationContext = {
   lastQuantity: null,
 };
 
+// 👉 Tách hàm ra để dễ dùng lại
 function extractEntities(entities) {
   return {
-    product: entities?.product?.[0]?.value?.toLowerCase() || null,
-    quantity: entities?.['wit$number:quantity']?.[0]?.value || null,
-    category: entities?.category?.[0]?.value?.toLowerCase() || null,
+    product: entities['product:product']?.[0]?.value || null,
+    quantity: entities['wit$number:number']?.[0]?.value || null,
+    category: entities['category:category']?.[0]?.value || null,
   };
 }
 
 async function getWitResponse(input) {
   try {
-    const res = await fetch("/wit/message", {
+    const res = await fetch("https://shapespeaker.onrender.com/wit/message", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ input }),
     });
     const data = await res.json();
-    const intent = data.intents?.[0]?.name || 'none';
+
+    let intent = 'none';
+    if (data.intents && data.intents.length > 0) {
+      intent = data.intents[0].name;
+    }
+
     const entities = data.entities || {};
     const { product, quantity, category } = extractEntities(entities);
 
-    // Lưu context hội thoại
+    // ✅ Cập nhật context nếu có dữ liệu mới
     if (product) conversationContext.lastProduct = product;
     if (quantity) conversationContext.lastQuantity = quantity;
     conversationContext.lastIntent = intent;
 
-    const callWitRoute = async (route, body = {}) => {
-      try {
-        const res = await fetch(`/wit/${route}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const data = await res.json();
-        return data.reply || "❌ Không có phản hồi.";
-      } catch (err) {
-        console.error(`❌ Lỗi gọi /wit/${route}:`, err);
-        return "⚠️ Lỗi hệ thống. Vui lòng thử lại sau.";
-      }
-    };
-
-    // Phân intent → gọi đúng route
     switch (intent) {
       case 'greeting':
-        return "👋 Xin chào! Tôi có thể giúp gì cho bạn?";
+        return 'Xin chào! Tôi có thể giúp gì cho bạn?';
+
       case 'ask_product':
-        return await callWitRoute("get-product-info");
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/get-product-info", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể lấy thông tin sản phẩm lúc này.";
+        }
+
       case 'products_by_category':
-        return await callWitRoute("products-by-category", { input, entities });
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/products-by-category", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input, entities }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi gọi server:", error);
+          return "Xin lỗi, không thể lấy sản phẩm theo danh mục lúc này.";
+        }
+
       case 'get_price_of_product':
-        return await callWitRoute("product-price", {
-          input, entities,
-          fallbackProduct: conversationContext.lastProduct,
-        });
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/product-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input,
+              entities,
+              fallbackProduct: conversationContext.lastProduct,
+            }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi lấy giá:", error);
+          return "Xin lỗi, không thể lấy giá sản phẩm lúc này.";
+        }
+
       case 'check_stock':
-        return await callWitRoute("check-stock", {
-          input, entities,
-          fallbackProduct: conversationContext.lastProduct,
-          fallbackQuantity: conversationContext.lastQuantity,
-        });
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/check-stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              input,
+              entities,
+              fallbackProduct: conversationContext.lastProduct,
+              fallbackQuantity: conversationContext.lastQuantity,
+            }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi kiểm tra tồn kho:", error);
+          return "Xin lỗi, không thể kiểm tra tồn kho lúc này.";
+        }
+
       case 'compare_price':
-        return await callWitRoute("compare-price", { input });
+        try {
+          const witServerRes = await fetch("https://shapespeaker.onrender.com/wit/compare-price", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input }),
+          });
+          const witData = await witServerRes.json();
+          return witData.reply;
+        } catch (error) {
+          console.error("❌ Lỗi so sánh giá:", error);
+          return "Xin lỗi, không thể so sánh giá lúc này.";
+        }
+
       case 'buy_product':
         if (conversationContext.lastProduct && conversationContext.lastQuantity) {
-          return `✅ Đã ghi nhận bạn muốn mua ${conversationContext.lastQuantity} cái ${conversationContext.lastProduct}.`;
+          return `✅ Đã ghi nhận bạn muốn mua ${conversationContext.lastQuantity} cái ${conversationContext.lastProduct}. Vui lòng vào trang chi tiết để hoàn tất.`;
         }
-        return '🛒 Vui lòng chọn sản phẩm trước khi mua.';
+        return 'Vậy bạn hãy chọn vào sản phẩm, sau đó chọn vào nút mua ngay hoặc giỏ hàng, thêm thông tin là được';
+
       case 'ask_features':
-        return "✨ Tôi có thể giúp bạn tìm giá, tồn kho, so sánh và mua hàng.";
+        return 'Tôi có chức năng trò chuyện, giải đáp các thắc mắc của bạn về sản phẩm và dịch vụ bên chúng tôi';
+
       case 'thank':
-        return "🙏 Cảm ơn bạn đã sử dụng dịch vụ!";
+        return 'Cảm ơn bạn vì đã tin tưởng dịch vụ bên mình';
+
       case 'goodbye':
-        return "👋 Hẹn gặp lại bạn lần sau!";
+        return 'Cảm ơn bạn, hẹn gặp lại!';
+
       default:
-        return "🤖 Tôi chưa hiểu rõ ý bạn. Bạn nói lại giúp mình nhé?";
+        return 'Tôi chưa hiểu rõ ý bạn, bạn có thể nói lại không?';
     }
 
   } catch (error) {
-    console.error('❌ Lỗi gọi getWitResponse:', error);
-    return "⚠️ Có lỗi xảy ra khi xử lý. Vui lòng thử lại.";
+    console.error('Lỗi gọi Wit.ai:', error);
+    return 'Xin lỗi, có lỗi khi xử lý yêu cầu của bạn.';
   }
 }
 
