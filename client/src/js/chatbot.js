@@ -493,7 +493,7 @@ async function getWitResponse(input) {
               return `⚠️ Không thể thêm vào giỏ hàng ở trang này. Vui lòng truy cập "Cửa hàng" để tiếp tục mua.`;
             }
 
-            const result = window.addToCart(productToAdd);
+            const result = await window.addToCart(productToAdd);
 
             if (!result || !result.success) {
               return result?.message || "❌ Không thể thêm vào giỏ. Vui lòng thử lại.";
