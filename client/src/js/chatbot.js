@@ -440,9 +440,8 @@ async function getWitResponse(input) {
               return `❌ Không tìm thấy sản phẩm "${conversationContext.lastProduct}" để thêm vào giỏ.`;
             }
 
-            // ✅ Tạo object để thêm
             const productToAdd = {
-              id: found.id, // Hoặc found.uid nếu bạn dùng uid riêng
+              id: found.id,
               name: found.name,
               picture: found.picture,
               price: found.price,
@@ -451,7 +450,12 @@ async function getWitResponse(input) {
               fromConversation: true
             };
 
-            const result = window.addToCart?.(productToAdd);
+            // ✅ Check if addToCart exists
+            if (typeof window.addToCart !== "function") {
+              return `⚠️ Không thể thêm vào giỏ hàng ở trang này. Vui lòng truy cập "Cửa hàng" để tiếp tục mua.`;
+            }
+
+            const result = window.addToCart(productToAdd);
 
             if (!result || !result.success) {
               return result?.message || "❌ Không thể thêm vào giỏ. Vui lòng thử lại.";
