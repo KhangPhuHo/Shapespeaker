@@ -422,6 +422,17 @@ async function getWitResponse(input) {
           return "Xin lỗi, không thể so sánh giá lúc này.";
         }
 
+      case 'ask_product_rating': {
+        const productName = entities?.product || conversationContext.lastProduct;
+        if (!productName) return "🤔 Bạn muốn hỏi đánh giá của sản phẩm nào?";
+
+        return await getRatingOfProductReply(productName);
+      }
+
+      case 'top_rated_products': {
+        return await getTopRatedProductsReply();
+      }
+
       case 'buy_product':
         if (conversationContext.lastProduct && conversationContext.lastQuantity) {
           try {
@@ -492,6 +503,62 @@ async function getWitResponse(input) {
   } catch (error) {
     console.error('Lỗi gọi Wit.ai:', error);
     return 'Xin lỗi, có lỗi khi xử lý yêu cầu của bạn.';
+  }
+}
+
+// 🔍 Normalize name không dấu để tìm sản phẩm
+function normalizeName(str) {
+  return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+// 📦 Lấy đánh giá của 1 sản phẩm
+async function getRatingOfProductReply(productName) {
+  try {
+    const res = await fetch("https://shapespeaker.onrender.com/wit/products");
+    const allProducts = await res.json();
+
+    const inputName = normalizeName(productName);
+    const found = allProducts.find(p => {
+      const name = normalizeName(p.name || "");
+      return name.includes(inputName) || inputName.includes(name);
+    });
+
+    if (!found) {
+      return `❌ Không tìm thấy sản phẩm "${productName}"`;
+    }
+
+    const ratingRes = await fetch(`https://shapespeaker.onrender.com/wit/ratings/${found.id}`);
+    const data = await ratingRes.json();
+    const { avgRating, totalRatings } = data;
+
+    if (totalRatings === 0) {
+      return `📦 *${found.name}* chưa có lượt đánh giá nào.`;
+    }
+
+    return `📦 *${found.name}* được đánh giá **${avgRating.toFixed(1)}⭐** từ ${totalRatings} lượt đánh giá.`;
+  } catch (err) {
+    console.error("❌ Lỗi lấy đánh giá:", err);
+    return "❌ Đã xảy ra lỗi khi lấy đánh giá sản phẩm.";
+  }
+}
+
+// 🔝 Lấy top 4 sản phẩm được đánh giá cao
+async function getTopRatedProductsReply() {
+  try {
+    const res = await fetch("https://shapespeaker.onrender.com/wit/top-rated");
+    const top = await res.json();
+
+    if (!top.length) return "😢 Hiện chưa có sản phẩm nào được đánh giá.";
+
+    let reply = `🌟 Top sản phẩm được đánh giá cao:\n\n`;
+    top.forEach((p, i) => {
+      reply += `${i + 1}. *${p.name}* — ${p.avgRating.toFixed(1)}⭐ (${p.totalRatings} lượt)\n`;
+    });
+
+    return reply;
+  } catch (err) {
+    console.error("❌ Lỗi lấy top rated:", err);
+    return "❌ Đã xảy ra lỗi khi tải danh sách sản phẩm đánh giá cao.";
   }
 }
 

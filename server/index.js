@@ -402,6 +402,53 @@ app.get("/wit/products", async (req, res) => {
   }
 });
 
+app.get("/wit/ratings/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const snapshot = await admin.firestore()
+      .collection(`shapespeakitems/${id}/ratings`).get();
+
+    const ratings = snapshot.docs.map(doc => doc.data());
+    const avgRating = ratings.length
+      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+      : 0;
+
+    res.json({ avgRating, totalRatings: ratings.length });
+  } catch (err) {
+    console.error("❌ Lỗi lấy ratings:", err);
+    res.status(500).json({ error: "Lỗi server khi lấy đánh giá" });
+  }
+});
+
+app.get("/wit/top-rated", async (req, res) => {
+  try {
+    const productSnap = await admin.firestore().collection("shapespeakitems").get();
+    const products = [];
+
+    for (const doc of productSnap.docs) {
+      const product = { id: doc.id, ...doc.data() };
+
+      const ratingSnap = await admin.firestore()
+        .collection(`shapespeakitems/${product.id}/ratings`).get();
+
+      const ratings = ratingSnap.docs.map(d => d.data());
+      const avg = ratings.length
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+
+      if (avg > 0) {
+        products.push({ ...product, avgRating: avg, totalRatings: ratings.length });
+      }
+    }
+
+    const top = products.sort((a, b) => b.avgRating - a.avgRating).slice(0, 4);
+    res.json(top);
+  } catch (err) {
+    console.error("❌ Lỗi lấy top-rated:", err);
+    res.status(500).json({ error: "Lỗi khi lấy top sản phẩm" });
+  }
+});
+
 // ✅ Xoá user trong Firebase Auth + Firestore
 app.post("/deleteUser", async (req, res) => {
   const { requesterUid, targetUid } = req.body;
