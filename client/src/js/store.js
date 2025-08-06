@@ -536,57 +536,30 @@ window.suggest = function () {
   });
 };
 
-function addToCart(product) {
+function addToCart (product) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const existing = cart.find(item => item.id === product.id);
-  const qtyToAdd = product.quantity || 1;
-  const maxStock = product.stock || 0;
-  const currentQty = existing ? existing.quantity : 0;
-  const total = currentQty + qtyToAdd;
-
-  if (total > maxStock) {
-    const remaining = maxStock - currentQty;
-    if (remaining <= 0) {
-      return { success: false, message: `❌ ${product.name} đã hết hàng.` };
-    } else {
-      return {
-        success: false,
-        message: `❌ Bạn chỉ có thể mua thêm tối đa ${remaining} cái "${product.name}".`
-      };
-    }
-  }
 
   if (existing) {
-    existing.quantity += qtyToAdd;
+    existing.quantity += 1;
   } else {
     cart.push({
       id: product.id,
       name: product.name,
       picture: product.picture,
       price: product.price,
-      quantity: qtyToAdd,
+      quantity: 1,
       stock: product.stock
     });
   }
 
   localStorage.setItem("cart", JSON.stringify(cart));
+  //showToast(\uD83C\uDF1F Đã thêm \"${product.name}\" vào giỏ hàng!, "success");
+  getTranslation("store.added_to_cart").then(msg =>
+    showToast(msg.replace("{name}", product.name), "success")
+  );
 
-  // 👉 Chỉ hiển thị toast nếu không gọi từ chatbot
-  if (!product.fromConversation) {
-    getTranslation("store.added_quantity").then(msg =>
-      showToast(
-        msg.replace("{qty}", qtyToAdd).replace("{name}", product.name),
-        "success"
-      )
-    );
-  }
-
-  return {
-    success: true,
-    message: `✅ Đã thêm ${qtyToAdd} cái **${product.name}** vào giỏ.`
-  };
-}
-
+};
 window.addToCart = addToCart;
 
 function changeLanguage(lang) {
