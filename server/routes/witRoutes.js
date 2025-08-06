@@ -99,7 +99,7 @@ router.post("/product-price", async (req, res) => {
 
     const reply = matched.map(p => {
       const data = p.data();
-      return `- ${data.name} – **${data.price?.toLocaleString()} VND**`;
+      return `- ${data.name} – ${data.price?.toLocaleString()} VND`;
     }).join('\n');
 
     res.json({ reply: `💡 Sản phẩm liên quan:\n${reply}` });
@@ -130,12 +130,12 @@ router.post("/check-stock", async (req, res) => {
     if (qty) {
       const enough = stock >= qty;
       return res.json({
-        reply: enough ? `✅ Có đủ **${qty}** cái **\"${product.name}\"**.` : `⚠️ Chỉ còn **${stock}** cái **\"${product.name}\"**.`,
+        reply: enough ? `✅ Có đủ ${qty} cái \"${product.name}\".` : `⚠️ Chỉ còn ${stock} cái \"${product.name}\".`,
         productId: matched[0].id
       });
     }
 
-    res.json({ reply: stock > 0 ? `📦 **${product.name}** còn **${stock}** cái.` : `❌ **${product.name}** đã hết hàng.`, productId: matched[0].id });
+    res.json({ reply: stock > 0 ? `📦 ${product.name} còn ${stock} cái.` : `❌ ${product.name} đã hết hàng.`, productId: matched[0].id });
   } catch (err) {
     console.error("❌ check-stock:", err);
     res.status(500).json({ reply: "❌ Lỗi kiểm tra tồn kho." });
@@ -158,7 +158,7 @@ router.post("/product-detail", async (req, res) => {
     if (!matched.length) return res.json({ reply: "😕 Không tìm thấy sản phẩm." });
     const product = matched[0].data();
     res.json({
-      reply: `📘 Sản phẩm bạn hỏi:\n🎁 **${product.name}**\n💰 Giá: ${product.price?.toLocaleString()} VND\n👉 Mình sẽ mở chi tiết sản phẩm này cho bạn nhé!`,
+      reply: `📘 Sản phẩm bạn hỏi:\n🎁 ${product.name}\n💰 Giá: ${product.price?.toLocaleString()} VND\n👉 Mình sẽ mở chi tiết sản phẩm này cho bạn nhé!`,
       productId: matched[0].id
     });
   } catch (err) {
