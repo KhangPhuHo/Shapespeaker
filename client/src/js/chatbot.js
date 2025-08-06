@@ -433,6 +433,29 @@ async function getWitResponse(input) {
         return await getTopRatedProductsReply();
       }
 
+      case "product_detail":
+        try {
+          const res = await fetch("https://shapespeaker.onrender.com/wit/product-detail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ input, entities }),
+          });
+          const data = await res.json();
+          showReply(data.reply);
+
+          // Tự động chuyển hướng nếu có productId
+          if (data.productId) {
+            setTimeout(() => {
+              window.location.href = `store.html?productId=${data.productId}`;
+            }, 2000);
+          }
+
+        } catch (error) {
+          console.error("❌ Lỗi khi xử lý product_detail:", error);
+          showReply("❌ Có lỗi xảy ra khi tìm thông tin sản phẩm.");
+        }
+        break;
+
       case 'buy_product':
         if (conversationContext.lastProduct && conversationContext.lastQuantity) {
           try {

@@ -449,6 +449,45 @@ app.get("/wit/top-rated", async (req, res) => {
   }
 });
 
+// ✅ /wit/product-detail – trả về mô tả sản phẩm và productId
+app.post("/wit/product-detail", async (req, res) => {
+  const { input, entities, fallbackProduct } = req.body;
+  if (!input) return res.status(400).json({ reply: "❌ Thiếu nội dung câu hỏi." });
+
+  try {
+    const removeDiacritics = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const normInput = removeDiacritics(input.toLowerCase());
+    const entityProduct = removeDiacritics(entities?.["product:product"]?.[0]?.value?.toLowerCase() || fallbackProduct || "");
+
+    const snapshot = await admin.firestore().collection("shapespeakitems").get();
+    const matched = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const name = removeDiacritics(data.name?.toLowerCase() || "");
+
+      const match = name.includes(entityProduct) ||
+                    entityProduct.includes(name) ||
+                    normInput.includes(name);
+
+      if (match) matched.push({ ...data, id: doc.id });
+    });
+
+    if (matched.length === 0) {
+      return res.json({ reply: "😕 Mình chưa tìm thấy sản phẩm bạn hỏi. Bạn thử nói rõ hơn nhé!" });
+    }
+
+    const product = matched[0];
+    const reply = `📘 Đây là sản phẩm bạn muốn tìm:\n\n🎁 **${product.name}**\n💰 Giá: ${product.price.toLocaleString()} VND\n\n👉 Mình sẽ mở chi tiết sản phẩm này cho bạn nhé!`;
+
+    return res.json({ reply, productId: product.id });
+
+  } catch (err) {
+    console.error("❌ Lỗi xử lý product-detail:", err);
+    return res.status(500).json({ reply: "❌ Có lỗi xảy ra khi lấy chi tiết sản phẩm." });
+  }
+});
+
 // ✅ Xoá user trong Firebase Auth + Firestore
 app.post("/deleteUser", async (req, res) => {
   const { requesterUid, targetUid } = req.body;
