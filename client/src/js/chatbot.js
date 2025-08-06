@@ -441,20 +441,24 @@ async function getWitResponse(input) {
             body: JSON.stringify({ input, entities }),
           });
           const data = await res.json();
-          showReply(data.reply);
 
-          // Tự động chuyển hướng nếu có productId
+          // ✅ Thay vì showReply
+          addMessage("Chatbot", data.reply, "left");
+
+          // ✅ Tự động chuyển nếu có productId
           if (data.productId) {
             setTimeout(() => {
               window.location.href = `store.html?productId=${data.productId}`;
             }, 2000);
           }
 
+          return data.reply; // 👈 để đọc bằng TTS nếu bật
         } catch (error) {
           console.error("❌ Lỗi khi xử lý product_detail:", error);
-          showReply("❌ Có lỗi xảy ra khi tìm thông tin sản phẩm.");
+          const errMsg = "❌ Có lỗi xảy ra khi tìm thông tin sản phẩm.";
+          addMessage("Chatbot", errMsg, "left");
+          return errMsg;
         }
-        break;
 
       case 'buy_product':
         if (conversationContext.lastProduct && conversationContext.lastQuantity) {
