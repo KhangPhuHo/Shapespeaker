@@ -517,6 +517,21 @@ async function getWitResponse(input) {
       case 'ask_features':
         return 'Tôi có chức năng trò chuyện, giải đáp các thắc mắc của bạn về sản phẩm và dịch vụ bên chúng tôi';
 
+      case 'introduce_about_shapespeak':
+        return 'ShapeSpeak là bộ mô hình học toán vui nhộn dành cho trẻ 2–4 tuổi, cả trẻ sáng mắt lẫn khiếm thị, kết hợp nhận diện hình ảnh và lắp ghép thông minh.';
+      
+      case 'shapespeak_slogan':
+        return '“Mở ra cánh cửa khám phá toán học – bước đầu kiến tạo tri thức cho mọi trẻ em.”'
+
+      case 'product_sale':
+        return 'Hiện tại các sản phẩm bên mình chưa được giảm giá, nhưng giá cả vô cùng phù hợp đấy bạn! 🤗'
+
+      case 'compliment':
+        return 'Rất vui được giúp bạn! 😊. Nếu bạn có vấn đề cần hỏi về sản phẩm thì cứ nói với mình nhé!'
+
+      case 'tao_lao':
+        return 'Mình không hiểu ý bạn. Vui lòng hãy hỏi mọi thứ liên quan đến sản phẩm nhé! 🤗'
+
       case 'thank':
         return 'Cảm ơn bạn vì đã tin tưởng dịch vụ bên mình';
 
