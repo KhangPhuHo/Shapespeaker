@@ -60,7 +60,7 @@ ${reply}\n\n🌟 Gõ tên để xem thêm nhé!` });
 router.post("/products-by-category", async (req, res) => {
   const { input, entities } = req.body;
   const inputLower = input?.toLowerCase();
-  const knownCategories = ['đồ chơi', 'giáo dục', 'toán', 'thẻ'];
+  const knownCategories = ['đồ chơi', 'giáo dục', 'toán', 'game','thẻ'];
   const entityCategory = entities?.['category:category']?.[0]?.value?.toLowerCase();
   const matched = entityCategory || knownCategories.find(cat => inputLower.includes(cat));
 

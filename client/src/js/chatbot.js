@@ -517,6 +517,9 @@ async function getWitResponse(input) {
       case 'ask_features':
         return 'Tôi có chức năng trò chuyện, giải đáp các thắc mắc của bạn về sản phẩm và dịch vụ bên chúng tôi';
 
+      case 'introduce_chatbot':
+        return 'Tôi là Chatbot của Shapespeak, tôi sẽ giải đáp các thắc mắc của bạn liên quan đến sản phẩm. 🤗'
+
       case 'introduce_about_shapespeak':
         return 'ShapeSpeak là bộ mô hình học toán vui nhộn dành cho trẻ 2–4 tuổi, cả trẻ sáng mắt lẫn khiếm thị, kết hợp nhận diện hình ảnh và lắp ghép thông minh.';
       
