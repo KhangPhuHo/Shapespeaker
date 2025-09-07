@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ShapeSpeak • Whiteboard Shape Game</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* ===== Component-scoped styles (shadowed by #shape-game prefix) ===== */
+    #shape-game .card {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 16px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    #shape-game .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .6rem .9rem;
+      border-radius: .7rem;
+      font-weight: 600;
+      background: #111827;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, .08);
+      transition: transform .06s ease, background .2s ease, box-shadow .2s ease;
+      box-shadow: 0 6px 16px rgba(17, 24, 39, .15);
+    }
+
+    #shape-game .btn:hover {
+      background: #0b1220;
+      transform: translateY(-1px);
+    }
+
+    #shape-game .btn.secondary {
+      background: #f3f4f6;
+      color: #111827;
+      box-shadow: none;
+    }
+
+    #shape-game .btn.secondary:hover {
+      background: #e5e7eb;
+    }
+
+    #shape-game .pill {
+      background: #FDF2F8;
+      color: #9D174D;
+      font-weight: 700;
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      border: 1px solid #FBCFE8;
+    }
+
+    #shape-game .target-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: #ECFEFF;
+      color: #0E7490;
+      border: 1px solid #CFFAFE;
+      padding: .25rem .6rem;
+      border-radius: 999px;
+      font-weight: 700;
+    }
+
+    #shape-game .toast {
+      position: fixed;
+      right: 1rem;
+      top: 6rem;
+      z-index: 2000;
+      background: #111827;
+      color: #fff;
+      border-radius: .75rem;
+      padding: .75rem 1rem;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity .25s ease, transform .25s ease;
+    }
+
+    #shape-game .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #shape-game canvas {
+      touch-action: none;
+    }
+
+    /* Play overlay button */
+    #shape-game .play-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    #shape-game .play-overlay .play-btn {
+      pointer-events: auto;
+      width: 50px;
+      height: 50px;
+      font-size: 1.8rem;
+      background-color: transparent;
+      color: black;
+      border-radius: 12px;
+      font-weight: 800;
+      box-shadow: 0 12px 26px rgba(63, 63, 68, 0.35);
+    }
+
+    #shape-game .play-overlay.hidden {
+      display: none;
+    }
+
+    #shape-game canvas {
+      cursor: crosshair;
+      /* mặc định vẽ */
+    }
+
+    /* Leaderboard animation */
+    #leaderboard-container {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height .6s ease, opacity .6s ease;
+    }
+
+    #leaderboard-container.show {
+      max-height: 700px;
+      opacity: 1;
+    }
+
+    #cursor-preview {
+      border: 2px dashed #3B82F6;
+      /* blue dashed circle */
+      transition: transform 0.1s ease;
+    }
+
+    #cursor-preview.ripple {
+      animation: rippleAnim 0.25s ease-out;
+    }
+
+    @keyframes rippleAnim {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50">
+  <section id="shape-game" class="relative z-10">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-8">
+
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+        <div class="flex items-center gap-3">
+          <span class="pill text-xs">ShapeSpeak</span>
+          <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight">Whiteboard Shape Game</h2>
+        </div>
+
+        <!-- Buttons: wrap để xuống hàng trên mobile -->
+        <div class="flex flex-wrap gap-2 justify-center md:justify-end">
+          <!-- Nhóm phụ -->
+          <div class="flex gap-2">
+            <button id="btn-undo" class="btn secondary min-w-[90px]">
+              <i class="fa-solid fa-rotate-left"></i> Undo
+            </button>
+            <button id="btn-clear" class="btn secondary min-w-[90px]">
+              <i class="fa-solid fa-eraser"></i> Clear
+            </button>
+            <button id="btn-clearall" class="btn secondary min-w-[90px]">
+              <i class="fa-solid fa-trash"></i> Xóa tất cả
+            </button>
+          </div>
+
+          <!-- Nhóm chính -->
+          <div class="flex gap-2">
+            <button id="btn-reset" class="btn min-w-[110px] bg-indigo-600 hover:bg-indigo-700">
+              <i class="fa-solid fa-arrow-rotate-right"></i> Reset
+            </button>
+            <button id="btn-toggle-leaderboard" class="btn secondary min-w-[120px]">
+              <i class="fa-solid fa-trophy"></i> Leaderboard
+            </button>
+            <button id="btn-next" class="btn secondary min-w-[90px]">
+              <i class="fa-solid fa-forward-step"></i> Next
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card p-4 md:p-5 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+          <!-- Cột 1: Mục tiêu -->
+          <div class="flex items-center gap-3 justify-start">
+            <span class="target-badge" id="target-badge">
+              <i class="fa-solid fa-bullseye"></i>
+              Mục tiêu: <span id="target-shape" class="ml-1">Bắt đầu để hiện</span>
+            </span>
+          </div>
+
+          <!-- Cột 2: Điểm & Thời gian -->
+          <div class="flex items-center justify-center gap-6">
+            <div class="flex items-center gap-2">
+              <span class="text-gray-500 text-sm">Điểm</span>
+              <span class="text-xl font-extrabold" id="score">0</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-gray-500 text-sm">Thời gian</span>
+              <span class="text-xl font-extrabold" id="timer">30</span>s
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Board + Tools -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+        <!-- Board -->
+        <div class="lg:col-span-4 card p-3 md:p-4">
+          <div class="relative">
+            <!-- Cursor preview -->
+            <div id="cursor-preview" class="absolute rounded-full pointer-events-none hidden"></div>
+
+            <!-- Responsive canvas -->
+            <canvas id="board" class="w-full h-[50vh] md:h-[66vh] rounded-xl bg-white border border-gray-200"></canvas>
+
+            <!-- Play overlay -->
+            <div id="play-overlay" class="play-overlay hidden">
+              <button id="btn-play" class="btn play-btn">
+                <i class="fa-solid fa-play"></i>
+              </button>
+            </div>
+
+            <!-- Watermark -->
+            <div class="pointer-events-none absolute left-3 bottom-2 text-xs text-gray-400">
+              Tip: vẽ một hình cho mỗi nét để nhận diện tốt nhất.
+            </div>
+          </div>
+        </div>
+
+        <!-- Tools: order-first trên mobile để hiển thị phía trên hoặc dưới -->
+        <aside class="lg:col-span-1 card p-4 space-y-4 order-first lg:order-last">
+          <h3 class="font-bold">Tools</h3>
+          <div class="flex items-center gap-2">
+            <input id="color" type="color" value="#0F172A" class="w-10 h-10 rounded border" />
+            <div class="flex-1">
+              <label class="text-xs text-gray-500">Độ dày nét</label>
+              <input id="size" type="range" min="2" max="24" value="6" class="w-full" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btn-pen" class="btn secondary w-full"><i class="fa-solid fa-pen"></i> Pen</button>
+            <button id="btn-eraser" class="btn secondary w-full justify-center">
+              <i class="fa-solid fa-eraser"></i> Eraser
+            </button>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Leaderboard -->
+      <div id="leaderboard-container" class="card mt-6 p-4 max-h-[60vh] overflow-y-auto">
+        <h2 class="text-xl font-bold mb-3">🏆 Bảng xếp hạng Top 20</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full border-collapse border border-gray-200 text-sm">
+            <thead>
+              <tr class="bg-pink-100">
+                <th class="border p-2">#</th>
+                <th class="border p-2">Người chơi</th>
+                <th class="border p-2">Điểm cao nhất</th>
+                <th class="border p-2">Tổng thời gian</th>
+                <th class="border p-2">Cập nhật</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <!-- realtime from Firestore -->
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">
+          * Sắp xếp theo điểm ↓, nếu bằng điểm thì thời gian ↑ (nhỏ hơn đứng trước).
+        </p>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="shape-toast" class="toast" role="status" aria-live="polite"></div>
+  </section>
+
+  <!-- ====== App Logic ====== -->
+  <script type="module">
+    import { saveLeaderboard, listenLeaderboard } from "./src/js/leaderboard-draw-game.js";
+
+    // ------- Toast -------
+    const toastEl = document.querySelector('#shape-toast');
+    function toast(msg, type = 'info') {
+      toastEl.textContent = msg;
+      toastEl.style.background = type === 'win' ? '#065F46' :
+        type === 'warn' ? '#7C2D12' : '#111827';
+      toastEl.classList.add('show');
+      clearTimeout(toastEl._t);
+      toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 1600);
+    }
+
+    // ------- State -------
+    const canvas = document.getElementById("board");
+    const ctx = canvas.getContext("2d");
+    let drawing = false;
+    let strokes = [];        // [{points:[], color, size, mode}]
+    let score = 0;
+    let timer = 30;
+    let timerInterval;
+    let gameOver = true;     // start in idle state
+    let totalTimePlayed = 0;
+
+    let toolColor = "#0F172A";
+    let toolSize = 6;
+    let toolMode = "pen";    // "pen" | "eraser"
+
+    // Targets
+    const shapes = [
+      { key: "square", label: "⬜ Hình vuông" },
+      { key: "rect-h", label: "▬ Hình chữ nhật ngang" },
+      { key: "rect-v", label: "▮ Hình chữ nhật dọc" },
+      { key: "circle", label: "🔵 Hình tròn / elip" }
+    ];
+    let currentTarget = null;
+
+    // ------- Canvas sizing (HiDPI) -------
+    function resizeCanvasToDisplaySize() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const cssW = canvas.clientWidth;
+      const cssH = canvas.clientHeight;
+      const needResize = canvas.width !== Math.floor(cssW * dpr) || canvas.height !== Math.floor(cssH * dpr);
+      if (needResize) {
+        canvas.width = Math.floor(cssW * dpr);
+        canvas.height = Math.floor(cssH * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // scale drawing ops to CSS pixels
+        redrawAll();
+      }
+    }
+    const ro = new ResizeObserver(resizeCanvasToDisplaySize);
+    ro.observe(canvas);
+
+    // ------- Drawing helpers -------
+    function startDrawing(e) {
+      if (gameOver) return;
+      drawing = true;
+      strokes.push({ points: [], color: toolMode === 'eraser' ? '#FFFFFF' : toolColor, size: toolMode === 'eraser' ? Math.max(toolSize * 2, toolSize + 6) : toolSize, mode: toolMode });
+      addPoint(e);
+    }
+    function stopDrawing() {
+      if (!drawing) return;
+      drawing = false;
+      // check shape on stroke end
+      if (!gameOver) checkShape();
+    }
+    function addPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX ?? e.touches?.[0]?.clientX) - rect.left;
+      const y = (e.clientY ?? e.touches?.[0]?.clientY) - rect.top;
+      const s = strokes[strokes.length - 1];
+      if (s) s.points.push({ x, y });
+      drawLastSegment();
+    }
+    function drawLastSegment() {
+      const s = strokes[strokes.length - 1];
+      if (!s || s.points.length < 2) return;
+      const p1 = s.points[s.points.length - 2];
+      const p2 = s.points[s.points.length - 1];
+      ctx.lineWidth = s.size;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = s.color;
+      ctx.globalCompositeOperation = s.mode === 'eraser' ? 'destination-out' : 'source-over';
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.stroke();
+      ctx.globalCompositeOperation = 'source-over';
+    }
+    function redrawAll() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      for (const s of strokes) {
+        if (!s.points || s.points.length < 2) continue;
+        ctx.lineWidth = s.size;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.strokeStyle = s.color;
+        ctx.globalCompositeOperation = s.mode === "eraser" ? "destination-out" : "source-over";
+        ctx.beginPath();
+        let pts = s.points;
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length - 1; i++) {
+          const midX = (pts[i].x + pts[i + 1].x) / 2;
+          const midY = (pts[i].y + pts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(pts[i].x, pts[i].y, midX, midY);
+        }
+        ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.stroke();
+      }
+      ctx.globalCompositeOperation = "source-over";
+    }
+
+    // ------- Shape detection -------
+    function checkShape() {
+      const s = strokes[strokes.length - 1];
+      if (!s || s.points.length < 10) return;
+
+      const xs = s.points.map(p => p.x);
+      const ys = s.points.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const w = maxX - minX, h = maxY - minY;
+      const ratio = w / h;
+
+      let detected = null;
+      if (Math.abs(ratio - 1) < 0.25) {
+        if (w * h < 2000) detected = "circle";
+        else detected = "square";
+      } else if (ratio > 1.3) {
+        detected = "rect-h";
+      } else if (ratio < 0.7) {
+        detected = "rect-v";
+      } else {
+        detected = "circle";
+      }
+
+      if (detected === currentTarget.key) {
+        score++;
+        document.getElementById("score").textContent = score;
+        toast("✅ Chính xác! +1 điểm", "win");
+
+        // Xoá toàn bộ nét để bắt đầu thử thách mới
+        strokes = [];
+        redrawAll();
+
+        // Reset lại thời gian
+        timer = 30;
+        document.getElementById("timer").textContent = timer;
+
+        // Chọn mục tiêu mới
+        pickTarget();
+      } else {
+        toast("❌ Sai hình!", "warn");
+      }
+    }
+
+    const cursorPreview = document.getElementById("cursor-preview");
+
+    // update preview size + style
+    function updateCursorPreview(x, y) {
+      const size = toolMode === "eraser"
+        ? Math.max(toolSize * 2, toolSize + 6)
+        : toolSize;
+
+      cursorPreview.style.width = size + "px";
+      cursorPreview.style.height = size + "px";
+      cursorPreview.style.left = (x - size / 2) + "px";
+      cursorPreview.style.top = (y - size / 2) + "px";
+
+      cursorPreview.classList.remove("hidden");
+    }
+
+    // hide cursor when leaving canvas
+    canvas.addEventListener("mouseleave", () => cursorPreview.classList.add("hidden"));
+    canvas.addEventListener("mouseenter", () => cursorPreview.classList.remove("hidden"));
+
+    // follow mouse
+    canvas.addEventListener("mousemove", e => {
+      const rect = canvas.getBoundingClientRect();
+      updateCursorPreview(e.clientX - rect.left, e.clientY - rect.top);
+    });
+
+    // follow touch
+    canvas.addEventListener("touchmove", e => {
+      const rect = canvas.getBoundingClientRect();
+      const t = e.touches[0];
+      updateCursorPreview(t.clientX - rect.left, t.clientY - rect.top);
+    }, { passive: false });
+
+    // ripple effect on click/tap
+    function triggerRipple() {
+      cursorPreview.classList.remove("ripple");
+      void cursorPreview.offsetWidth; // restart animation hack
+      cursorPreview.classList.add("ripple");
+    }
+
+    canvas.addEventListener("mousedown", triggerRipple);
+    canvas.addEventListener("touchstart", triggerRipple);
+
+    // ------- Game logic -------
+    function pickTarget() {
+      const rand = shapes[Math.floor(Math.random() * shapes.length)];
+      currentTarget = rand;
+      document.getElementById("target-shape").textContent = rand.label;
+    }
+
+    function startGame() {
+      score = 0;
+      totalTimePlayed = 0;
+      document.getElementById("score").textContent = score;
+      timer = 30;
+      document.getElementById("timer").textContent = timer;
+      gameOver = false;
+      strokes = [];
+      redrawAll();
+      pickTarget();
+
+      document.getElementById("play-overlay").classList.add("hidden");
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (gameOver) return;
+        timer--;
+        totalTimePlayed++;
+        document.getElementById("timer").textContent = timer;
+        if (timer <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame() {
+      gameOver = true;
+      clearInterval(timerInterval);
+      toast(`🎯 Hết giờ! Bạn được ${score} điểm.`, "info");
+      document.getElementById("play-overlay").classList.remove("hidden");
+
+      // Lưu vào leaderboard
+      saveLeaderboard(score, totalTimePlayed);
+    }
+
+    // ------- Events -------
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mousemove", e => drawing && addPoint(e));
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mouseleave", stopDrawing);
+    canvas.addEventListener("touchstart", startDrawing);
+    canvas.addEventListener("touchmove", e => { if (drawing) addPoint(e); e.preventDefault(); }, { passive: false });
+    canvas.addEventListener("touchend", stopDrawing);
+
+    document.getElementById("color").addEventListener("input", e => toolColor = e.target.value);
+    document.getElementById("size").addEventListener("input", e => toolSize = +e.target.value);
+
+    document.getElementById("btn-pen").onclick = () => {
+      toolMode = "pen";
+      canvas.style.cursor = "crosshair";   // vẽ thì dùng dấu cộng
+      toast("✏️ Pen tool");
+    };
+
+    const eraserCursor = "url('data:image/svg+xml;utf8,\
+<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\" viewBox=\"0 0 512 512\">\
+<path fill=\"black\" d=\"M497.9 273.9L339.6 115.6c-12.5-12.5-32.8-12.5-45.3 0L14.1 395.8c-12.5 12.5-12.5 32.8 0 45.3l58.7 58.7c12.5 12.5 32.8 12.5 45.3 0l280.2-280.2c12.5-12.5 12.5-32.8 0-45.3z\"/>\
+</svg>') 8 8, auto";
+
+    document.getElementById("btn-eraser").onclick = () => {
+      toolMode = "eraser";
+      canvas.style.cursor = eraserCursor;
+      toast("🧽 Eraser");
+    };
+    document.getElementById("btn-undo").onclick = () => { strokes.pop(); redrawAll(); };
+    document.getElementById("btn-clear").onclick = () => { strokes = []; redrawAll(); };
+    document.getElementById("btn-clearall").onclick = () => { strokes = []; redrawAll(); };
+    document.getElementById("btn-reset").onclick = () => { endGame(); startGame(); };
+    document.getElementById("btn-next").onclick = pickTarget;
+    document.getElementById("btn-play").onclick = startGame;
+
+    document.getElementById("btn-toggle-leaderboard").onclick = () => {
+      document.getElementById("leaderboard-container").classList.toggle("show");
+    };
+
+    // ------- Leaderboard realtime -------
+    listenLeaderboard();
+
+    // Auto resize at init
+    window.onload = () => {
+      document.getElementById("play-overlay").classList.remove("hidden");
+      resizeCanvasToDisplaySize();
+    };
+  </script>
+</body>
+</html>

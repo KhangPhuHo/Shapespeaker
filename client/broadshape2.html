@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShapeSpeak Pad</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.2.4/fabric.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            display: flex;
+            height: 100vh;
+            background: #fff;
+        }
+
+        .sidebar {
+            width: 120px;
+            background: rgba(255, 192, 203, 0.25);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            border-right: 2px solid #f8bbd0;
+        }
+
+        .shape-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 105, 180, 0.8);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: 0.2s;
+        }
+
+        .shape-btn:hover {
+            transform: scale(1.1);
+            background: rgba(255, 20, 147, 0.9);
+        }
+
+        #c {
+            flex: 1;
+            border: none;
+            background: #fff url('https://i.ibb.co/vZQ9F6r/grid.png') repeat;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar menu -->
+    <div class="sidebar">
+        <div class="shape-btn" data-shape="square">⬛</div>
+        <div class="shape-btn" data-shape="circle">⚪</div>
+        <div class="shape-btn" data-shape="triangle">🔺</div>
+        <div class="shape-btn" data-shape="rect">▭</div>
+        <div class="shape-btn" data-shape="hex">⬡</div>
+        <hr style="width:80%; border:1px solid pink;">
+        <div class="shape-btn" id="deleteBtn">❌</div>
+        <div class="shape-btn" id="cloneBtn">📄</div>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="c" width="1200" height="800"></canvas>
+
+    <script>
+        const canvas = new fabric.Canvas("c", {
+            backgroundColor: "#fff",
+            selection: true
+        });
+
+        const grid = 30;
+
+        // Snap-to-grid khi thả object (sau khi kéo xong)
+        canvas.on("object:modified", (e) => {
+            e.target.set({
+                left: Math.round(e.target.left / grid) * grid,
+                top: Math.round(e.target.top / grid) * grid
+            });
+            canvas.renderAll();
+        });
+
+        // Thêm shapes
+        document.querySelectorAll(".shape-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const shape = btn.dataset.shape;
+                let obj;
+
+                switch (shape) {
+                    case "square":
+                        obj = new fabric.Rect({
+                            left: 150, top: 150,
+                            fill: "rgba(255,105,180,0.7)",
+                            width: 60, height: 60
+                        });
+                        break;
+                    case "circle":
+                        obj = new fabric.Circle({
+                            left: 150, top: 150,
+                            radius: 30,
+                            fill: "rgba(255,105,180,0.7)"
+                        });
+                        break;
+                    case "triangle":
+                        obj = new fabric.Triangle({
+                            left: 150, top: 150,
+                            width: 60, height: 60,
+                            fill: "rgba(255,105,180,0.7)"
+                        });
+                        break;
+                    case "rect":
+                        obj = new fabric.Rect({
+                            left: 150, top: 150,
+                            fill: "rgba(255,105,180,0.7)",
+                            width: 100, height: 50
+                        });
+                        break;
+                    case "hex":
+                        obj = new fabric.Polygon([
+                            { x: 30, y: 0 }, { x: 60, y: 15 }, { x: 60, y: 45 },
+                            { x: 30, y: 60 }, { x: 0, y: 45 }, { x: 0, y: 15 }
+                        ], {
+                            left: 150, top: 150,
+                            fill: "rgba(255,105,180,0.7)"
+                        });
+                        break;
+                }
+
+                canvas.add(obj).setActiveObject(obj);
+            });
+        });
+
+        // Xoá
+        document.getElementById("deleteBtn").onclick = () => {
+            const active = canvas.getActiveObject();
+            if (active) canvas.remove(active);
+        };
+
+        // Nhân bản
+        document.getElementById("cloneBtn").onclick = () => {
+            const active = canvas.getActiveObject();
+            if (active) {
+                active.clone((cloned) => {
+                    cloned.set({ left: active.left + 40, top: active.top + 40 });
+                    canvas.add(cloned);
+                });
+            }
+        };
+    </script>
+</body>
+
+</html>

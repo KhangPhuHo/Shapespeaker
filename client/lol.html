@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shape Game - Nhận diện hình dạng</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9fafb;
+    }
+
+    canvas {
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      background: white;
+      cursor: crosshair;
+    }
+
+    .btn {
+      background: #f472b6;
+      color: white;
+      font-weight: bold;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: 0.2s;
+    }
+
+    .btn:hover {
+      background: #ec4899;
+    }
+
+    /* Leaderboard animation */
+    #leaderboard-container {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.6s ease, opacity 0.6s ease;
+    }
+
+    #leaderboard-container.show {
+      max-height: 600px;
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col items-center justify-center min-h-screen">
+
+  <h1 class="text-2xl font-bold mb-4">🎮 Shape Game - Nhận diện hình dạng</h1>
+
+  <!-- Thông tin Game -->
+  <div class="flex gap-6 mb-4">
+    <div class="text-lg">🎯 Nhiệm vụ: <span id="target-shape" class="font-bold text-pink-600"></span></div>
+    <div class="text-lg">⭐ Điểm: <span id="score" class="font-bold text-green-600">0</span></div>
+    <div class="text-lg">⏳ Thời gian: <span id="timer" class="font-bold text-red-600">30</span>s</div>
+  </div>
+
+  <!-- Controls -->
+  <div class="flex items-center gap-4 mb-3">
+    <!-- Nút menu dropdown -->
+    <div class="relative">
+      <button id="btn-menu" class="btn bg-gray-600 hover:bg-gray-700">
+        ⚙️ Menu
+      </button>
+      <div id="menu-dropdown" class="absolute hidden bg-white shadow-lg rounded-md mt-2 w-48 z-10">
+        <button id="btn-reset" class="block w-full text-left px-4 py-2 hover:bg-gray-100">🔄 Reset Game</button>
+        <button id="btn-clear" class="block w-full text-left px-4 py-2 hover:bg-gray-100">🧹 Xoá bảng</button>
+        <button id="btn-leaderboard" class="block w-full text-left px-4 py-2 hover:bg-gray-100">🏆 Bảng xếp
+          hạng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Whiteboard + nút Play -->
+  <div class="relative">
+    <canvas id="whiteboard" width="500" height="400"></canvas>
+    <button id="btn-play"
+      class="absolute inset-0 m-auto w-40 h-16 bg-green-500 text-white text-xl font-bold rounded-lg shadow-lg hidden">
+      ▶️ Play
+    </button>
+  </div>
+
+  <!-- Info -->
+  <div id="result" class="mt-3 text-lg font-semibold text-gray-700"></div>
+
+  <!-- Leaderboard -->
+  <div id="leaderboard-container" class="w-3/4 mt-6 bg-white shadow-lg rounded-lg p-4">
+    <h2 class="text-xl font-bold mb-3">🏆 Bảng xếp hạng Top 20</h2>
+    <table class="w-full border-collapse border border-gray-300">
+      <thead>
+        <tr class="bg-pink-100">
+          <th class="border p-2">#</th>
+          <th class="border p-2">Người chơi</th>
+          <th class="border p-2">Điểm cao nhất</th>
+          <th class="border p-2">Tổng thời gian</th>
+          <th class="border p-2">Cập nhật</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+        <!-- dữ liệu sẽ được load từ Firestore -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Firebase SDK (tùy chọn, nếu bạn cần leaderboard) -->
+  <script type="module">
+    import { listenLeaderboard } from "./src/js/leaderboard-draw-game.js";
+
+    document.getElementById("btn-leaderboard").addEventListener("click", () => {
+      const box = document.getElementById("leaderboard-container");
+      box.classList.toggle("show");
+      if (box.classList.contains("show")) {
+        listenLeaderboard();
+      }
+    });
+  </script>
+
+  <!-- Game Logic -->
+  <script type="module">
+    import { saveLeaderboard } from "./src/js/leaderboard-draw-game.js";
+
+    const canvas = document.getElementById("whiteboard");
+    const ctx = canvas.getContext("2d");
+    let drawing = false;
+    let strokes = [];
+    let score = 0;
+    let timer = 30;
+    let timerInterval;
+    let gameOver = false;
+    let totalTimePlayed = 0;
+
+    const shapes = [
+      { key: "square", label: "⬜ Hình vuông" },
+      { key: "rect-h", label: "▬ Hình chữ nhật ngang" },
+      { key: "rect-v", label: "▮ Hình chữ nhật dọc" },
+      { key: "circle", label: "🔵 Hình tròn / elip" }
+    ];
+    let currentTarget = null;
+
+    // 🎯 Chọn ngẫu nhiên hình mục tiêu
+    function pickNewTarget() {
+      currentTarget = shapes[Math.floor(Math.random() * shapes.length)];
+      document.getElementById("target-shape").textContent = currentTarget.label;
+      resetTimer();
+    }
+
+    // --- Vẽ ---
+    function startDrawing(e) {
+      if (gameOver) return;
+      drawing = true;
+      strokes.push([]);
+      addPoint(e);
+    }
+
+    function stopDrawing() {
+      drawing = false;
+      if (!gameOver) checkShape(); // kiểm tra khi dừng vẽ
+    }
+
+    function draw(e) {
+      if (!drawing || gameOver) return;
+      addPoint(e);
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = "#000";
+      ctx.beginPath();
+      const stroke = strokes[strokes.length - 1];
+      const p1 = stroke[stroke.length - 2];
+      const p2 = stroke[stroke.length - 1];
+      if (p1 && p2) {
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+      }
+      ctx.stroke();
+    }
+
+    function addPoint(e) {
+      const rect = canvas.getBoundingClientRect();
+      strokes[strokes.length - 1].push({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+
+    canvas.addEventListener("mousedown", startDrawing);
+    canvas.addEventListener("mouseup", stopDrawing);
+    canvas.addEventListener("mousemove", draw);
+
+    // --- Nhận diện hình ---
+    function recognizeShape(points) {
+      if (points.length < 10) return null;
+      const minX = Math.min(...points.map(p => p.x));
+      const maxX = Math.max(...points.map(p => p.x));
+      const minY = Math.min(...points.map(p => p.y));
+      const maxY = Math.max(...points.map(p => p.y));
+      const w = maxX - minX, h = maxY - minY;
+      const ratio = w / h;
+
+      if (Math.abs(ratio - 1) < 0.2) return "square";
+      else if (ratio > 1.5) return "rect-h";
+      else if (ratio < 0.5) return "rect-v";
+      else return "circle";
+    }
+
+    function checkShape() {
+      const lastStroke = strokes[strokes.length - 1];
+      const detected = recognizeShape(lastStroke);
+      const resultBox = document.getElementById("result");
+
+      if (detected === currentTarget.key) {
+        score++;
+        document.getElementById("score").textContent = score;
+        resultBox.textContent = "✅ Chính xác! Bạn vẽ đúng " + currentTarget.label;
+        pickNewTarget();
+        clearCanvas();
+      } else {
+        resultBox.textContent = "❌ Sai rồi!";
+      }
+    }
+
+    // --- Timer ---
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (gameOver) return;
+        timer--;
+        totalTimePlayed++;
+        document.getElementById("timer").textContent = timer;
+        if (timer <= 0) {
+          clearInterval(timerInterval);
+          gameOver = true;
+          document.getElementById("result").textContent = "⏰ Hết giờ! Game Over ❌";
+
+          // 🔥 Lưu kết quả
+          saveLeaderboard(score, totalTimePlayed);
+
+          showPlayButton();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      timer = 30;
+      document.getElementById("timer").textContent = timer;
+      gameOver = false;
+      startTimer();
+    }
+
+    // --- Canvas ---
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // --- Reset Game ---
+    function resetGame() {
+      clearInterval(timerInterval);
+      score = 0;
+      totalTimePlayed = 0;
+      gameOver = false;
+      document.getElementById("score").textContent = score;
+      document.getElementById("result").textContent = "🔄 Game đã reset, bắt đầu vẽ!";
+      clearCanvas();
+      pickNewTarget();
+      hidePlayButton();
+    }
+
+    document.getElementById("btn-reset").addEventListener("click", resetGame);
+    document.getElementById("btn-clear").addEventListener("click", clearCanvas);
+
+    // --- Dropdown Menu ---
+    const menuBtn = document.getElementById("btn-menu");
+    const menuDropdown = document.getElementById("menu-dropdown");
+
+    menuBtn.addEventListener("click", () => {
+      menuDropdown.classList.toggle("hidden");
+    });
+
+    // --- Nút Play Again ---
+    const playBtn = document.getElementById("btn-play");
+
+    function showPlayButton() {
+      playBtn.classList.remove("hidden");
+    }
+
+    function hidePlayButton() {
+      playBtn.classList.add("hidden");
+    }
+
+    playBtn.addEventListener("click", () => {
+      resetGame();
+    });
+
+    // --- Khởi động game ---
+    showPlayButton();
+  </script>
+
+</body>
+
+</html>
