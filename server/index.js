@@ -56,39 +56,16 @@ const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2";
 app.get("/", (_, res) => res.send("✅ API hoạt động."));
 
 app.post("/upload", (req, res) => {
-  upload.array("media")(req, res, async function (err) {
-    if (err?.code === "LIMIT_FILE_SIZE") {
-      return res.status(413).json({ success: false, message: "❌ File quá lớn." });
-    }
-    if (err) {
-      return res.status(400).json({ success: false, message: `❌ Upload lỗi: ${err.message}` });
-    }
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, message: "❌ Không có file." });
-    }
+  upload.single("media")(req, res, function (err) {
+    if (err?.code === "LIMIT_FILE_SIZE") return res.status(413).json({ success: false, message: "❌ File quá lớn." });
+    if (err) return res.status(400).json({ success: false, message: `❌ Upload lỗi: ${err.message}` });
+    if (!req.file) return res.status(400).json({ success: false, message: "❌ Không có file." });
 
-    try {
-      // ✅ Upload tất cả file song song
-      const uploadPromises = req.files.map(file =>
-        cloudinary.uploader.upload(file.path, { resource_type: "auto" })
-          .then(result => {
-            fs.unlink(file.path, () => {}); // Xoá file tạm
-            return result;
-          })
-      );
-
-      const results = await Promise.all(uploadPromises);
-
-      return res.json({
-        success: true,
-        message: "✅ Upload nhiều file thành công!",
-        count: results.length,
-        data: results,
-      });
-    } catch (err) {
-      console.error("❌ Lỗi upload:", err);
-      res.status(500).json({ success: false, message: "❌ Upload thất bại.", error: err.message });
-    }
+    cloudinary.uploader.upload(req.file.path, { resource_type: "auto" }, (err, result) => {
+      fs.unlink(req.file.path, () => {});
+      if (err) return res.status(500).json({ success: false, message: "❌ Upload thất bại." });
+      return res.json({ success: true, message: "✅ Upload thành công!", data: result });
+    });
   });
 });
 
