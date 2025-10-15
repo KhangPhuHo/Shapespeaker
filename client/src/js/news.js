@@ -72,10 +72,10 @@ hover:shadow-xl transition-all duration-300 p-3 transform hover:scale-105 hover:
   <div class="p-3 space-y-1">
     <h3 class="text-base font-semibold text-rose-600 truncate">${product.name || 'No name'}</h3>
 
-    <p class="text-xs sm:text-sm text-gray-700 flex flex-wrap gap-x-2 justify-center">
-      <span class="font-bold"><span data-i18n="news.created">Created:</span> ${createdAt}</span>
-      <span class="font-bold"><span data-i18n="news.updated">Updated:</span> ${updatedAt || 'Not updated'}</span>
-    </p>
+    <!--<p class="text-xs sm:text-sm text-gray-700 flex flex-wrap gap-x-2 justify-center">-->
+    <!--<span class="font-bold"><span data-i18n="news.created">Created:</span> ${createdAt}</span>-->
+    <!--<span class="font-bold"><span data-i18n="news.updated">Updated:</span> ${updatedAt || 'Not updated'}</span>-->
+    <!--</p>-->
   </div>
     `;
 
@@ -190,7 +190,7 @@ async function showPopup(product) {
         <i class="fa-solid fa-circle-xmark"></i>
       </button>
       <img src="${imageSrc}" alt="${product.name || 'new'}" loading="lazy"
-        class="w-full h-60 object-cover rounded-lg border border-white/10" />
+        class="w-full h-80 object-cover rounded-lg border border-white/10" />
 
       <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
       <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>

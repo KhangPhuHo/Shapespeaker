@@ -2,6 +2,7 @@
 import { db } from './firebase-config.js';
 import { collection, getDocs, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { setLanguage, getCurrency, getTranslation } from './language.js';
+import { setupSlider } from "./slider-control.js";
 import { loadRatingUI } from './ratings.js';
 import { loadComments, setupCommentSubmit } from './comments.js';
 import { showToast } from './toast.js';
@@ -227,7 +228,41 @@ async function showPopup(product) {
       <button class="close-popup absolute top-2 right-3 text-red-400 hover:text-white text-xl z-10">
         <i class="fa-solid fa-circle-xmark"></i>
       </button>
-      <img src="${imageSrc}" alt="${product.name}" class="w-full h-60 object-cover rounded-lg border border-[#2e2e33]" />
+      
+      <!-- Slider ảnh sản phẩm -->
+<div class="relative w-full h-80 overflow-hidden rounded-lg border border-[#2e2e33]">
+  <div class="flex transition-transform duration-500 ease-in-out" id="product-slider">
+    ${[
+      `<div class='w-full flex-shrink-0'><img src='${imageSrc}' class='w-full h-80 object-cover rounded-lg' /></div>`,
+      ...(product.media || [])
+        .map(m => {
+          if (m.type === "video") {
+            return `<div class='w-full flex-shrink-0'>
+                      <video src='${m.url}' class='w-full h-80 object-cover rounded-lg' controls muted></video>
+                    </div>`;
+          } else {
+            return `<div class='w-full flex-shrink-0'>
+                      <img src='${m.url}' class='w-full h-80 object-cover rounded-lg' />
+                    </div>`;
+          }
+        })
+    ].join("")}
+  </div>
+
+  <!-- Nút điều hướng trái/phải -->
+  <button id="prev-slide" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
+  <button id="next-slide" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+    <i class="fa-solid fa-chevron-right"></i>
+  </button>
+</div>
+      <!-- Kết thúc slider -->
+
+      <div id="slider-dots" class="flex justify-center mt-2 space-x-2">
+</div>
+
+
       <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
       <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>
       <div id="rating-summary" class="mt-2"></div>
@@ -305,6 +340,9 @@ async function showPopup(product) {
   `;
 
   popupContainer.style.display = "flex";
+
+  // Sau khi popup đã render xong nội dung HTML
+  setupSlider(popup);
 
   // Setup hiệu ứng lật
   const flipInner = popup.querySelector(".flip-inner");
@@ -536,7 +574,7 @@ window.suggest = function () {
   });
 };
 
-function addToCart (product) {
+function addToCart(product) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const existing = cart.find(item => item.id === product.id);
 

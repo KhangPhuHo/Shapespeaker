@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎵 Đang phát nhạc</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #f2c4fb, #eeebf0);
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    audio {
+      width: 90%;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="title">🎶 Đang phát âm thanh</h2>
+
+  <audio id="player" autoplay muted playsinline controls>
+    <source id="audioSrc" type="audio/mpeg">
+    Trình duyệt của bạn không hỗ trợ phát nhạc.
+  </audio>
+
+  <script>
+    const player = document.getElementById('player');
+    const source = document.getElementById('audioSrc');
+    const title = document.getElementById('title');
+
+    // 📦 Lấy tên file từ URL (ví dụ ?file=dog.mp3)
+    // http://my-domain-name/client/playbooksound/player.html?file=dog.mp3
+    const params = new URLSearchParams(window.location.search);
+    const fileName = params.get("file") || "default.mp3";
+
+    // 🎧 Gán nguồn âm thanh
+    source.src = `./audio/${fileName}`;
+    player.load();
+    title.textContent = `🎶 Đang phát: ${fileName}`;
+
+    // 🔇 Phát thử ở chế độ im lặng
+    player.muted = true;
+    player.play().then(() => {
+      console.log("Đã phát ở chế độ im lặng...");
+    }).catch(err => console.warn("Autoplay bị chặn:", err));
+
+    // 🔊 Khi người dùng click hoặc chạm đầu tiên → bật tiếng
+    document.addEventListener('click', () => {
+      player.muted = false;
+      player.play();
+      console.log("Âm thanh đã được bật.");
+    }, { once: true });
+  </script>
+</body>
+</html>
