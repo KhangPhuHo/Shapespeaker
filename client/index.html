@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./src/css/menure.css">
     <link rel="stylesheet" href="./src/css/toast.css">
     <link rel="stylesheet" href="./src/css/index.css">
+    <link rel="stylesheet" href="./src/css/multiplemedia.css">
     <link rel="stylesheet" href="./src/css/chatbot.css">
 </head>
 
@@ -54,11 +55,18 @@
                 <h2>Tạo Sản Phẩm Mới</h2>
                 <form id="form-new-product">
                     <div class="form-group">
-                        <label for="picture">Hình ảnh</label>
+                        <label for="picture">Hình ảnh thumnail</label>
                         <img id="preview-picture-new" src="" alt="Ảnh hiện tại"
                             style="max-width: 200px; margin-bottom: 10px; display: none;" />
                         <input type="file" accept="image/*" id="picture" name="picture" />
                     </div>
+
+                    <div class="form-group">
+                        <label for="mediaFiles">Ảnh & Video phụ</label>
+                        <input type="file" id="mediaFiles" name="media" accept="image/*,video/*" multiple />
+                        <div id="mediaPreview" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
                     <div class="form-group">
                         <label for="name">Tên sản phẩm</label>
                         <input type="text" id="name" name="name" required />
@@ -139,10 +147,16 @@
                 <h2>Chỉnh sửa sản phẩm</h2>
                 <form id="form-edit-product" onsubmit="updateProduct(event)">
                     <div class="form-group">
-                        <label for="edit-picture">Hình ảnh</label>
+                        <label for="edit-picture">Hình ảnh thumnail</label>
                         <img id="preview-picture-edit" src="" alt="Ảnh hiện tại"
                             style="max-width: 200px; margin-bottom: 10px;" />
                         <input type="file" accept="image/*" id="edit-picture" name="picture" />
+                    </div>
+                    
+                    <div id="form-group">
+                        <label for="edit-mediaFiles">Ảnh & Video phụ</label>
+                        <input type="file" id="edit-mediaFiles" name="media" accept="image/*,video/*" multiple />
+                        <div id="edit-mediaPreview" class="flex flex-wrap gap-2 mt-2"></div>
                     </div>
 
                     <div class="form-group">
@@ -292,6 +306,7 @@
         });
 
     </script>
+    <script type="module" src="./src/js/multiplemedia.js"></script>
 </body>
 
 </html>

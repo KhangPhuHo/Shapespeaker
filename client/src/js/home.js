@@ -56,7 +56,8 @@ function renderTopProducts(products) {
 
   products.forEach(product => {
     const div = document.createElement("div");
-    div.className = `bg-white dark:bg-gray-900 text-gray-900 dark:text-white 
+    //dark:text-white dark:bg-gray-900
+    div.className = `bg-white text-gray-900
       rounded-xl shadow-md p-4 w-full max-w-[260px] text-center transition-transform hover:scale-105`;
 
     div.innerHTML = `
