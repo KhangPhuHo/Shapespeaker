@@ -419,8 +419,8 @@ async function showPopup(product) {
 function renderBuyNowPopup() {
   const popupHTML = `
   <div id="buy-now-popup" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-900 text-black dark:text-white p-6 rounded-xl shadow-lg w-[300px]">
-      <h2 class="text-xl font-bold mb-4">Chọn số lượng</h2>
+    <div class="bg-white dark:bg-gray-900 text-black p-6 rounded-xl shadow-lg w-[300px]">
+      <h2 class="text-xl dark:text-white font-bold mb-4">Chọn số lượng</h2>
       <div class="mb-4">
         <input id="buy-now-qty" type="number" min="1" value="1"
           class="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-700 focus:outline-none" />
