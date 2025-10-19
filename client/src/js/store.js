@@ -366,9 +366,7 @@ async function showPopup(product) {
           <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" data-url="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif"
             class="sticker-option cursor-pointer w-12 h-12 rounded hover:scale-110 transition" />
         </div>
-      </div>
-      <br><br>
-            
+      </div>   
       </div>
 
       <!-- MẶT SAU -->
