@@ -56,7 +56,7 @@
 
       .popup .face.front,
       .popup .face.back {
-        min-height: 75vh !important;
+        min-height: 70vh !important;
         /* 👈 Đảm bảo cả hai mặt cao như nhau */
       }
     }
