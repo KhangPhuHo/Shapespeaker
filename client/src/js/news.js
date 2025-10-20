@@ -3,6 +3,7 @@ import { db } from './firebase-config.js';
 import { collection, getDocs, onSnapshot, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 import { setLanguage } from './language.js';
 import { loadComments, setupCommentSubmit } from './comments.js';
+import { setupSlider } from "./slider-control.js";
 
 let products = [];
 let currentSort = "desc"; // "desc" = mới nhất trước
@@ -175,39 +176,111 @@ async function loadProductIntro(productId) {
 }
 
 async function showPopup(product) {
+
+  // ✅ Lấy popup container và popup bên trong
+  const popupContainer = document.querySelector(".popup-container");
+  const popup = popupContainer?.querySelector(".popup");
+
+  if (!popup || !popupContainer) {
+    console.error("Không tìm thấy phần tử popup hoặc popup-container!");
+    return;
+  }
+
+  // Now proceed exactly as before (use popup and popupContainer variables below)
   const imageSrc = product.picture?.trim() || "./src/img/shapespeakicon.jpg";
   const postId = product.id || product.postId;
 
-  // Tạo thẻ chứa flip-card bên trong popup
+  // Giao diện popup (chỉ thay đổi bố cục hiển thị)
   popup.innerHTML = `
-    <!-- Popup kiểu Meta Style: mềm mại, dark nhẹ, pastel accents -->
-<div class="flip-card w-full max-w-2xl h-[700px] sm:h-[90vh] mx-auto relative">
-  <div class="flip-inner relative w-full h-full transition-transform duration-700">
+  <div class="flip-card w-full h-full relative">
+    <div class="flip-inner relative w-full h-full transition-transform duration-700">
 
-    <!-- FRONT FACE -->
-    <div class="face front absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-xl overflow-y-auto scroll-smooth">
-      <button class="close-popup absolute top-2 right-3 text-[#f87171] hover:text-white text-xl z-10">
-        <i class="fa-solid fa-circle-xmark"></i>
+      <!-- MẶT TRƯỚC -->
+      <div class="face front absolute inset-0 bg-[#1e1e20] text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
+        <button class="close-popup absolute top-2 right-3 text-red-400 hover:text-white text-xl z-10">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </button>
+
+        <!-- Bố cục 2 cột cho desktop -->
+        <div class="desktop-layout">
+          <!-- CỘT TRÁI: Hình ảnh -->
+          <div class="desktop-left">
+            <div class="relative w-full h-70 lg:h-[70vh] overflow-hidden rounded-lg border border-[#2e2e33]">
+              <div class="flex transition-transform duration-500 ease-in-out" id="product-slider">
+                ${[
+      `<div class='w-full flex-shrink-0'><img src='${imageSrc}' class='w-full h-full object-cover rounded-lg' /></div>`,
+      ...(product.media || []).map(m => {
+        if (m.type === "video") {
+          return `<div class='w-full flex-shrink-0'>
+                                <video src='${m.url}' class='w-full h-full object-cover rounded-lg' controls muted></video>
+                              </div>`;
+        } else {
+          return `<div class='w-full flex-shrink-0'>
+                                <img src='${m.url}' class='w-full h-full object-cover rounded-lg' />
+                              </div>`;
+        }
+      })
+    ].join("")}
+              </div>
+
+              <!-- Nút điều hướng -->
+              <button id="prev-slide" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-chevron-left"></i>
+              </button>
+              <button id="next-slide" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+            <div id="slider-dots" class="flex justify-center mt-2 space-x-2"></div>
+          </div>
+
+          <!-- CỘT PHẢI: Thông tin + Bình luận (NEWS POPUP) -->
+<div class="desktop-right w-full lg:w-[45%] flex flex-col justify-start items-center p-4 
+            min-h-[300px] lg:max-h-[80vh] overflow-y-auto scroll-smooth">
+
+  <div class="flex flex-col justify-start items-center w-full space-y-4">
+
+    <!-- Tên bài viết -->
+    <h3 class="text-2xl font-bold text-yellow-400 text-center">
+      ${product.name}
+    </h3>
+
+    <!-- Chi tiết sản phẩm -->
+    <div class="product-details text-center">
+      <p class="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
+        ${product.details || ""}
+      </p>
+      <div id="rating-summary" class="mt-2"></div>
+    </div>
+
+    <!-- Tác giả -->
+    <div class="text-center">
+      <p class="text-gray-400 text-sm" data-i18n="news.author">Tác giả:</p>
+      <p class="text-lg font-semibold text-[#90cdf4]">
+        ${product.author || "Không có thông tin"}
+      </p>
+    </div>
+
+    <!-- Nút -->
+    <div class="action-buttons flex flex-col gap-3 w-full mt-2">
+      <button
+        id="flip-to-back"
+        class="w-full bg-gradient-to-r from-pink-300 to-orange-200 
+               text-gray-900 font-semibold py-2 px-4 rounded-full transition hover:opacity-90"
+        data-i18n="news.information">
+        Thông tin chi tiết
       </button>
-      <img src="${imageSrc}" alt="${product.name || 'new'}" loading="lazy"
-        class="w-full h-80 object-cover rounded-lg border border-white/10" />
+    </div>
 
-      <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
-      <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>
+  </div>
 
-      <div class="text-center mt-4">
-        <p class="text-gray-400 text-sm" data-i18n="news.author">Author:</p>
-        <p class="text-lg font-semibold text-[#90cdf4]">${product.author || "Don't have author"}</p>
-      </div>
+</div>
 
-      <div class="flex flex-col gap-3 mt-4 w-full">
-        <button id="flip-to-back"
-          class="w-full bg-gradient-to-r from-pink-300 to-orange-200 text-gray-900 font-semibold py-2 px-4 rounded-full transition hover:opacity-90"
-          data-i18n="news.information">Thông tin chi tiết</button>
-      </div>
+        </div>
 
-      <!-- COMMENTS SECTION -->
-      <div class="w-full max-w-md mt-4 bg-[#2b2b2e] rounded-xl p-2 text-white flex flex-col h-[550px] border border-white/10">
+        <!-- COMMENTS SECTION -->
+      <div class="w-full sm:w-[500px] lg:w-[700px] xl:w-[850px] mx-auto mt-4 bg-[#2b2b2e] rounded-xl p-2 text-white flex flex-col h-[550px] border border-white/10">
+
         <!-- Pinned -->
         <div id="admin-pinned-wrapper" data-visible="true" class="relative mb-2">
           <button id="pinned-toggle-btn" onclick="togglePinned()" title="Ẩn/Hiện ghim"
@@ -254,35 +327,46 @@ async function showPopup(product) {
             class="sticker-option cursor-pointer w-12 h-12 rounded hover:scale-110 transition" />
         </div>
       </div>
-      <br><br><br><br>
-    </div>
+      <br><br>   
+      </div>
 
-    <!-- BACK FACE -->
-    <div class="face back absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-xl overflow-y-auto scroll-smooth">
-      <button id="flip-to-front" class="absolute top-2 left-2 text-blue-400 hover:text-white text-xl z-10">
-        <i class="fa-solid fa-arrow-left"></i>
-      </button>
-      <h2 class="text-center text-2xl font-bold text-yellow-400 mb-3" data-i18n="store.intro">Giới thiệu sản phẩm</h2>
-      <div id="product-intro" class="relative whitespace-pre-line text-sm text-gray-200"></div>
+      <!-- MẶT SAU -->
+      <div class="face back absolute inset-0 bg-[#1e1e20] text-white p-6 rounded-2xl shadow-2xl overflow-y-auto scroll-smooth">
+        <button id="flip-to-front" class="absolute top-2 left-2 text-blue-400 hover:text-white text-xl z-10">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+        <h2 class="text-center text-2xl font-bold text-yellow-400 mb-3" data-i18n="store.intro">Giới thiệu sản phẩm</h2>
+        <div id="product-intro" class="relative whitespace-pre-line text-sm text-gray-200"></div>
+      </div>
     </div>
   </div>
-</div>
   `;
 
   popupContainer.style.display = "flex";
+  popup.style.display = "block"; // ✅ giúp hiển thị trên mobile
 
-  // Setup hiệu ứng lật
+  // Ẩn menu khi bật popup
+  const menu = document.getElementById("Menu");
+  if (menu) {
+    menu.style.display = "none";
+  }
+
+  setupSlider(popup);
+
   const flipInner = popup.querySelector(".flip-inner");
   popup.querySelector("#flip-to-back").onclick = () => flipInner.classList.add("rotate-y-180");
   popup.querySelector("#flip-to-front").onclick = () => flipInner.classList.remove("rotate-y-180");
 
-  // Đóng popup và reset lại trạng thái
   popup.querySelector(".close-popup").onclick = () => {
     popupContainer.style.display = "none";
+    popup.style.display = "none";
     flipInner.classList.remove("rotate-y-180");
+
+    const menu = document.getElementById("Menu");
+    if (menu) menu.style.display = "";
   };
 
-  // Load nội dung
+
   setLanguage(localStorage.getItem("lang") || "en");
   loadComments(postId);
   setupCommentSubmit(postId);

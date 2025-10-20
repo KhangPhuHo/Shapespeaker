@@ -336,13 +336,13 @@ async function showPopup(product) {
   popup.querySelector("#flip-to-front").onclick = () => flipInner.classList.remove("rotate-y-180");
 
   popup.querySelector(".close-popup").onclick = () => {
-  popupContainer.style.display = "none";
-  popup.style.display = "none";
-  flipInner.classList.remove("rotate-y-180");
+    popupContainer.style.display = "none";
+    popup.style.display = "none";
+    flipInner.classList.remove("rotate-y-180");
 
-  const menu = document.getElementById("Menu");
-  if (menu) menu.style.display = "";
-};
+    const menu = document.getElementById("Menu");
+    if (menu) menu.style.display = "";
+  };
 
 
   setLanguage(localStorage.getItem("lang") || "en");
@@ -352,3 +352,149 @@ async function showPopup(product) {
   loadProductIntro(postId);
 }
 
+
+
+
+
+
+async function showPopup(product) {
+  const imageSrc = product.picture?.trim() || "./src/img/shapespeakicon.jpg";
+  const postId = product.id || product.postId;
+
+  // Tạo thẻ chứa flip-card bên trong popup
+  popup.innerHTML = `
+    <!-- Popup kiểu Meta Style: mềm mại, dark nhẹ, pastel accents -->
+<div class="flip-card w-full max-w-2xl h-[700px] sm:h-[90vh] mx-auto relative">
+  <div class="flip-inner relative w-full h-full transition-transform duration-700">
+
+    <!-- FRONT FACE -->
+    <div class="face front absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-xl overflow-y-auto scroll-smooth">
+      <button class="close-popup absolute top-2 right-3 text-[#f87171] hover:text-white text-xl z-10">
+        <i class="fa-solid fa-circle-xmark"></i>
+      </button>
+      <img src="${imageSrc}" alt="${product.name || 'new'}" loading="lazy"
+        class="w-full h-80 object-cover rounded-lg border border-white/10" />
+
+      <h3 class="text-2xl font-bold text-yellow-400 text-center mt-3">${product.name}</h3>
+      <p class="text-sm text-gray-300 text-center whitespace-pre-line mt-2">${product.details || ""}</p>
+
+      <div class="text-center mt-4">
+        <p class="text-gray-400 text-sm" data-i18n="news.author">Author:</p>
+        <p class="text-lg font-semibold text-[#90cdf4]">${product.author || "Don't have author"}</p>
+      </div>
+
+      <div class="flex flex-col gap-3 mt-4 w-full">
+        <button id="flip-to-back"
+          class="w-full bg-gradient-to-r from-pink-300 to-orange-200 text-gray-900 font-semibold py-2 px-4 rounded-full transition hover:opacity-90"
+          data-i18n="news.information">Thông tin chi tiết</button>
+      </div>
+
+      <!-- COMMENTS SECTION -->
+      <div class="w-full max-w-md mt-4 bg-[#2b2b2e] rounded-xl p-2 text-white flex flex-col h-[550px] border border-white/10">
+        <!-- Pinned -->
+        <div id="admin-pinned-wrapper" data-visible="true" class="relative mb-2">
+          <button id="pinned-toggle-btn" onclick="togglePinned()" title="Ẩn/Hiện ghim"
+            class="absolute top-0 right-0 z-10 bg-[#6366f1] text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-indigo-600 transition text-xs">
+            <i class="fa-solid fa-map-pin"></i>
+          </button>
+          <div id="admin-pinned" class="mt-2 max-h-[100px] overflow-y-auto pr-1 scroll-smooth"></div>
+        </div>
+
+        <div id="comments-list" class="flex-1 overflow-y-auto flex flex-col gap-3 px-2 py-1 scroll-smooth"></div>
+
+        <!-- Comment form -->
+        <form id="comment-form" class="mt-2 p-2 border-t border-white/10">
+          <div id="media-preview" class="flex flex-wrap gap-2 p-2 mb-2 border border-gray-700 rounded-md hidden"></div>
+
+          <div class="flex items-center gap-2">
+            <label for="comment-image" class="cursor-pointer text-gray-300 hover:text-white">
+              <i class="fa-solid fa-image text-xl"></i>
+            </label>
+            <input type="file" name="media" id="comment-image" accept="image/*,video/mp4" multiple class="hidden" />
+
+            <textarea id="comment-input" rows="1" placeholder="Write a message..."
+              class="flex-1 resize-none bg-transparent text-white text-sm placeholder-gray-400 focus:outline-none"></textarea>
+
+            <button type="button" id="emoji-toggle" class="text-yellow-300 text-xl hover:text-yellow-400">😊</button>
+            <button type="submit" id="submit-comment" class="text-blue-400 hover:text-blue-600 text-xl">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+
+          <div id="emoji-box" class="hidden flex flex-wrap gap-1 mt-2 px-1">
+            <button class="text-xl">😀</button><button class="text-xl">😂</button><button class="text-xl">😍</button>
+            <button class="text-xl">🥺</button><button class="text-xl">😎</button><button class="text-xl">👍</button>
+            <button class="text-xl">🔥</button><button class="text-xl">😡</button><button class="text-xl">🙏</button>
+            <button class="text-xl">💯</button>
+          </div>
+        </form>
+
+        <!-- Stickers -->
+        <div class="flex gap-2 mt-2 px-2 overflow-x-auto">
+          <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" data-url="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif"
+            class="sticker-option cursor-pointer w-12 h-12 rounded hover:scale-110 transition" />
+          <img src="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif" data-url="https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif"
+            class="sticker-option cursor-pointer w-12 h-12 rounded hover:scale-110 transition" />
+        </div>
+      </div>
+      <br><br><br><br>
+    </div>
+
+    <!-- BACK FACE -->
+    <div class="face back absolute inset-0 w-full h-full bg-[#1e1e20] text-white p-6 rounded-2xl shadow-xl overflow-y-auto scroll-smooth">
+      <button id="flip-to-front" class="absolute top-2 left-2 text-blue-400 hover:text-white text-xl z-10">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+      <h2 class="text-center text-2xl font-bold text-yellow-400 mb-3" data-i18n="store.intro">Giới thiệu sản phẩm</h2>
+      <div id="product-intro" class="relative whitespace-pre-line text-sm text-gray-200"></div>
+    </div>
+  </div>
+</div>
+  `;
+
+  popupContainer.style.display = "flex";
+
+  // Setup hiệu ứng lật
+  const flipInner = popup.querySelector(".flip-inner");
+  popup.querySelector("#flip-to-back").onclick = () => flipInner.classList.add("rotate-y-180");
+  popup.querySelector("#flip-to-front").onclick = () => flipInner.classList.remove("rotate-y-180");
+
+  // Đóng popup và reset lại trạng thái
+  popup.querySelector(".close-popup").onclick = () => {
+    popupContainer.style.display = "none";
+    flipInner.classList.remove("rotate-y-180");
+  };
+
+  // Load nội dung
+  setLanguage(localStorage.getItem("lang") || "en");
+  loadComments(postId);
+  setupCommentSubmit(postId);
+  loadProductIntro(postId);
+}
+
+< !--CỘT PHẢI: Thông tin + Bình luận-- >
+  <div class="desktop-right">
+    <div>
+      <!-- Tên sản phẩm -->
+      <h3 class="text-2xl font-bold text-yellow-400 text-center">${product.name}</h3>
+
+      <!-- Chi tiết sản phẩm -->
+      <div class="product-details mt-3">
+        <p class="text-sm text-gray-300 text-center whitespace-pre-line">${product.details || ""}</p>
+        <div id="rating-summary" class="mt-2"></div>
+      </div>
+
+      <div class="text-center mt-4">
+        <p class="text-gray-400 text-sm" data-i18n="news.author">Author:</p>
+        <p class="text-lg font-semibold text-[#90cdf4]">${product.author || "Don't have author"}</p>
+      </div>
+
+      <!-- Các nút -->
+      <div class="action-buttons mt-4 w-full gap-3">
+        <button id="flip-to-back"
+          class="w-full bg-gradient-to-r from-pink-300 to-orange-200 text-gray-900 font-semibold py-2 px-4 rounded-full transition hover:opacity-90"
+          data-i18n="news.information">Thông tin chi tiết</button>
+      </div>
+
+    </div>
+  </div>

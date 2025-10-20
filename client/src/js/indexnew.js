@@ -14,6 +14,8 @@ import {
   query,
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
+import { renderMediaPreview, uploadMultipleMedia, renderExistingMedia, selectedFiles } from "./multiplemedia.js";
+
 const API_BASE_URL = "https://shapespeaker.onrender.com";
 
 // ✅ DOMContentLoaded
@@ -83,8 +85,8 @@ window.deleteProduct = async (newsId) => {
       showToast("✅ Đã xóa bài báo!", "success");
       loadProducts(document.getElementById("content"));
     } catch (error) {
-      console.error("❌ Error deleting news:", error);
       showToast("❌ Lỗi khi xóa bài báo!", "error");
+      console.error("❌ Error deleting news:", error);
     }
   }
 };
@@ -93,6 +95,7 @@ window.deleteProduct = async (newsId) => {
 window.getOneProduct = async (newsId) => {
   try {
     const docSnap = await getDoc(doc(db, "shapespeaknews", newsId));
+
     if (docSnap.exists()) {
       const data = docSnap.data();
       document.getElementById("preview-picture-edit").src = data.picture || "../img/shapespeakicon.jpg";
@@ -100,6 +103,16 @@ window.getOneProduct = async (newsId) => {
       document.getElementById("edit-details").value = data.details || "";
       document.getElementById("edit-author").value = data.author || "";
       document.getElementById("form-edit-product").dataset.productId = newsId;
+
+      // --- Hiển thị media phụ có sẵn ---
+      const previewBox = document.getElementById("edit-mediaPreview");
+      if (data.media && Array.isArray(data.media)) {
+        renderExistingMedia(data.media, previewBox);
+      } else {
+        previewBox.innerHTML =
+          "<p class='text-gray-400 text-sm'>Không có hình ảnh / video phụ.</p>";
+      }
+
       openModal2();
     } else {
       showToast("❌ Bài báo không tồn tại!", "error");
@@ -128,18 +141,51 @@ window.updateProduct = async (event) => {
     formData.append("media", pictureFile);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const result = await response.json();
-      updatedData.picture = result.data.secure_url;
+      // const response = await fetch(`${API_BASE_URL}/upload`, {
+      //   method: "POST",
+      //   body: formData,
+      // });
+      // const result = await response.json();
+      // updatedData.picture = result.data.secure_url;
+
+      const res = await fetch(`${API_BASE_URL}/upload`, { method: "POST", body: formData });
+      const result = await res.json();
+      if (result?.success) {
+        updatedData.picture = result.data.secure_url;
+      } else {
+        showToast("❌ Upload ảnh thumbnail thất bại!", "error");
+      }
+
     } catch (error) {
       console.error("❌ Lỗi khi upload ảnh:", error);
       showToast("❌ Lỗi khi upload ảnh!", "error");
     }
   }
 
+  // --- Upload media phụ mới nếu có ---
+  let newUploaded = [];
+  try {
+    // Upload chỉ những file là File object (người dùng mới thêm)
+    const newFiles = selectedFiles.filter(f => f instanceof File);
+    if (newFiles.length > 0) {
+      newUploaded = await uploadMultipleMedia();
+    }
+
+    // Giữ lại media cũ chưa bị xoá
+    const remainingMedia = selectedFiles
+      .filter(f => f.url) // có url nghĩa là media cũ
+      .map(f => ({
+        url: f.url,
+        type: f.type.startsWith("video") ? "video" : "image",
+      }));
+
+    updatedData.media = [...remainingMedia, ...newUploaded];
+  } catch (err) {
+    console.error("Lỗi xử lý media phụ:", err);
+    showToast("❌ Lỗi upload hoặc lưu media phụ!", "error");
+  }
+
+  // --- Lưu Firestore ---
   try {
     await updateDoc(doc(db, "shapespeaknews", newsId), updatedData);
     showToast("✅ Cập nhật bài báo thành công!", "success");
@@ -166,6 +212,36 @@ async function AddProduct(newProduct) {
   }
 }
 
+// --- GẮN preview khi người dùng chọn file ---
+const mediaInput = document.getElementById("mediaFiles");
+const mediaPreview = document.getElementById("mediaPreview");
+
+if (mediaInput && mediaPreview) {
+  mediaInput.addEventListener("change", (e) => {
+    renderMediaPreview(e.target.files, mediaPreview);
+    e.target.value = ""; // ✅ Reset input mỗi lần chọn
+  });
+}
+
+// --- Preview cho form sửa sản phẩm ---
+const editMediaInput = document.getElementById("edit-mediaFiles");
+const editMediaPreview = document.getElementById("edit-mediaPreview");
+
+// replace (thay thế toàn bộ selectedFiles bằng file mới)
+if (editMediaInput && editMediaPreview) {
+  editMediaInput.addEventListener("change", (e) => {
+    const newFiles = Array.from(e.target.files);
+    // Thay thế nội dung của selectedFiles bằng file mới
+    selectedFiles.length = 0;
+    selectedFiles.push(...newFiles);
+
+    renderMediaPreview(selectedFiles, editMediaPreview);
+
+    // Reset input nếu muốn chọn lại cùng file
+    editMediaInput.value = null;
+  });
+}
+
 // ✅ Xử lý submit thêm bài báo
 async function handleAddProduct() {
   const picture = document.getElementById("picture").files[0];
@@ -184,15 +260,43 @@ async function handleAddProduct() {
         method: "POST",
         body: formData,
       });
+
       const result = await response.json();
-      newProduct.picture = result.data.secure_url;
+      if (result?.success) {
+        newProduct.picture = result.data.secure_url;
+      } else {
+        showToast("❌ Upload ảnh thumbnail thất bại!", "error");
+      }
+
     } catch (error) {
       console.error("❌ Lỗi khi upload ảnh:", error);
       showToast("❌ Lỗi khi upload ảnh!", "error");
     }
   }
 
+    // ✅ 2. Upload media phụ nếu có
+    let uploadedMedia = [];
+    if (selectedFiles.length > 0) {
+      try {
+        uploadedMedia = await uploadMultipleMedia();
+        newProduct.media = uploadedMedia;
+      } catch (err) {
+        console.error("Lỗi upload media phụ:", err);
+        showToast("❌ Lỗi upload media phụ!", "error");
+      }
+    }
+  
+    // ✅ 3. Lưu Firestore hoặc server
+    console.log("✅ Dữ liệu sản phẩm mới:", newProduct);
   await AddProduct(newProduct);
+  
+    // ✅ 4. Reset form
+    document.getElementById("form-new-product").reset();
+    selectedFiles.length = 0;
+    mediaPreview.innerHTML = "";
+    document.getElementById("preview-picture-new").style.display = "none";
+  
+    showToast("🎉 Sản phẩm đã được thêm!", "success");
 }
 
 // ✅ Gắn sự kiện cho form
