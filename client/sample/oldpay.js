@@ -407,3 +407,65 @@ function renderGiftInfo(giftDoc) {
         };
 
         //const admin = require("firebase-admin");
+
+        async function enableFCM() {
+    if (!currentUser) {
+        setStatus("⚠️ Bạn cần đăng nhập trước khi bật thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    if (!("Notification" in window)) {
+        setStatus("⚠️ Trình duyệt không hỗ trợ thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Yêu cầu quyền nhận thông báo...");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        setStatus("❌ Bạn đã từ chối quyền thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Lấy VAPID key từ server...");
+    const VAPID_KEY = await getVapidKeyFromServer();
+    if (!VAPID_KEY) {
+        setStatus("❌ Không lấy được VAPID key", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Lấy token FCM...");
+    const messaging = getMessaging();
+
+    try {
+        const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+        if (!token) throw new Error("Không lấy được token");
+
+        const res = await fetch(`${SERVER_URL}/api/saveFCMToken`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                userId: currentUser.uid, 
+                fcmToken: token, 
+                platform: "web" 
+            })
+        });
+
+        if (res.ok) {
+            currentToken = token;
+            tokenEl.textContent = token;
+            setStatus("🎉 Thiết bị đã đăng ký nhận thông báo thành công!", "success");
+        } else {
+            const errData = await res.json();
+            setStatus(`⚠️ Lỗi server: ${errData.message}`, "error");
+            toggleEl.checked = false;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Lỗi khi lấy hoặc gửi token FCM", "error");
+        toggleEl.checked = false;
+    }
+}

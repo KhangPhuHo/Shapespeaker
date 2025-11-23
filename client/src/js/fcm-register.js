@@ -108,20 +108,29 @@ async function enableFCM() {
         return;
     }
 
-    setStatus("⏳ Lấy token FCM...");
-    const messaging = getMessaging();
+    setStatus("⏳ Đăng ký service worker và lấy token FCM...");
 
     try {
-        const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+        // ✅ Đăng ký service worker ở root (Vercel)
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
+        // Lấy token FCM
+        const messaging = getMessaging();
+        const token = await getToken(messaging, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: registration
+        });
+
         if (!token) throw new Error("Không lấy được token");
 
+        // Gửi token lên server
         const res = await fetch(`${SERVER_URL}/api/saveFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                userId: currentUser.uid, 
-                fcmToken: token, 
-                platform: "web" 
+            body: JSON.stringify({
+                userId: currentUser.uid,
+                fcmToken: token,
+                platform: "web"
             })
         });
 
@@ -149,9 +158,9 @@ async function disableFCM() {
         const res = await fetch(`${SERVER_URL}/api/deleteFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                userId: currentUser.uid, 
-                fcmToken: currentToken 
+            body: JSON.stringify({
+                userId: currentUser.uid,
+                fcmToken: currentToken
             })
         });
 
