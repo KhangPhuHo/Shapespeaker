@@ -112,8 +112,7 @@ async function enableFCM() {
 
     try {
         // ✅ Đăng ký service worker ở root (Vercel)
-        //const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/firebase/' });
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
 
         // Lấy token FCM
         const messaging = getMessaging();
