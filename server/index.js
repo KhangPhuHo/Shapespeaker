@@ -11,20 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 🔐 Init Firebase Admin
-admin.initializeApp({
-  credential: admin.credential.cert({
-    type: process.env.FIREBASE_TYPE,
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: process.env.FIREBASE_AUTH_URI,
-    token_uri: process.env.TOKEN_URI,
-    auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_X509_CERT_URL,
-    client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL,
-  })
-});
+const { admin, firestore, messaging } = require("./firebaseAdmin"); 
 
 // ✅ Middleware
 app.use(cors({
@@ -49,7 +36,7 @@ app.use((req, res, next) => {
 
 // ✅ Utils
 const removeDiacritics = str => str.normalize("NFD").replace(/\p{Diacritic}/gu, "");
-const firestore = admin.firestore();
+//const firestore = admin.firestore();
 const SUPER_ADMIN_UID = "J1RINivGZFgXKTWfGRe4ITU3BGz2";
 
 // ✅ Routes
@@ -81,6 +68,21 @@ app.get("/api/getVapidKey", (req, res) => {
   const VAPID_KEY = process.env.FCM_VAPID_KEY;
   if (!VAPID_KEY) return res.status(500).json({ success: false, message: "VAPID key chưa cấu hình" });
   return res.json({ success: true, vapidKey: VAPID_KEY });
+});
+
+// ví dụ route gửi notification
+app.post("/notifications/send", async (req, res) => {
+    const { tokens, title, body } = req.body;
+    try {
+        const response = await messaging.sendMulticast({
+            tokens,
+            notification: { title, body },
+        });
+        res.json({ success: true, response });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
 });
 
 
