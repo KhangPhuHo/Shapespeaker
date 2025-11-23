@@ -1,9 +1,10 @@
-// firebase-messaging-sw.js
+// public/firebase-messaging-sw.js
 
+// Load Firebase scripts
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
 importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js');
 
-// ✅ Cấu hình Firebase
+// Firebase config
 firebase.initializeApp({
     apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
     authDomain: "book-management-b7265.firebaseapp.com",
@@ -14,12 +15,12 @@ firebase.initializeApp({
     measurementId: "G-ZYTCE1YML4"
 });
 
-// ✅ Lấy messaging instance
+// Lấy messaging instance
 const messaging = firebase.messaging();
 
-// Xử lý background messages
-messaging.onBackgroundMessage(function(payload) {
-    console.log('[firebase-messaging-sw.js] Nhận background message ', payload);
+// Background message handler
+messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Received background message ', payload);
 
     const notificationTitle = payload.notification?.title || 'Thông báo';
     const notificationOptions = {
@@ -31,12 +32,13 @@ messaging.onBackgroundMessage(function(payload) {
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Xử lý khi người dùng click vào notification
-self.addEventListener('notificationclick', function(event) {
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+
     const clickAction = event.notification.data?.click_action || '/';
     event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
             for (const client of clientList) {
                 if (client.url === clickAction && 'focus' in client) return client.focus();
             }
