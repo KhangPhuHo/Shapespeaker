@@ -1,0 +1,166 @@
+// fcm-register.js
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
+import { auth } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+// 🔑 VAPID PUBLIC KEY của dự án
+async function getVapidKeyFromServer() {
+    try {
+        const res = await fetch("/api/getVapidKey");
+        if (!res.ok) throw new Error("Không lấy được VAPID key");
+        const data = await res.json();
+        return data.vapidKey;
+    } catch (err) {
+        console.error("❌ Lỗi lấy VAPID key:", err);
+        return null;
+    }
+}
+
+// DOM Elements
+const statusEl = document.getElementById("statusMessage");
+const authEl = document.getElementById("authStatus");
+const userEl = document.getElementById("userIdDisplay");
+const tokenEl = document.getElementById("fcmTokenDisplay");
+const toggleEl = document.getElementById("fcmToggle"); // mới: toggle checkbox
+
+// Trạng thái user & token
+let currentUser = null;
+let currentToken = null;
+
+// Set status UI
+function setStatus(text, type = "info") {
+    statusEl.textContent = text;
+    const colors = {
+        info: "bg-gray-700 text-gray-200",
+        success: "bg-green-600 text-white",
+        error: "bg-red-600 text-white"
+    };
+    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type] || colors.info}`;
+}
+
+// Theo dõi auth realtime
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (user) {
+        authEl.textContent = "Đã đăng nhập";
+        userEl.textContent = user.uid;
+
+        // Kiểm tra token trên server
+        try {
+            const res = await fetch(`/api/checkFCMToken?userId=${user.uid}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.registered && data.token) {
+                    currentToken = data.token;
+                    tokenEl.textContent = currentToken;
+                    toggleEl.checked = true;
+                    setStatus("🔔 Thiết bị đã đăng ký nhận thông báo.", "success");
+                } else {
+                    currentToken = null;
+                    tokenEl.textContent = "Chưa có";
+                    toggleEl.checked = false;
+                    setStatus("ℹ️ Thiết bị chưa đăng ký nhận thông báo.", "info");
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    } else {
+        authEl.textContent = "Chưa đăng nhập";
+        userEl.textContent = "N/A";
+        tokenEl.textContent = "Chưa có";
+        toggleEl.checked = false;
+        setStatus("⚠️ Bạn cần đăng nhập để nhận thông báo.", "info");
+    }
+});
+
+// Hàm bật FCM
+async function enableFCM() {
+    if (!currentUser) {
+        setStatus("⚠️ Bạn cần đăng nhập trước khi bật thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    if (!("Notification" in window)) {
+        setStatus("⚠️ Trình duyệt không hỗ trợ thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Yêu cầu quyền nhận thông báo...");
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        setStatus("❌ Bạn đã từ chối quyền thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Lấy VAPID key từ server...");
+    const VAPID_KEY = await getVapidKeyFromServer();
+    if (!VAPID_KEY) {
+        setStatus("❌ Không lấy được VAPID key", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Lấy token FCM...");
+    const messaging = getMessaging();
+    try {
+        const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+        if (!token) throw new Error("Không lấy được token");
+
+        // Gửi lên server
+        const res = await fetch("/api/saveFCMToken", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.uid, fcmToken: token, platform: "web" })
+        });
+
+        if (res.ok) {
+            currentToken = token;
+            tokenEl.textContent = token;
+            setStatus("🎉 Thiết bị đã đăng ký nhận thông báo thành công!", "success");
+        } else {
+            const errData = await res.json();
+            setStatus(`⚠️ Lỗi server: ${errData.message || "Không xác định"}`, "error");
+            toggleEl.checked = false;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Lỗi khi lấy hoặc gửi token FCM", "error");
+        toggleEl.checked = false;
+    }
+}
+
+// Hàm tắt FCM
+async function disableFCM() {
+    if (!currentUser || !currentToken) return;
+
+    try {
+        const res = await fetch("/api/deleteFCMToken", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.uid, fcmToken: currentToken })
+        });
+
+        if (res.ok) {
+            tokenEl.textContent = "Chưa có";
+            setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
+            currentToken = null;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Lỗi khi hủy đăng ký FCM", "error");
+        toggleEl.checked = true;
+    }
+}
+
+// Xử lý toggle change
+export function handleToggleChange(e) {
+    if (e.target.checked) {
+        enableFCM();
+    } else {
+        disableFCM();
+    }
+}

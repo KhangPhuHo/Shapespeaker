@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title data-i18n="title.giftcode">Gift codes</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./src/css/styles.css" />
+  <link rel="stylesheet" href="./src/css/toast.css" />
+  <link rel="stylesheet" href="./src/css/menure.css" />
+  <link rel="stylesheet" href="./src/css/chatbot.css">
+  <link rel="website icon" href="./src/img/shapespeakicon.jpg" />
+
+  <style>
+    .code-box {
+      font-family: monospace;
+      letter-spacing: .12em;
+    }
+
+    .used-badge {
+      background: rgba(220, 38, 38, .12);
+      color: #ef4444;
+      border: 1px solid rgba(220, 38, 38, .18);
+    }
+
+    .unused-badge {
+      background: rgba(34, 197, 94, .12);
+      color: #10b981;
+      border: 1px solid rgba(34, 197, 94, .18);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+  <img id="background-img" src="./src/img/background.webp"
+    class="fixed inset-0 w-full h-full object-cover opacity-10 pointer-events-none">
+
+  <div id="Menu"></div>
+  <div id="bot"></div>
+
+  <main class="text-white max-w-4xl mx-auto mt-20 px-4">
+    <header class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold">🎁 Gift Codes</h1>
+        <p class="text-sm text-gray-300" data-i18n="giftcode.list">Danh sách mã quà tặng của bạn</p>
+      </div>
+      <div class="text-right text-sm text-gray-400">
+        <div id="userEmail"></div>
+        <div class="mt-2">
+          <label class="text-xs text-gray-300 mr-2" data-i18n="giftcode.currency">Currency:</label>
+          <select id="currencySelect" class="bg-gray-800 text-white px-2 py-1 rounded">
+            <option value="VND">VND</option>
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <div id="GiftcodeList" class="space-y-4"></div>
+  </main>
+
+  <div id="toast-container" class="fixed top-20 right-4 z-[1100] space-y-2 max-w-xs w-full"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/toast.js"></script>
+  <script type="module" src="./src/js/firebase-config.js"></script>
+  <script src="./src/js/menu.js"></script>
+  <script type="module" src="./src/js/profile.js"></script>
+  <script type="module" src="./src/js/logout.js"></script>
+  <script type="module">
+    import { addToCart } from './src/js/cart-utils.js';
+    window.addToCart = addToCart;
+  </script>
+  <script type="module" src="./src/js/chatbot.js"></script>
+  <script type="module">
+    import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+    enableSessionKeepAlive();
+  </script>
+
+  <script type="module">
+    import { db } from './src/js/firebase-config.js';
+    import { setLanguage, getTranslation } from './src/js/language.js';
+    import { showToast } from './src/js/toast.js';
+    import { collection, query, where, orderBy, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+    const GiftcodeList = document.getElementById("GiftcodeList");
+    const userEmail = document.getElementById("userEmail");
+    const currencySelect = document.getElementById("currencySelect");
+    const DEFAULT_EXCHANGE_RATE = 24000;
+
+    function getCurrency() { return localStorage.getItem("currency") || "VND"; }
+    function getExchangeRate() { return localStorage.getItem("exchangeRate") ? Number(localStorage.getItem("exchangeRate")) : DEFAULT_EXCHANGE_RATE; }
+    function formatCurrency(amount) {
+      return getCurrency() === "USD" ? `$${(amount / getExchangeRate()).toFixed(2)}` : amount.toLocaleString("vi-VN") + " VND";
+    }
+
+    async function copyToClipboard(text) {
+      try { await navigator.clipboard.writeText(text); showToast(await getTranslation("toast.copy_success"), "success"); }
+      catch { showToast(await getTranslation("toast.copy_error"), "error"); }
+    }
+
+    async function confirmAndRedeem(giftId, g) {
+      if (!confirm(await getTranslation("toast.confirm_redeem"))) return;
+
+      try {
+        showToast(await getTranslation("toast.redeem_success"), "success");
+
+        // 2 giây sau redirect sang redeem.html
+        setTimeout(() => {
+          window.location.href = `redeem.html?giftCode=${g.code}`;
+        }, 2000);
+
+      } catch {
+        showToast(await getTranslation("toast.redeem_error"), "error");
+      }
+    }
+
+
+
+    // Render snapshot (tối ưu: chỉ setLanguage 1 lần)
+    async function renderSnapshot(snapshot) {
+      GiftcodeList.innerHTML = "";
+      if (!snapshot || snapshot.empty) {
+        const emptyBox = document.createElement("div");
+        emptyBox.className = "bg-gray-800 p-6 rounded text-center text-gray-300";
+        emptyBox.textContent = await getTranslation("toast.empty");
+        GiftcodeList.appendChild(emptyBox);
+        return;
+      }
+
+      const highlight = new URLSearchParams(window.location.search).get("code");
+      const lang = localStorage.getItem("lang") || "en";
+
+      // Tạo tất cả giftcode trước, rồi apply language 1 lần
+      const fragment = document.createDocumentFragment();
+
+      for (const docSnap of snapshot.docs) {
+        const g = docSnap.data();
+        const total = (g.items || []).reduce((s, it) => s + (it.price || 0) * (it.quantity || 1), 0);
+        const itemsHtml = (g.items || []).map(it => `
+            <div class="flex items-center gap-3 mb-2">
+                <img src="${it.picture || './src/img/shapespeakicon.jpg'}" class="w-12 h-12 object-cover rounded-md" />
+                <div class="text-sm"><p class="text-yellow-400 font-semibold">${it.name}</p>
+                <p class="text-gray-300">x${it.quantity} • ${formatCurrency(it.price)}</p></div>
+            </div>
+        `).join("");
+
+        const el = document.createElement("div");
+        el.className = `bg-gray-800 p-4 rounded shadow ${highlight === g.code ? "ring-4 ring-yellow-400" : ""}`;
+        el.innerHTML = `
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-gray-400 text-sm" data-i18n="giftcode.code_label">Mã</p>
+                    <div class="code-box text-2xl font-bold">${g.code}</div>
+                    <p class="text-xs text-gray-400 mt-1">📅 ${g.date?.toDate?.().toLocaleString() || "(unknown)"} ${g.orderId ? `• <span data-i18n="giftcode.order_label">Đơn:</span> ${g.orderId}` : ""}</p>
+                </div>
+                <div class="flex flex-col items-end gap-3">
+                    <span class="${g.used ? 'used-badge' : 'unused-badge'} px-3 py-1 rounded-full text-sm" data-i18n="${g.used ? 'giftcode.used' : 'giftcode.unused'}"></span>
+                    <div class="flex gap-2">
+                        <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-md text-sm copy-btn">
+                            <i class="fa-regular fa-copy mr-2"></i>
+                            <span data-i18n="giftcode.copy">Sao chép</span>
+                        </button>
+                        ${g.used ? `<button class="bg-gray-600 px-3 py-2 rounded-md text-sm cursor-not-allowed" disabled data-i18n="giftcode.used">Đã dùng</button>` : `<button class="bg-amber-500 hover:bg-amber-600 text-black px-3 py-2 rounded-md text-sm redeem-btn"><span data-i18n="giftcode.redeem">Redeem</span></button>`}
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 pt-3 mt-3">${itemsHtml}
+                <div class="mt-2 flex justify-between items-center">
+                    <div class="text-sm text-gray-300" data-i18n="giftcode.total_value">Tổng giá trị</div>
+                    <div class="text-white font-semibold">${formatCurrency(total)}</div>
+                </div>
+            </div>
+        `;
+
+        el.querySelector(".copy-btn")?.addEventListener("click", () => copyToClipboard(g.code));
+        el.querySelector(".redeem-btn")?.addEventListener("click", () => confirmAndRedeem(docSnap.id, g));
+
+        fragment.appendChild(el);
+      }
+
+      GiftcodeList.appendChild(fragment);
+
+      // Apply language 1 lần cho cả danh sách
+      setLanguage(lang);
+    }
+
+    // Cài đặt chọn currency
+    currencySelect.value = getCurrency();
+    currencySelect.addEventListener("change", () => { localStorage.setItem("currency", currencySelect.value); location.reload(); });
+
+    // Xác thực người dùng & lấy giftcodes
+    const auth = getAuth();
+    onAuthStateChanged(auth, async (user) => {
+      GiftcodeList.innerHTML = "";
+      userEmail.textContent = user ? (user.email || user.displayName || user.uid) : "";
+      if (!user) { showToast(await getTranslation("toast.need_login"), "warning"); return; }
+
+      const q = query(collection(db, "giftcodes"), where("uid", "==", user.uid), orderBy("date", "desc"));
+      onSnapshot(q, renderSnapshot);
+    });
+
+    // Lắng nghe sự kiện đổi ngôn ngữ từ tab khác
+    document.addEventListener("languageChanged", () => {
+      const lang = localStorage.getItem("lang") || "en";
+      setLanguage(lang);
+    });
+    window.addEventListener("storage", e => {
+      if (e.key === "lang") document.dispatchEvent(new Event("languageChanged"));
+    });
+
+    // Khi trang load: apply language
+    document.addEventListener("DOMContentLoaded", async () => {
+      const lang = localStorage.getItem("lang") || "en";
+      await setLanguage(lang);
+    });
+  </script>
+
+</body>
+
+</html>

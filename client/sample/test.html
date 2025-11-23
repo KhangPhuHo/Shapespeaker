@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Redeem Giftcode</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./src/css/styles.css" />
+  <link rel="stylesheet" href="./src/css/toast.css" />
+  <link rel="stylesheet" href="./src/css/menure.css" />
+  <link rel="stylesheet" href="./src/css/chatbot.css">
+  <link rel="website icon" href="./src/img/shapespeakicon.jpg" />
+
+  <style>
+    .code-box {
+      font-family: monospace;
+      letter-spacing: .12em;
+    }
+
+    .used-badge {
+      background: rgba(220, 38, 38, .12);
+      color: #ef4444;
+      border: 1px solid rgba(220, 38, 38, .18);
+    }
+
+    .unused-badge {
+      background: rgba(34, 197, 94, .12);
+      color: #10b981;
+      border: 1px solid rgba(34, 197, 94, .18);
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+  <img id="background-img" src="./src/img/background.webp"
+    class="fixed inset-0 w-full h-full object-cover opacity-10 pointer-events-none">
+
+  <div id="Menu"></div>
+  <div id="bot"></div>
+
+  <main class="text-white max-w-2xl mx-auto mt-24 px-4">
+    <h1 class="text-2xl font-bold mb-4">Nhập giftcode</h1>
+
+    <div class="bg-gray-800 p-6 rounded mb-4">
+      <label class="block mb-2 text-sm text-gray-300">Nhập mã giftcode</label>
+      <div class="flex gap-2">
+        <input id="codeInput" class="flex-1 bg-gray-700 px-3 py-2 rounded text-white"
+          placeholder="Nhập mã (ví dụ: ABCD1234)" />
+        <button id="checkBtn" class="bg-amber-500 px-4 py-2 rounded text-black font-semibold">Kiểm tra</button>
+      </div>
+      <p class="text-xs text-gray-400 mt-2">Lưu ý: mã chỉ hợp lệ cho tài khoản đã mua.</p>
+    </div>
+
+    <div id="result" class="space-y-4"></div>
+  </main>
+
+  <div id="toast-container" class="fixed top-20 right-4 z-[1100] space-y-2 max-w-xs w-full"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="./src/js/language.js" defer></script>
+  <script type="module" src="./src/js/toast.js"></script>
+  <script type="module" src="./src/js/firebase-config.js"></script>
+  <script src="./src/js/menu.js"></script>
+  <script type="module" src="./src/js/profile.js"></script>
+  <script type="module" src="./src/js/logout.js"></script>
+  <script type="module">
+    import { addToCart } from './src/js/cart-utils.js';
+    window.addToCart = addToCart;
+  </script>
+  <script type="module" src="./src/js/chatbot.js"></script>
+  <script type="module">
+    import { enableSessionKeepAlive } from "./src/js/session-keeper.js";
+    enableSessionKeepAlive();
+  </script>
+
+  <script type="module">
+    import { db } from './src/js/firebase-config.js';
+    import { setLanguage, getTranslation } from './src/js/language.js';
+    import { showToast } from './src/js/toast.js';
+
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      doc,
+      updateDoc
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+    const codeInput = document.getElementById("codeInput");
+    const checkBtn = document.getElementById("checkBtn");
+    const result = document.getElementById("result");
+
+    const DEFAULT_EXCHANGE_RATE = 24000;
+    function getCurrency() { return localStorage.getItem("currency") || "VND"; }
+    function getExchangeRate() { const r = localStorage.getItem("exchangeRate"); return r ? Number(r) : DEFAULT_EXCHANGE_RATE; }
+    function formatCurrency(amount) {
+      const cur = getCurrency();
+      if (cur === "USD") return `$${(amount / getExchangeRate()).toFixed(2)}`;
+      return amount.toLocaleString("vi-VN") + " VND";
+    }
+
+    let currentUser = null;
+    setTimeout(() => {
+      const auth = getAuth();
+
+      onAuthStateChanged(auth, user => {
+        currentUser = user;
+        if (!user) {
+          showToast("Vui lòng đăng nhập để nhập giftcode.", "warning");
+        }
+      });
+
+    }, 2000);
+
+
+    async function findGiftcodeByCode(code) {
+      const q = query(collection(db, "giftcodes"), where("code", "==", code.trim()));
+      const snap = await getDocs(q);
+      return snap;
+    }
+
+    async function renderGiftInfo(giftDoc) {
+      const g = giftDoc.data();
+      const id = giftDoc.id;
+      console.log("renderGiftInfo - doc:", id, g);
+
+      const total = (g.items || []).reduce((s, it) => s + (it.price || 0) * (it.quantity || 1), 0);
+      const itemsHtml = (g.items || []).map(it => `
+    <div class="flex items-center gap-3 mb-2">
+      <img src="${it.picture || './src/img/shapespeakicon.jpg'}" class="w-12 h-12 rounded object-cover" />
+      <div class="text-sm">
+        <div class="text-yellow-400 font-semibold">${it.name}</div>
+        <div class="text-gray-300">x${it.quantity} • ${formatCurrency(it.price)}</div>
+      </div>
+    </div>
+  `).join("");
+
+      // rewardLink hiện tại (nếu có) // || g.rewardLink || g.url || g.videoUrl
+      let rewardLink = (g.link || "").toString().trim();
+      console.log("rewardLink:", rewardLink);
+
+      result.innerHTML = `
+<div class="bg-gray-800 p-4 rounded">
+  <div class="flex justify-between items-start">
+    <div>
+      <p class="text-gray-400 text-sm">Mã</p>
+      <div class="code-box text-2xl font-bold">${g.code || ""}</div>
+      <p class="text-xs text-gray-400 mt-1">${g.orderId ? `Đơn hàng: ${g.orderId}` : ""}</p>
+    </div>
+    <div class="text-right">
+      <div class="${g.used ? 'used-badge px-3 py-1 rounded-full' : 'unused-badge px-3 py-1 rounded-full'}">${g.used ?
+          'Đã dùng' : 'Chưa dùng'}</div>
+    </div>
+  </div>
+
+  <div class="mt-4 border-t border-gray-700 pt-3">
+    ${itemsHtml}
+    <div class="mt-2 flex justify-between items-center">
+      <div class="text-gray-300">Tổng</div>
+      <div class="text-white font-semibold">${formatCurrency(total)}</div>
+    </div>
+  </div>
+
+  <div id="rewardArea" class="mt-4 border-t border-gray-700 pt-3">
+    <p class="text-gray-300 text-sm mb-2">Liên kết nhận thưởng</p>
+
+    ${g.used
+          ? `
+    <div id="usedLinkBox" class="flex items-center gap-3 w-full">
+
+      <!-- Hộp đen chứa link, không chỉnh sửa -->
+      <div class="flex-1 bg-gray-700 px-3 py-2 rounded text-amber-300 text-sm truncate">
+        ${rewardLink || "— Không có liên kết —"}
+      </div>
+
+      <!-- Nút mở -->
+      <button id="openRewardLinkBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-md text-sm flex items-center 
+          ${rewardLink ? '' : 'opacity-50 cursor-not-allowed'}" ${rewardLink ? '' : 'disabled'}>
+        <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i>
+        <span>Mở</span>
+      </button>
+
+      <!-- Nút sao chép -->
+      <button id="copyRewardLinkBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-md text-sm flex items-center 
+          ${rewardLink ? '' : 'opacity-50 cursor-not-allowed'}" ${rewardLink ? '' : 'disabled'}>
+        <i class="fa-regular fa-copy mr-2"></i>
+        <span>Sao chép</span>
+      </button>
+
+    </div>
+
+    <div class="text-gray-400 text-sm mt-2">
+      Mã đã được đánh dấu là <strong>Đã dùng</strong>. Bạn có thể mở hoặc sao chép liên kết.
+    </div>
+    `
+          : `
+  <div id="noLinkBox" class="flex items-center gap-3">
+    <div class="flex-1 bg-gray-700 px-3 py-2 rounded text-amber-300 text-sm truncate">
+      — Chưa có liên kết thưởng —
+    </div>
+  </div>
+
+  <div class="text-gray-400 text-sm mt-2">
+    Khi bạn bấm "Dùng mã", liên kết sẽ được kích hoạt tự động.
+  </div>
+`
+        }
+  </div>
+
+  <div class="mt-4 flex gap-2">
+    ${g.used ? '<button class="bg-gray-600 px-3 py-2 rounded text-sm cursor-not-allowed" disabled>Đã dùng</button>' :
+          `<button id="useBtn" class="bg-amber-500 px-4 py-2 rounded text-black font-semibold">Dùng mã</button>`}
+    <button id="backBtn" class="bg-gray-700 px-4 py-2 rounded text-sm">Nhập mã khác</button>
+  </div>
+</div>
+`;
+
+      // helper copy function
+      async function copyToClipboard(text) {
+        if (!text) return false;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            const ta = document.createElement("textarea");
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            ta.remove();
+          }
+          return true;
+        } catch (err) {
+          console.error("Copy failed", err);
+          return false;
+        }
+      }
+
+      // validate url
+      function isValidHttpUrl(str) {
+        try {
+          const u = new URL(str);
+          return u.protocol === "http:" || u.protocol === "https:";
+        } catch (_) {
+          return false;
+        }
+      }
+
+      // BACK button
+      const backBtn = document.getElementById("backBtn");
+      if (backBtn) backBtn.addEventListener("click", () => { result.innerHTML = ""; codeInput.focus(); });
+
+      // OPEN button (nếu tồn tại)
+      const openBtn = document.getElementById("openRewardLinkBtn");
+      if (openBtn) {
+        openBtn.addEventListener("click", () => {
+          // Lấy href nếu là <a>, fallback về biến rewardLink
+          let linkNow = document.getElementById("rewardLinkAnchor")?.href || rewardLink;
+          // Nếu rewardLinkAnchor là div (khi không có link) thì .href undefined -> dùng rewardLink (chuỗi rỗng)
+          if (linkNow && linkNow.toString().trim()) {
+            // đảm bảo mở tab mới an toàn
+            window.open(linkNow, "_blank", "noopener");
+          } else {
+            showToast("Không có liên kết để mở.", "error");
+          }
+        });
+      }
+
+      // COPY button (nếu tồn tại)
+      const copyBtn = document.getElementById("copyRewardLinkBtn");
+      if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+          // nếu rewardLinkAnchor là <a> lấy href; nếu là div lấy textContent
+          const anchorEl = document.getElementById("rewardLinkAnchor");
+          let linkNow = "";
+          if (anchorEl) {
+            if (anchorEl.tagName.toLowerCase() === 'a') linkNow = anchorEl.href || "";
+            else linkNow = anchorEl.textContent || "";
+          }
+          linkNow = linkNow?.toString().trim() || rewardLink;
+
+          if (!linkNow) { showToast("Không có liên kết để sao chép.", "error"); return; }
+          const ok = await copyToClipboard(linkNow);
+          if (ok) {
+            const span = copyBtn.querySelector("span");
+            if (span) { span.textContent = "Đã sao chép"; setTimeout(() => (span.textContent = "Sao chép"), 1800); }
+            showToast("Đã sao chép liên kết vào bộ nhớ tạm.", "success");
+          } else showToast("Không thể sao chép liên kết.", "error");
+        });
+      }
+
+      // USE button: nếu người dùng bấm Dùng mã (trước khi thêm link)
+      const useBtn = document.getElementById("useBtn");
+      if (useBtn) {
+        useBtn.addEventListener("click", async () => {
+          if (!currentUser) { showToast("Bạn cần đăng nhập để dùng mã.", "warning"); return; }
+          if (g.uid && g.uid !== currentUser.uid) { showToast("Mã này không thuộc về tài khoản của bạn.", "error"); return; }
+          if (g.used) { showToast("Mã đã được sử dụng trước đó.", "info"); return; }
+
+          if (!confirm("Xác nhận dùng mã này? Hành động sẽ đánh dấu mã là đã sử dụng.")) return;
+
+          // update used:true nhưng giữ nguyên link (nếu có)
+          try {
+            await updateDoc(doc(db, "giftcodes", id), { used: true, usedAt: new Date() });
+            showToast("Đã đánh dấu mã là đã dùng.", "success");
+
+            // nếu đã có link trước đó, auto copy và show
+            if (rewardLink) {
+              const copied = await copyToClipboard(rewardLink);
+              if (copied) showToast("Liên kết đã được sao chép vào clipboard — bạn có thể dán vào trình duyệt.", "success");
+              else showToast("Không thể sao chép tự động; bạn có thể bấm Sao chép.", "warning");
+            }
+
+            // refresh re-render
+            try {
+              const updatedSnap = await findGiftcodeByCode(g.code || "");
+              if (!updatedSnap.empty) renderGiftInfo(updatedSnap.docs[0]);
+              else result.innerHTML = "";
+            } catch (refreshErr) { console.error("Refresh error:", refreshErr); }
+
+          } catch (err) {
+            console.error(err);
+            showToast("Lỗi khi đổi mã. Vui lòng thử lại.", "error");
+          }
+        });
+      }
+    }
+
+    checkBtn.addEventListener("click", async () => {
+      const code = codeInput.value?.trim();
+      if (!code) {
+        showToast("Vui lòng nhập mã giftcode.", "warning");
+        return;
+      }
+      if (!currentUser) {
+        showToast("Vui lòng đăng nhập để sử dụng giftcode.", "warning");
+        return;
+      }
+
+      try {
+        const snap = await findGiftcodeByCode(code);
+        if (snap.empty) {
+          showToast("Mã không tồn tại.", "error");
+          return;
+        }
+
+        // find first match (should be unique)
+        const docSnap = snap.docs[0];
+        const g = docSnap.data();
+
+        // check owner first
+        if (g.uid !== currentUser.uid) {
+          showToast("Mã này không thuộc về tài khoản của bạn.", "error");
+          return;
+        }
+
+        // render details and let user confirm to mark used
+        renderGiftInfo(docSnap);
+      } catch (err) {
+        console.error(err);
+        showToast("Lỗi khi kiểm tra mã", "error");
+      }
+    });
+
+    // allow pressing Enter to check
+    codeInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") checkBtn.click();
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const giftCode = params.get("giftCode");
+      if (giftCode) {
+        const codeInput = document.getElementById("codeInput");
+        if (codeInput) {
+          codeInput.value = giftCode;
+          document.getElementById("checkBtn")?.click(); // tự động submit
+        }
+      }
+    });
+
+  </script>
+</body>
+
+</html>

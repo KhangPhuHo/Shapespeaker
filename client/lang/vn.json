@@ -12,7 +12,57 @@
     "order_created": "✅ Đã tạo đơn hàng cho \"{name}\".",
     "order_created_all": "✅ Đã tạo đơn hàng với {count} sản phẩm.",
     "order_error": "❌ Lỗi khi tạo đơn hàng.",
-    "max_stock_reached": "Sản phẩm \"{name}\" chỉ còn {stock} trong kho."
+    "max_stock_reached": "Sản phẩm \"{name}\" chỉ còn {stock} trong kho.",
+    "giftcode_created": "🎉 Tạo mã quà tặng thành công! Mã của bạn là: {code}",
+    "giftcode_error": "❌ Không thể tạo giftcode. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+    "copy_success": "Đã sao chép mã vào clipboard!",
+    "copy_error": "Không thể sao chép mã. Vui lòng thử thủ công.",
+    "confirm_redeem": "Bạn có chắc muốn sử dụng mã này? Hành động sẽ đánh dấu mã là đã sử dụng.",
+    "empty": "Bạn chưa có mã quà tặng nào.",
+    "redeem_success": "Mã đã được đánh dấu là đã sử dụng.",
+    "redeem_error": "Lỗi khi redeem mã. Vui lòng thử lại.",
+    "need_login": "Vui lòng đăng nhập để xem giftcodes.",
+    "load_error": "Không thể tải dữ liệu. Vui lòng thử lại sau."
+  },
+  "giftcode": {
+    "currency": "Tiền tệ:",
+    "used": "Đã dùng",
+    "unused": "Chưa dùng",
+    "total_value": "Tổng giá trị:",
+    "order_label": "Đơn:",
+    "date_label": "Ngày tạo:",
+    "code_label": "Mã",
+    "copy": "Sao chép",
+    "redeem": "Kích hoạt",
+    "title": "Mã quà tặng của bạn",
+    "list": "Danh sách mã quà tặng của bạn"
+  },
+  "redeem": {
+    "title": "Sử dụng mã quà tặng",
+    "input_giftcode": "Nhập mã quà tặng",
+    "input_placeholder": "Nhập mã (ví dụ: ABCD1234)",
+    "check": "Kiểm tra",
+    "owner_note": "Lưu ý: mã chỉ hợp lệ cho tài khoản đã mua.",
+    "code": "Mã quà tặng",
+    "order": "Đơn hàng",
+    "total": "Tổng giá trị:",
+    "reward_link": "Liên kết nhận thưởng",
+    "used": "Đã dùng",
+    "unused": "Chưa dùng",
+    "use": "Dùng mã",
+    "back": "Nhập mã khác",
+    "open": "Mở liên kết",
+    "copy": "Sao chép",
+    "not_found": "Không tìm thấy mã quà tặng",
+    "not_owner": "Mã này không thuộc tài khoản của bạn",
+    "confirm_use": "Bạn có chắc chắn muốn dùng mã này không?",
+    "used_success": "Dùng mã thành công!",
+    "need_login": "Vui lòng đăng nhập để sử dụng mã quà tặng",
+    "enter_code": "Vui lòng nhập mã quà tặng",
+    "used_note": "Mã đã được sử dụng. Bạn có thể mở hoặc sao chép liên kết nhận thưởng.",
+    "not_used_note": "Khi bạn bấm 'Dùng mã', liên kết sẽ được kích hoạt.",
+    "open_success": "Đã mở liên kết.",
+    "copy_success": "Đã sao chép liên kết vào clipboard!"
   },
   "common": {
     "try_again_error": "Chưa thực hiện được, vui lòng thử lại sau.",
@@ -31,14 +81,32 @@
     "no_permission": "Bạn không có quyền truy cập trang này.",
     "error": "Đã xảy ra lỗi. Vui lòng thử lại sau."
   },
-  "menu": {
+  "title": {
     "home": "Trang chủ",
     "news": "Thông tin",
     "store": "Cửa hàng",
+    "games": "Trò chơi",
     "language": "Ngôn ngữ",
     "my_account": "Tài khoản của bạn",
     "cart": "Giỏ hàng",
     "orders": "Đơn đã đặt",
+    "giftcode": "Mã quà tặng",
+    "redeem": "Sử dụng mã quà tặng",
+    "settings": "Cài đặt tài khoản",
+    "login": "Đăng nhập"
+  },
+  "menu": {
+    "home": "Trang chủ",
+    "news": "Thông tin",
+    "store": "Cửa hàng",
+    "games": "Trò chơi",
+    "language": "Ngôn ngữ",
+    "my_account": "Tài khoản của bạn",
+    "cart": "Giỏ hàng",
+    "orders": "Đơn đã đặt",
+    "giftcode": "Mã quà tặng",
+    "redeem": "Sử dụng mã quà tặng",
+    "settings": "Cài đặt tài khoản",
     "logout": "Đăng xuất",
     "sign_in": "Đăng nhập",
     "no_account": "Chưa có tài khoản"
@@ -137,7 +205,6 @@
     "cancel": "Quay lại"
   },
   "language": {
-    "language_title": "Ngôn ngữ",
     "choose_language": "Chọn ngôn ngữ của bạn"
   },
   "news": {
@@ -169,7 +236,6 @@
     "added_to_cart": "🌟 Đã thêm \"{name}\" vào giỏ hàng!"
   },
   "myaccount": {
-    "my_account_title": "Tài khoản của bạn",
     "update_info": "Cập nhật thông tin",
     "name": "Họ và tên",
     "email": "Email",
@@ -232,7 +298,6 @@
       "default_error": "Đã xảy ra lỗi khi đăng nhập bằng Google. Vui lòng thử lại sau.",
       "success": "Đăng nhập Google thành công."
     },
-    "login_title": "Đăng nhập",
     "wel_back": "Chào mừng trở lại!",
     "password": "Mật khẩu",
     "login": "Đăng nhập",

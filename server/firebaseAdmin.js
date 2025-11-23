@@ -1,7 +1,16 @@
+// firebaseAdmin.js
 const admin = require('firebase-admin');
 
 admin.initializeApp({
-  credential: admin.credential.applicationDefault(), // hoặc dùng serviceAccountKey.json nếu cần
+  credential: admin.credential.applicationDefault(),
 });
 
-module.exports = admin;
+// Export đầy đủ
+const firestore = admin.firestore();
+const messaging = admin.messaging();
+
+module.exports = {
+  admin,
+  firestore,
+  messaging
+};

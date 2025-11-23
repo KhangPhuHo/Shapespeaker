@@ -62,7 +62,7 @@ app.post("/upload", (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, message: "❌ Không có file." });
 
     cloudinary.uploader.upload(req.file.path, { resource_type: "auto" }, (err, result) => {
-      fs.unlink(req.file.path, () => { });
+      fs.unlink(req.file.path, () => {});
       if (err) return res.status(500).json({ success: false, message: "❌ Upload thất bại." });
       return res.json({ success: true, message: "✅ Upload thành công!", data: result });
     });
@@ -71,18 +71,7 @@ app.post("/upload", (req, res) => {
 
 // ✨ Route Handlers
 const witRoutes = require("./routes/witRoutes");
-const notificationRoutes = require("./routes/notificationRoutes"); // ⬅️ ĐÃ IMPORT LẠI
-
 app.use("/wit", witRoutes);
-app.use("/notifications", notificationRoutes); // ⬅️ ĐÃ THÊM LẠI ROUTE GỬI THÔNG BÁO
-
-// Lấy VAPID public key từ env
-app.get("/api/getVapidKey", (req, res) => {
-  const VAPID_KEY = process.env.FCM_VAPID_KEY;
-  if (!VAPID_KEY) return res.status(500).json({ success: false, message: "VAPID key chưa cấu hình" });
-  return res.json({ success: true, vapidKey: VAPID_KEY });
-});
-
 
 // 🔐 Xoá user
 app.post("/deleteUser", async (req, res) => {
@@ -101,3 +90,58 @@ app.post("/deleteUser", async (req, res) => {
 
 // 🚀 Start
 app.listen(PORT, () => console.log(`🚀 Server chạy tại http://localhost:${PORT}`));
+
+
+ window.updateStatus = async function (orderId) {
+            const select = document.getElementById(`status-${orderId}`);
+            if (!select) return;
+            const newStatus = select.value;
+            const orderRef = doc(db, "orders", orderId);
+
+            try {
+                // Lấy snapshot cũ (để có userId, items,...)
+                const orderSnapBefore = await getDoc(orderRef);
+                if (!orderSnapBefore.exists()) {
+                    showToast("❌ Đơn hàng không tồn tại", "error");
+                    return;
+                }
+                const orderDataBefore = orderSnapBefore.data();
+                const userId = orderDataBefore.uid;
+
+                // Cập nhật trạng thái
+                await updateDoc(orderRef, {
+                    status: newStatus,
+                });
+                showToast("✅ Đã cập nhật trạng thái", "success");
+
+                // Nếu vừa đổi sang delivered => tạo giftcode (nếu chưa có)
+                if (newStatus === "delivered") {
+                    try {
+                        // Kiểm tra đã có giftcode cho order này chưa (tránh tạo trùng)
+                        const gcQuery = query(collection(db, "giftcodes"), where("orderId", "==", orderId));
+                        const gcSnap = await getDocs(gcQuery);
+
+                        if (!gcSnap.empty) {
+                            // Đã có giftcode rồi — không làm gì thêm
+                            showToast("🔔 Giftcode đã được tạo trước đó cho đơn này", "info");
+                        } else {
+                            // Chuẩn bị danh sách product (bạn có thể truyền toàn bộ items hoặc chỉ 1 sản phẩm tuỳ logic)
+                            const items = orderDataBefore.items || [];
+                            // Gọi helper tạo và lưu giftcode — KHÔNG redirect (redirect:false)
+                            await createAndSaveGiftCode(userId, orderId, items, { redirect: false });
+                            showToast("🎁 Giftcode đã được tạo cho đơn hàng này", "success");
+                            // (nếu muốn, có thể thêm gửi email/FCM trong helper)
+                        }
+                    } catch (errGc) {
+                        console.error("Lỗi khi tạo giftcode:", errGc);
+                        showToast("❌ Lỗi khi tạo giftcode (xem console)", "error");
+                    }
+                }
+
+                // Làm mới dữ liệu giao diện
+                fetchData();
+            } catch (e) {
+                console.error(e);
+                showToast("❌ Lỗi khi cập nhật trạng thái", "error");
+            }
+        };

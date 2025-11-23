@@ -4,6 +4,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-aut
 import { getCurrency, getTranslation } from './language.js';
 import { showToast } from './toast.js';
 
+
 const cartList = document.getElementById("CartList");
 const cartSummary = document.getElementById("CartSummary");
 const totalAmount = document.getElementById("TotalAmount");
@@ -153,6 +154,9 @@ async function changeQuantity(index, delta) {
 }
 
 
+// ----------------------------------
+// CẬP NHẬT buyNow
+// ----------------------------------
 async function buyNow(index) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   const product = cart[index];
@@ -175,7 +179,6 @@ async function buyNow(index) {
   }
 
   try {
-    // ✅ Lấy thông tin user từ Firestore
     const userRef = doc(db, "users", user.uid);
     const userSnap = await getDoc(userRef);
     if (!userSnap.exists()) {
@@ -187,7 +190,6 @@ async function buyNow(index) {
 
     const userData = userSnap.data();
     const { phone, address } = userData;
-
     if (!phone || !address) {
       //showToast("⚠️ Vui lòng cập nhật số điện thoại và địa chỉ trước khi mua hàng.", "warning");
       const msg = await getTranslation("toast.missing_contact");
@@ -195,7 +197,7 @@ async function buyNow(index) {
       return;
     }
 
-    // ✅ Kiểm tra tồn kho sản phẩm
+    // Kiểm tra tồn kho
     const productRef = doc(db, "shapespeakitems", product.id);
     const productSnap = await getDoc(productRef);
     if (!productSnap.exists()) throw new Error(`Không tìm thấy sản phẩm ${product.name}`);
@@ -203,21 +205,21 @@ async function buyNow(index) {
     const productData = productSnap.data();
     if (productData.stock < product.quantity) {
       //showToast(`❌ Sản phẩm "${product.name}" chỉ còn ${productData.stock}`, "error");
-        const msgTemplate = await getTranslation("toast.insufficient_stock");
-        const message = msgTemplate
-          .replace("{name}", item.name)
-          .replace("{stock}", productData.stock);
-        showToast(message, "error");
+      const msgTemplate = await getTranslation("toast.insufficient_stock");
+      const message = msgTemplate
+        .replace("{name}", product.name)
+        .replace("{stock}", productData.stock);
+      showToast(message, "error");
       return;
     }
 
-    // ✅ Cập nhật tồn kho
+    // Trừ stock
     await updateDoc(productRef, {
       stock: productData.stock - product.quantity
     });
 
-    // ✅ Tạo đơn hàng (thêm phone và address)
-    await addDoc(collection(db, "orders"), {
+    // --- Tạo order và LẤY orderRef ---
+    const orderRef = await addDoc(collection(db, "orders"), {
       uid: user.uid,
       date: serverTimestamp(),
       status: "pending",
@@ -226,23 +228,27 @@ async function buyNow(index) {
       address
     });
 
+    // Cập nhật UI giỏ hàng
+    cart.splice(index, 1);
+    localStorage.setItem("cart", JSON.stringify(cart));
+    loadCart();
+
     //showToast(`✅ Đã tạo đơn hàng cho "${product.name}".`, "success");
     const msgTemplate = await getTranslation("toast.order_created");
     const message = msgTemplate.replace("{name}", product.name); // ✅ đúng giá trị
     showToast(message, "success");
-
-    // ✅ Cập nhật giỏ hàng
-    cart.splice(index, 1);
-    localStorage.setItem("cart", JSON.stringify(cart));
-    loadCart();
+    
   } catch (err) {
     console.error(err);
-    //showToast("❌ Lỗi khi tạo đơn hàng.", "error");
     const msg = await getTranslation("toast.order_error");
     showToast(msg, "error");
   }
 }
 
+
+// ----------------------------------
+// CẬP NHẬT checkoutAll
+// ----------------------------------
 async function checkoutAll() {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];
   if (cart.length === 0) {
@@ -260,7 +266,6 @@ async function checkoutAll() {
     .replace("{total}", formatCurrency(total));
 
   const confirmCheckout = confirm(confirmMsg);
-
   if (!confirmCheckout) return;
 
   const auth = getAuth();
@@ -285,7 +290,6 @@ async function checkoutAll() {
 
     const userData = userSnap.data();
     const { phone, address } = userData;
-
     if (!phone || !address) {
       //showToast("⚠️ Vui lòng cập nhật số điện thoại và địa chỉ trước khi thanh toán.", "warning");
       const msg = await getTranslation("toast.missing_contact");
@@ -293,7 +297,7 @@ async function checkoutAll() {
       return;
     }
 
-    // 🔁 Check từng sản phẩm
+    // Kiểm tra & trừ stock cho từng sản phẩm
     for (const item of cart) {
       const productRef = doc(db, "shapespeakitems", item.id);
       const productSnap = await getDoc(productRef);
@@ -303,7 +307,6 @@ async function checkoutAll() {
         const msgTemplate = await getTranslation("toast.product_not_found");
         const message = msgTemplate.replace("{name}", item.name);
         showToast(message, "error");
-
         return;
       }
 
@@ -315,7 +318,6 @@ async function checkoutAll() {
           .replace("{name}", item.name)
           .replace("{stock}", productData.stock);
         showToast(message, "error");
-
         return;
       }
 
@@ -325,8 +327,8 @@ async function checkoutAll() {
       });
     }
 
-    // ✅ Tạo đơn hàng (thêm phone và address)
-    await addDoc(collection(db, "orders"), {
+    // Tạo order & lấy orderRef
+    const orderRef = await addDoc(collection(db, "orders"), {
       uid: user.uid,
       date: serverTimestamp(),
       status: "pending",
@@ -334,14 +336,15 @@ async function checkoutAll() {
       phone,
       address
     });
+    // Xoá giỏ hàng local
+    localStorage.removeItem("cart");
+    loadCart();
 
     //showToast(`✅ Đã tạo đơn hàng với ${cart.length} sản phẩm.`, "success");
     const msgTemplate = await getTranslation("toast.order_created_all");
     const message = msgTemplate.replace("{count}", cart.length);
     showToast(message, "success");
 
-    localStorage.removeItem("cart");
-    loadCart();
   } catch (err) {
     console.error(err);
     //showToast("❌ Lỗi khi tạo đơn hàng.", "error");
@@ -349,6 +352,7 @@ async function checkoutAll() {
     showToast(msg, "error");
   }
 }
+
 
 function setMin(index) {
   const cart = JSON.parse(localStorage.getItem("cart")) || [];

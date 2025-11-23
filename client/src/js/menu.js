@@ -22,6 +22,7 @@ function renderMenu() {
         <a href="home.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-home"></i><span data-i18n="menu.home">Home</span></a>
         <a href="news.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-newspaper"></i><span data-i18n="menu.news">News</span></a>
         <a href="store.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa-solid fa-cart-shopping"></i><span data-i18n="menu.store">Store</span></a>
+        <a href="game-menu.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa-solid fa-puzzle-piece"></i><span data-i18n="menu.games">Games</span></a>
         <a href="Language.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-globe"></i><span data-i18n="menu.language">Language</span></a>
       </nav>
 
@@ -33,6 +34,9 @@ function renderMenu() {
         <a href="myaccount.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa fa-address-book"></i> <span data-i18n="menu.my_account">My Account</span></a>
         <a href="cart.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa-solid fa-basket-shopping"></i> <span data-i18n="menu.cart">Cart</span></a>
         <a href="orders.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa-solid fa-truck"></i> <span data-i18n="menu.orders">Orders</span></a>
+        <a href="giftcode.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa-solid fa-gift"></i> <span data-i18n="menu.giftcode">Gift code</span></a>
+        <a href="redeem.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa-solid fa-person-chalkboard"></i> <span data-i18n="menu.redeem">Redeem code</span></a>
+        <a href="fcm_client_registration.html" class="text-gray-700 hover:text-pink-300 font-semibold"><i class="fa-solid fa-gear"></i> <span data-i18n="menu.settings">Account Settings</span></a>
         <div id="logout" class="mt-2"></div>
       </div>
     </nav>
@@ -43,6 +47,7 @@ function renderMenu() {
       <a href="home.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-home"></i><span data-i18n="menu.home">Home</span></a>
       <a href="news.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-newspaper"></i><span data-i18n="menu.news">News</span></a>
       <a href="store.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa-solid fa-cart-shopping"></i><span data-i18n="menu.store">Store</span></a>
+      <a href="game-menu.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa-solid fa-puzzle-piece"></i><span data-i18n="menu.games">Games</span></a>
       <a href="Language.html" class="flex items-center gap-2 hover:text-pink-300"><i class="fa fa-globe"></i><span data-i18n="menu.language">Language</span></a>
     </nav>
   </header>
