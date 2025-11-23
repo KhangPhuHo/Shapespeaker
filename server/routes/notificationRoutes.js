@@ -4,6 +4,40 @@ const router = express.Router();
 // Import Firebase Admin từ file firebaseAdmin.js
 const { admin, firestore, messaging } = require('../firebaseAdmin');
 
+router.get("/checkFCMToken", async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({
+            success: false,
+            message: "Thiếu userId"
+        });
+    }
+
+    try {
+        const tokensSnapshot = await firestore
+            .collection("fcm_tokens")
+            .doc(userId)
+            .collection("tokens")
+            .get();
+
+        if (tokensSnapshot.empty) {
+            return res.json({ registered: false, tokens: [] });
+        }
+
+        const tokens = tokensSnapshot.docs.map(doc => doc.id);
+
+        return res.json({
+            registered: true,
+            tokens
+        });
+
+    } catch (error) {
+        console.error("❌ Lỗi check FCM token:", error);
+        return res.status(500).json({ success: false });
+    }
+});
+
 /**
  * =====================================================================
  * 📌 API: Lưu FCM Token (hỗ trợ đa thiết bị)

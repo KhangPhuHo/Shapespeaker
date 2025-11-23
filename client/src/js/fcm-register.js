@@ -3,10 +3,13 @@ import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.13
 import { auth } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-// 🔑 VAPID PUBLIC KEY của dự án
+// 🌍 SERVER URL (Render server của bạn)
+const SERVER_URL = "https://shapespeaker.onrender.com";
+
+// 🔑 Lấy VAPID PUBLIC KEY từ server
 async function getVapidKeyFromServer() {
     try {
-        const res = await fetch("/api/getVapidKey");
+        const res = await fetch(`${SERVER_URL}/api/getVapidKey`);
         if (!res.ok) throw new Error("Không lấy được VAPID key");
         const data = await res.json();
         return data.vapidKey;
@@ -21,13 +24,13 @@ const statusEl = document.getElementById("statusMessage");
 const authEl = document.getElementById("authStatus");
 const userEl = document.getElementById("userIdDisplay");
 const tokenEl = document.getElementById("fcmTokenDisplay");
-const toggleEl = document.getElementById("fcmToggle"); // mới: toggle checkbox
+const toggleEl = document.getElementById("fcmToggle");
 
-// Trạng thái user & token
+// User & token
 let currentUser = null;
 let currentToken = null;
 
-// Set status UI
+// UI
 function setStatus(text, type = "info") {
     statusEl.textContent = text;
     const colors = {
@@ -35,19 +38,19 @@ function setStatus(text, type = "info") {
         success: "bg-green-600 text-white",
         error: "bg-red-600 text-white"
     };
-    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type] || colors.info}`;
+    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type]}`;
 }
 
-// Theo dõi auth realtime
+// Auth listener
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
+
     if (user) {
         authEl.textContent = "Đã đăng nhập";
         userEl.textContent = user.uid;
 
-        // Kiểm tra token trên server
         try {
-            const res = await fetch(`/api/checkFCMToken?userId=${user.uid}`);
+            const res = await fetch(`${SERVER_URL}/api/checkFCMToken?userId=${user.uid}`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.registered && data.token) {
@@ -65,6 +68,7 @@ onAuthStateChanged(auth, async (user) => {
         } catch (err) {
             console.error(err);
         }
+
     } else {
         authEl.textContent = "Chưa đăng nhập";
         userEl.textContent = "N/A";
@@ -74,7 +78,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Hàm bật FCM
+// Enable FCM
 async function enableFCM() {
     if (!currentUser) {
         setStatus("⚠️ Bạn cần đăng nhập trước khi bật thông báo.", "error");
@@ -106,15 +110,19 @@ async function enableFCM() {
 
     setStatus("⏳ Lấy token FCM...");
     const messaging = getMessaging();
+
     try {
         const token = await getToken(messaging, { vapidKey: VAPID_KEY });
         if (!token) throw new Error("Không lấy được token");
 
-        // Gửi lên server
-        const res = await fetch("/api/saveFCMToken", {
+        const res = await fetch(`${SERVER_URL}/api/saveFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.uid, fcmToken: token, platform: "web" })
+            body: JSON.stringify({ 
+                userId: currentUser.uid, 
+                fcmToken: token, 
+                platform: "web" 
+            })
         });
 
         if (res.ok) {
@@ -123,7 +131,7 @@ async function enableFCM() {
             setStatus("🎉 Thiết bị đã đăng ký nhận thông báo thành công!", "success");
         } else {
             const errData = await res.json();
-            setStatus(`⚠️ Lỗi server: ${errData.message || "Không xác định"}`, "error");
+            setStatus(`⚠️ Lỗi server: ${errData.message}`, "error");
             toggleEl.checked = false;
         }
     } catch (err) {
@@ -133,21 +141,24 @@ async function enableFCM() {
     }
 }
 
-// Hàm tắt FCM
+// Disable FCM
 async function disableFCM() {
     if (!currentUser || !currentToken) return;
 
     try {
-        const res = await fetch("/api/deleteFCMToken", {
+        const res = await fetch(`${SERVER_URL}/api/deleteFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.uid, fcmToken: currentToken })
+            body: JSON.stringify({ 
+                userId: currentUser.uid, 
+                fcmToken: currentToken 
+            })
         });
 
         if (res.ok) {
             tokenEl.textContent = "Chưa có";
-            setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
             currentToken = null;
+            setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
         }
     } catch (err) {
         console.error(err);
@@ -156,11 +167,8 @@ async function disableFCM() {
     }
 }
 
-// Xử lý toggle change
+// Toggle handler
 export function handleToggleChange(e) {
-    if (e.target.checked) {
-        enableFCM();
-    } else {
-        disableFCM();
-    }
+    if (e.target.checked) enableFCM();
+    else disableFCM();
 }
