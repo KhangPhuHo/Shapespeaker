@@ -6,7 +6,7 @@ const cors = require("cors");
 const compression = require("compression");
 const upload = require("./middleware/multer");
 const cloudinary = require("./utils/cloudinary");
-const admin = require("firebase-admin");
+//const admin = require("firebase-admin");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
