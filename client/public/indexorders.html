@@ -246,13 +246,18 @@
             }[status] || "bg-gray-600";
         }
 
+
+        const SERVER_URL = "https://shapespeaker.onrender.com";
+
         window.updateStatus = async function (orderId) {
             const select = document.getElementById(`status-${orderId}`);
             if (!select) return;
             const newStatus = select.value;
+
             const orderRef = doc(db, "orders", orderId);
 
             try {
+                // Lấy snapshot cũ để lấy userId
                 const orderSnapBefore = await getDoc(orderRef);
                 if (!orderSnapBefore.exists()) {
                     showToast("❌ Đơn hàng không tồn tại", "error");
@@ -261,24 +266,30 @@
                 const orderDataBefore = orderSnapBefore.data();
                 const userId = orderDataBefore.uid;
 
-                // 1️⃣ Cập nhật trạng thái
+                // 1️⃣ Cập nhật trạng thái trong Firestore
                 await updateDoc(orderRef, { status: newStatus });
                 showToast("✅ Đã cập nhật trạng thái", "success");
 
-                // 2️⃣ Nếu delivered → tạo giftcode + gửi FCM
+                // 2️⃣ Nếu delivered → gọi backend để tạo giftcode + gửi FCM
                 if (newStatus === "delivered") {
                     try {
-                        const API_URL = "/notifications/completeOrder";
+                        const API_URL = `${SERVER_URL}/notifications/completeOrder`;
+
                         const res = await fetch(API_URL, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ userId, orderId })
                         });
 
-                        const data = await res.json(); // ⚡ chỉ parse 1 lần
+                        let data = {};
+                        try {
+                            data = await res.json();
+                        } catch (err) {
+                            console.error("❌ Không parse được JSON:", err);
+                        }
 
                         if (!res.ok) {
-                            showToast(`⚠️ Lỗi gửi thông báo: ${data.message || "Không xác định"}`, "warning");
+                            showToast(`⚠️ Lỗi gửi thông báo: ${data.message || res.statusText}`, "warning");
                         } else {
                             showToast(`🎁 Giftcode: ${data.giftCode} | 🔔 Thông báo đã gửi FCM`, "info");
                         }
@@ -297,7 +308,6 @@
                 showToast("❌ Lỗi khi cập nhật trạng thái", "error");
             }
         };
-
 
         window.cancelOrder = async function (orderId) {
             const reason = prompt("Nhập lý do hủy đơn hàng này:");
