@@ -113,6 +113,7 @@ async function enableFCM() {
     try {
         // ✅ Đăng ký service worker ở root (Vercel)
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        console.log('SW registered', registration); // log để kiểm tra
 
         // Lấy token FCM
         const messaging = getMessaging();
@@ -143,8 +144,9 @@ async function enableFCM() {
             setStatus(`⚠️ Lỗi server: ${errData.message}`, "error");
             toggleEl.checked = false;
         }
+
     } catch (err) {
-        console.error(err);
+        console.error("SW hoặc FCM lỗi:", err);
         setStatus("❌ Lỗi khi lấy hoặc gửi token FCM", "error");
         toggleEl.checked = false;
     }
