@@ -27,14 +27,37 @@ router.get("/checkFCMToken", async (req, res) => {
 
         const tokens = tokensSnapshot.docs.map(doc => doc.id);
 
+        // Trả thêm `token` (token đầu tiên) để client cũ còn dùng được
         return res.json({
             registered: true,
-            tokens
+            tokens,
+            token: tokens[0] || null
         });
 
     } catch (error) {
         console.error("❌ Lỗi check FCM token:", error);
         return res.status(500).json({ success: false });
+    }
+});
+
+router.post("/deleteFCMToken", async (req, res) => {
+    const { userId, fcmToken } = req.body;
+    if (!userId || !fcmToken) {
+        return res.status(400).json({ success: false, message: "Thiếu userId hoặc fcmToken" });
+    }
+
+    try {
+        await firestore
+            .collection("fcm_tokens")
+            .doc(userId)
+            .collection("tokens")
+            .doc(fcmToken)
+            .delete();
+
+        return res.json({ success: true, message: "Đã xóa token" });
+    } catch (err) {
+        console.error("❌ Lỗi xóa token:", err);
+        return res.status(500).json({ success: false, message: "Lỗi server khi xóa token" });
     }
 });
 

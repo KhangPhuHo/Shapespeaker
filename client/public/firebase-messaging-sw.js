@@ -1,10 +1,10 @@
 // public/firebase-messaging-sw.js
 
-// Load Firebase scripts
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js');
+// Sử dụng compat build vì trong SW bạn dùng API namespaced (firebase.messaging())
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
 
-// Firebase config
+// Firebase config (copy từ project của bạn)
 firebase.initializeApp({
     apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
     authDomain: "book-management-b7265.firebaseapp.com",
@@ -15,7 +15,7 @@ firebase.initializeApp({
     measurementId: "G-ZYTCE1YML4"
 });
 
-// Lấy messaging instance
+// Lấy messaging instance (compat)
 const messaging = firebase.messaging();
 
 // Background message handler

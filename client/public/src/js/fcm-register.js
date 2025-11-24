@@ -3,10 +3,9 @@ import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.13
 import { auth } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-// 🌍 SERVER URL (Render server của bạn)
-const SERVER_URL = "https://shapespeaker.onrender.com";
+const SERVER_URL = "https://shapespeaker.onrender.com"; // giữ nguyên
 
-// 🔑 Lấy VAPID PUBLIC KEY từ server
+// Lấy VAPID PUBLIC KEY từ server
 async function getVapidKeyFromServer() {
     try {
         const res = await fetch(`${SERVER_URL}/api/getVapidKey`);
@@ -50,11 +49,13 @@ onAuthStateChanged(auth, async (user) => {
         userEl.textContent = user.uid;
 
         try {
-            const res = await fetch(`${SERVER_URL}/api/checkFCMToken?userId=${user.uid}`);
+            // <-- SỬA ĐƯỜNG DẪN: notifications/checkFCMToken
+            const res = await fetch(`${SERVER_URL}/notifications/checkFCMToken?userId=${user.uid}`);
             if (res.ok) {
                 const data = await res.json();
-                if (data.registered && data.token) {
-                    currentToken = data.token;
+                // server trả tokens (mảng). Hợp nhất kỳ vọng: nếu có tokens => lấy token đầu tiên
+                if (data.registered && data.tokens && data.tokens.length > 0) {
+                    currentToken = data.tokens[0];
                     tokenEl.textContent = currentToken;
                     toggleEl.checked = true;
                     setStatus("🔔 Thiết bị đã đăng ký nhận thông báo.", "success");
@@ -64,6 +65,8 @@ onAuthStateChanged(auth, async (user) => {
                     toggleEl.checked = false;
                     setStatus("ℹ️ Thiết bị chưa đăng ký nhận thông báo.", "info");
                 }
+            } else {
+                console.warn("Không lấy được status token từ server:", res.status);
             }
         } catch (err) {
             console.error(err);
@@ -111,11 +114,9 @@ async function enableFCM() {
     setStatus("⏳ Đăng ký service worker và lấy token FCM...");
 
     try {
-        // ✅ Đăng ký service worker ở root (Vercel)
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        console.log('SW registered', registration); // log để kiểm tra
+        console.log('SW registered', registration);
 
-        // Lấy token FCM
         const messaging = getMessaging();
         const token = await getToken(messaging, {
             vapidKey: VAPID_KEY,
@@ -125,8 +126,8 @@ async function enableFCM() {
 
         if (!token) throw new Error("Không lấy được token");
 
-        // Gửi token lên server
-        const res = await fetch(`${SERVER_URL}/api/saveFCMToken`, {
+        // <-- SỬA ĐƯỜNG DẪN: notifications/saveFCMToken
+        const res = await fetch(`${SERVER_URL}/notifications/saveFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -141,8 +142,8 @@ async function enableFCM() {
             tokenEl.textContent = token;
             setStatus("🎉 Thiết bị đã đăng ký nhận thông báo thành công!", "success");
         } else {
-            const errData = await res.json();
-            setStatus(`⚠️ Lỗi server: ${errData.message}`, "error");
+            const errData = await res.json().catch(() => ({}));
+            setStatus(`⚠️ Lỗi server: ${errData.message || res.statusText}`, "error");
             toggleEl.checked = false;
         }
 
@@ -155,10 +156,14 @@ async function enableFCM() {
 
 // Disable FCM
 async function disableFCM() {
-    if (!currentUser || !currentToken) return;
+    if (!currentUser || !currentToken) {
+        toggleEl.checked = false;
+        return;
+    }
 
     try {
-        const res = await fetch(`${SERVER_URL}/api/deleteFCMToken`, {
+        // <-- SỬA ĐƯỜNG DẪN: notifications/deleteFCMToken
+        const res = await fetch(`${SERVER_URL}/notifications/deleteFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -171,6 +176,11 @@ async function disableFCM() {
             tokenEl.textContent = "Chưa có";
             currentToken = null;
             setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
+        } else {
+            const err = await res.json().catch(() => ({}));
+            console.warn("Không thể xóa token:", err);
+            setStatus("❌ Lỗi khi hủy đăng ký FCM", "error");
+            toggleEl.checked = true;
         }
     } catch (err) {
         console.error(err);
