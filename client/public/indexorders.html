@@ -77,7 +77,7 @@
 
         async function fetchData() {
             const loading = document.getElementById("loading-users");
-            loading.classList.remove("hidden"); // ✅ HIỆN loading
+            if (loading) loading.classList.remove("hidden");
 
             try {
                 const orderSnap = await getDocs(query(collection(db, "orders"), orderBy("date", "desc")));
@@ -126,12 +126,13 @@
                         return b.latestOrderTime - a.latestOrderTime;
                     });
 
+                
                 renderPage(); // ✅ CHỈ render sau khi có dữ liệu
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu:", error);
                 // Có thể hiện toast lỗi tại đây nếu bạn muốn
             } finally {
-                loading.classList.add("hidden"); // ✅ ẨN loading ngay cả khi lỗi
+                if (loading) loading.classList.add("hidden");
             }
         }
 
