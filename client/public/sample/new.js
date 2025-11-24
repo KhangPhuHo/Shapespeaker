@@ -3,19 +3,33 @@ import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.13
 import { auth } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
-const SERVER_URL = "https://shapespeaker.onrender.com";
+const SERVER_URL = "https://shapespeaker.onrender.com"; // giữ nguyên
 
-// DOM
+// Lấy VAPID PUBLIC KEY từ server
+async function getVapidKeyFromServer() {
+    try {
+        const res = await fetch(`${SERVER_URL}/api/getVapidKey`);
+        if (!res.ok) throw new Error("Không lấy được VAPID key");
+        const data = await res.json();
+        return data.vapidKey;
+    } catch (err) {
+        console.error("❌ Lỗi lấy VAPID key:", err);
+        return null;
+    }
+}
+
+// DOM Elements
 const statusEl = document.getElementById("statusMessage");
 const authEl = document.getElementById("authStatus");
 const userEl = document.getElementById("userIdDisplay");
 const tokenEl = document.getElementById("fcmTokenDisplay");
 const toggleEl = document.getElementById("fcmToggle");
 
+// User & token
 let currentUser = null;
 let currentToken = null;
 
-// Hiển thị trạng thái
+// UI
 function setStatus(text, type = "info") {
     statusEl.textContent = text;
     const colors = {
@@ -26,46 +40,20 @@ function setStatus(text, type = "info") {
     statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type]}`;
 }
 
-// Lấy VAPID key từ server
-async function getVapidKeyFromServer() {
-    try {
-        const res = await fetch(`${SERVER_URL}/api/getVapidKey`);
-        if (!res.ok) throw new Error("Không lấy được VAPID key");
-        const data = await res.json();
-        return data.vapidKey;
-    } catch (err) {
-        console.error(err);
-        return null;
-    }
-}
-
-// Chờ SW active
-async function waitForSWActive(registration) {
-    if (registration.active) return registration.active;
-
-    return new Promise((resolve, reject) => {
-        const sw = registration.installing || registration.waiting;
-        if (!sw) return reject("No SW installing or waiting");
-
-        sw.addEventListener('statechange', () => {
-            if (sw.state === 'activated') resolve(sw);
-        });
-
-        setTimeout(() => reject("SW activation timed out"), 5000);
-    });
-}
-
 // Auth listener
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
+
     if (user) {
         authEl.textContent = "Đã đăng nhập";
         userEl.textContent = user.uid;
 
         try {
+            // <-- SỬA ĐƯỜNG DẪN: notifications/checkFCMToken
             const res = await fetch(`${SERVER_URL}/notifications/checkFCMToken?userId=${user.uid}`);
             if (res.ok) {
                 const data = await res.json();
+                // server trả tokens (mảng). Hợp nhất kỳ vọng: nếu có tokens => lấy token đầu tiên
                 if (data.registered && data.tokens && data.tokens.length > 0) {
                     currentToken = data.tokens[0];
                     tokenEl.textContent = currentToken;
@@ -77,10 +65,13 @@ onAuthStateChanged(auth, async (user) => {
                     toggleEl.checked = false;
                     setStatus("ℹ️ Thiết bị chưa đăng ký nhận thông báo.", "info");
                 }
+            } else {
+                console.warn("Không lấy được status token từ server:", res.status);
             }
         } catch (err) {
             console.error(err);
         }
+
     } else {
         authEl.textContent = "Chưa đăng nhập";
         userEl.textContent = "N/A";
@@ -90,7 +81,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// Bật FCM
+// Enable FCM
 async function enableFCM() {
     if (!currentUser) {
         setStatus("⚠️ Bạn cần đăng nhập trước khi bật thông báo.", "error");
@@ -104,6 +95,7 @@ async function enableFCM() {
         return;
     }
 
+    setStatus("⏳ Yêu cầu quyền nhận thông báo...");
     const permission = await Notification.requestPermission();
     if (permission !== "granted") {
         setStatus("❌ Bạn đã từ chối quyền thông báo.", "error");
@@ -119,23 +111,30 @@ async function enableFCM() {
         return;
     }
 
+    setStatus("⏳ Đăng ký service worker và lấy token FCM...");
+
     try {
-        setStatus("⏳ Đăng ký Service Worker...");
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-        await waitForSWActive(registration);
+        console.log('SW registered', registration);
 
         const messaging = getMessaging();
         const token = await getToken(messaging, {
             vapidKey: VAPID_KEY,
             serviceWorkerRegistration: registration
         });
+        console.log("FCM Token:", token);
 
-        if (!token) throw new Error("Không lấy được token FCM");
+        if (!token) throw new Error("Không lấy được token");
 
+        // <-- SỬA ĐƯỜNG DẪN: notifications/saveFCMToken
         const res = await fetch(`${SERVER_URL}/notifications/saveFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.uid, fcmToken: token, platform: "web" })
+            body: JSON.stringify({
+                userId: currentUser.uid,
+                fcmToken: token,
+                platform: "web"
+            })
         });
 
         if (res.ok) {
@@ -155,7 +154,7 @@ async function enableFCM() {
     }
 }
 
-// Tắt FCM
+// Disable FCM
 async function disableFCM() {
     if (!currentUser || !currentToken) {
         toggleEl.checked = false;
@@ -163,18 +162,23 @@ async function disableFCM() {
     }
 
     try {
+        // <-- SỬA ĐƯỜNG DẪN: notifications/deleteFCMToken
         const res = await fetch(`${SERVER_URL}/notifications/deleteFCMToken`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: currentUser.uid, fcmToken: currentToken })
+            body: JSON.stringify({
+                userId: currentUser.uid,
+                fcmToken: currentToken
+            })
         });
 
         if (res.ok) {
-            currentToken = null;
             tokenEl.textContent = "Chưa có";
+            currentToken = null;
             setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
         } else {
             const err = await res.json().catch(() => ({}));
+            console.warn("Không thể xóa token:", err);
             setStatus("❌ Lỗi khi hủy đăng ký FCM", "error");
             toggleEl.checked = true;
         }
@@ -185,8 +189,64 @@ async function disableFCM() {
     }
 }
 
-// Toggle listener
-toggleEl.addEventListener('change', (e) => {
+// Toggle handler
+export function handleToggleChange(e) {
     if (e.target.checked) enableFCM();
     else disableFCM();
+}
+
+
+
+
+
+
+
+
+// public/firebase-messaging-sw.js
+
+// Sử dụng compat build vì trong SW bạn dùng API namespaced (firebase.messaging())
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
+
+// Firebase config (copy từ project của bạn)
+firebase.initializeApp({
+    apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
+    authDomain: "book-management-b7265.firebaseapp.com",
+    projectId: "book-management-b7265",
+    storageBucket: "book-management-b7265.appspot.com",
+    messagingSenderId: "1046859996196",
+    appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
+    measurementId: "G-ZYTCE1YML4"
+});
+
+// Lấy messaging instance (compat)
+const messaging = firebase.messaging();
+
+// Background message handler
+messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
+    const notificationTitle = payload.notification?.title || 'Thông báo';
+    const notificationOptions = {
+        body: payload.notification?.body || '',
+        icon: payload.notification?.icon || '/favicon.ico',
+        data: payload.data || {}
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Notification click handler
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const clickAction = event.notification.data?.click_action || '/';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                if (client.url === clickAction && 'focus' in client) return client.focus();
+            }
+            if (clients.openWindow) return clients.openWindow(clickAction);
+        })
+    );
 });
