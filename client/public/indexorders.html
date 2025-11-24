@@ -253,7 +253,6 @@
             const orderRef = doc(db, "orders", orderId);
 
             try {
-                // Lấy snapshot cũ để lấy userId
                 const orderSnapBefore = await getDoc(orderRef);
                 if (!orderSnapBefore.exists()) {
                     showToast("❌ Đơn hàng không tồn tại", "error");
@@ -262,14 +261,13 @@
                 const orderDataBefore = orderSnapBefore.data();
                 const userId = orderDataBefore.uid;
 
-                // 1️⃣ Cập nhật trạng thái trong Firestore
+                // 1️⃣ Cập nhật trạng thái
                 await updateDoc(orderRef, { status: newStatus });
                 showToast("✅ Đã cập nhật trạng thái", "success");
 
                 // 2️⃣ Nếu delivered → tạo giftcode + gửi FCM
                 if (newStatus === "delivered") {
                     try {
-                        // a. Gọi API backend để tạo giftcode và gửi FCM
                         const API_URL = "/notifications/completeOrder";
                         const res = await fetch(API_URL, {
                             method: "POST",
@@ -277,13 +275,14 @@
                             body: JSON.stringify({ userId, orderId })
                         });
 
+                        const data = await res.json(); // ⚡ chỉ parse 1 lần
+
                         if (!res.ok) {
-                            const errorData = await res.json();
-                            showToast(`⚠️ Lỗi gửi thông báo: ${errorData.message || "Không xác định"}`, "warning");
+                            showToast(`⚠️ Lỗi gửi thông báo: ${data.message || "Không xác định"}`, "warning");
                         } else {
-                            const data = await res.json();
                             showToast(`🎁 Giftcode: ${data.giftCode} | 🔔 Thông báo đã gửi FCM`, "info");
                         }
+
                     } catch (err) {
                         console.error("❌ Lỗi gọi API FCM:", err);
                         showToast("❌ Lỗi khi gửi thông báo FCM", "error");
