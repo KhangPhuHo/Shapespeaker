@@ -121,6 +121,7 @@ async function enableFCM() {
             vapidKey: VAPID_KEY,
             serviceWorkerRegistration: registration
         });
+        console.log("FCM Token:", token);
 
         if (!token) throw new Error("Không lấy được token");
 
