@@ -250,3 +250,68 @@ self.addEventListener('notificationclick', (event) => {
         })
     );
 });
+
+// <!DOCTYPE html>
+// <html lang="vi">
+
+// <head>
+//     <meta charset="UTF-8">
+//     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//     <title data-i18n="title.settings">Đăng ký FCM Client</title>
+//     <script src="https://cdn.tailwindcss.com"></script>
+//     <style>
+//         body {
+//             font-family: 'Inter', sans-serif;
+//             background-color: #1f2937;
+//             color: #f9fafb;
+//         }
+
+//         .card {
+//             background-color: #374151;
+//             border-radius: 12px;
+//             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+//         }
+//     </style>
+// </head>
+
+// <body>
+
+//     <div class="min-h-screen flex items-center justify-center p-4">
+//         <div class="card w-full max-w-lg p-8 space-y-6">
+//             <h1 class="text-3xl font-bold text-center text-indigo-400">Đăng Ký Thiết Bị Nhận Thông Báo</h1>
+//             <p class="text-center text-gray-300">Nhấn nút bên dưới để yêu cầu quyền nhận thông báo và gửi Token FCM lên
+//                 Server.</p>
+
+//             <!-- Nút gọi hàm đăng ký -->
+//             <div class="flex items-center justify-center mt-6">
+//                 <label class="flex items-center gap-3 cursor-pointer">
+//                     <input type="checkbox" id="fcmToggle" class="w-6 h-6 accent-indigo-500">
+//                     <span>Bật / Tắt nhận thông báo</span>
+//                 </label>
+//             </div>
+
+
+//             <div id="statusMessage"
+//                 class="mt-4 p-4 rounded-lg text-center font-medium bg-gray-700 text-gray-200 min-h-[4rem]">
+//                 Đang chờ khởi tạo Firebase...
+//             </div>
+
+//             <div class="bg-gray-800 p-4 rounded-lg space-y-2 text-sm">
+//                 <p><strong>Trạng thái Auth:</strong> <span id="authStatus">Chưa xác định</span></p>
+//                 <p><strong>User ID:</strong> <span id="userIdDisplay">N/A</span></p>
+//                 <p><strong>FCM Token:</strong> <span id="fcmTokenDisplay" class="break-all text-yellow-400">Chưa
+//                         có</span></p>
+//             </div>
+//         </div>
+//     </div>
+
+//     <!-- 💡 IMPORT LOGIC TỪ FILE JS RIÊNG -->
+//     <script type="module">
+//         import { handleToggleChange } from './src/js/fcm-register.js';
+//         const toggleEl = document.getElementById("fcmToggle");
+//         toggleEl.addEventListener("change", handleToggleChange);
+//     </script>
+
+// </body>
+
+// </html>

@@ -186,7 +186,7 @@ async function disableFCM() {
 }
 
 // Toggle listener
-toggleEl.addEventListener('change', (e) => {
+export function handleToggleChange(e) {
     if (e.target.checked) enableFCM();
     else disableFCM();
-});
+}
