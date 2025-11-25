@@ -78,6 +78,7 @@ router.post("/deleteFCMToken", async (req, res) => {
 /**
  * Function: gửi notification khi đơn hàng hoàn thành
  */
+// trong file router notifications (server side)
 async function sendOrderCompleteNotification(userId, orderId, giftCode) {
     const snapshot = await firestore
         .collection('fcm_tokens')
@@ -87,31 +88,43 @@ async function sendOrderCompleteNotification(userId, orderId, giftCode) {
 
     if (snapshot.empty) return { success: false, message: 'Không có token để gửi.' };
 
-    const tokens = snapshot.docs.map(d => d.id); // ⚡ dùng doc.id
+    const tokens = snapshot.docs.map(d => d.id);
 
-    const payload = {
-        notification: {
-            title: '🎉 Đơn hàng hoàn thành!',
-            body: `Mã quà tặng của bạn: ${giftCode}`,
-            icon: 'https://shapespeaker.vercel.app/favicon.ico'
-        },
-        data: {
-            type: 'ORDER_COMPLETE',
-            order_id: orderId,
-            giftcode: giftCode,
-            user_id: userId,
-            click_action: 'https://shapespeaker.vercel.app/giftcodes.html'
+    // data-only payload (KHÔNG đặt 'notification' key) để SW xử lý tùy ý
+    const dataPayload = {
+        type: 'ORDER_COMPLETE',
+        order_id: orderId,
+        giftcode: giftCode,
+        user_id: userId,
+        title: '🎉 Đơn hàng hoàn thành!',
+        body: `Mã quà tặng của bạn: ${giftCode}`,
+        icon: 'https://shapespeaker.vercel.app/favicon.ico',
+        click_action: 'https://shapespeaker.vercel.app/giftcodes.html'
+    };
+
+    const message = {
+        tokens: tokens,
+        data: Object.fromEntries(Object.entries(dataPayload).map(([k, v]) => [k, String(v)])), // FCM expects string map for data
+        webpush: {
+            fcmOptions: {
+                // optional: link that may be used by some clients
+                link: 'https://shapespeaker.vercel.app/giftcodes.html'
+            },
+            headers: {
+                Urgency: 'high'
+            }
         }
     };
 
     try {
-        const response = await messaging.sendMulticast({ tokens, ...payload });
+        const response = await messaging.sendMulticast(message);
 
         const invalidTokens = [];
         response.responses.forEach((resp, idx) => {
             if (!resp.success) {
-                const err = resp.error?.code;
-                if (err === 'messaging/invalid-argument' || err === 'messaging/registration-token-not-registered') {
+                const errCode = resp.error && resp.error.code;
+                // common invalid token codes
+                if (errCode === 'messaging/invalid-argument' || errCode === 'messaging/registration-token-not-registered' || errCode === 'messaging/registration-token-not-registered') {
                     invalidTokens.push(tokens[idx]);
                 }
             }
@@ -128,7 +141,7 @@ async function sendOrderCompleteNotification(userId, orderId, giftCode) {
         return { success: true };
     } catch (error) {
         console.error('❌ Lỗi FCM:', error);
-        return { success: false, message: error.message };
+        return { success: false, message: error.message || String(error) };
     }
 }
 

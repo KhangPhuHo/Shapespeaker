@@ -1,0 +1,420 @@
+const express = require('express');
+const router = express.Router();
+const { admin, firestore, messaging } = require('../firebaseAdmin');
+
+/**
+ * API: Check FCM token
+ */
+router.get("/checkFCMToken", async (req, res) => {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ success: false, message: "Thiếu userId" });
+
+    try {
+        const tokensSnapshot = await firestore
+            .collection("fcm_tokens")
+            .doc(userId)
+            .collection("tokens")
+            .get();
+
+        if (tokensSnapshot.empty) return res.json({ registered: false, tokens: [] });
+
+        const tokens = tokensSnapshot.docs.map(doc => doc.id); // ⚡ dùng doc.id
+        return res.json({ registered: true, tokens, token: tokens[0] || null });
+    } catch (error) {
+        console.error("❌ Lỗi check FCM token:", error);
+        return res.status(500).json({ success: false });
+    }
+});
+
+/**
+ * API: Save FCM token
+ */
+router.post('/saveFCMToken', async (req, res) => {
+    const { userId, fcmToken, platform } = req.body;
+    if (!userId || !fcmToken) return res.status(400).json({ success: false, message: 'Thiếu userId hoặc fcmToken.' });
+
+    try {
+        const tokenRef = firestore
+            .collection('fcm_tokens')
+            .doc(userId)
+            .collection('tokens')
+            .doc(fcmToken);
+
+        await tokenRef.set({
+            fcmToken,
+            platform: platform || 'web',
+            lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+        });
+
+        return res.json({ success: true, message: `Đã lưu token FCM cho user ${userId}.` });
+    } catch (error) {
+        console.error('❌ Lỗi lưu FCM Token:', error);
+        return res.status(500).json({ success: false, message: 'Lỗi server khi lưu token.' });
+    }
+});
+
+/**
+ * API: Delete FCM token
+ */
+router.post("/deleteFCMToken", async (req, res) => {
+    const { userId, fcmToken } = req.body;
+    if (!userId || !fcmToken) return res.status(400).json({ success: false, message: "Thiếu userId hoặc fcmToken" });
+
+    try {
+        await firestore
+            .collection('fcm_tokens')
+            .doc(userId)
+            .collection('tokens')
+            .doc(fcmToken)
+            .delete();
+
+        return res.json({ success: true, message: "Đã xóa token" });
+    } catch (err) {
+        console.error("❌ Lỗi xóa token:", err);
+        return res.status(500).json({ success: false, message: "Lỗi server khi xóa token" });
+    }
+});
+
+/**
+ * Function: gửi notification khi đơn hàng hoàn thành
+ */
+async function sendOrderCompleteNotification(userId, orderId, giftCode) {
+    const snapshot = await firestore
+        .collection('fcm_tokens')
+        .doc(userId)
+        .collection('tokens')
+        .get();
+
+    if (snapshot.empty) return { success: false, message: 'Không có token để gửi.' };
+
+    const tokens = snapshot.docs.map(d => d.id); // ⚡ dùng doc.id
+
+    const payload = {
+        notification: {
+            title: '🎉 Đơn hàng hoàn thành!',
+            body: `Mã quà tặng của bạn: ${giftCode}`,
+            icon: 'https://shapespeaker.vercel.app/favicon.ico'
+        },
+        data: {
+            type: 'ORDER_COMPLETE',
+            order_id: orderId,
+            giftcode: giftCode,
+            user_id: userId,
+            click_action: 'https://shapespeaker.vercel.app/giftcodes.html'
+        }
+    };
+
+    try {
+        const response = await messaging.sendMulticast({ tokens, ...payload });
+
+        const invalidTokens = [];
+        response.responses.forEach((resp, idx) => {
+            if (!resp.success) {
+                const err = resp.error?.code;
+                if (err === 'messaging/invalid-argument' || err === 'messaging/registration-token-not-registered') {
+                    invalidTokens.push(tokens[idx]);
+                }
+            }
+        });
+
+        if (invalidTokens.length > 0) {
+            const batch = firestore.batch();
+            invalidTokens.forEach(token => {
+                batch.delete(firestore.collection('fcm_tokens').doc(userId).collection('tokens').doc(token));
+            });
+            await batch.commit();
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Lỗi FCM:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+/**
+ * API: trigger hoàn thành đơn hàng
+ */
+router.post('/completeOrder', async (req, res) => {
+    const { userId, orderId } = req.body;
+    if (!userId || !orderId) return res.status(400).json({ success: false, message: 'Thiếu userId hoặc orderId.' });
+
+    const giftCode = `GC-${orderId.slice(-4)}-${Math.floor(Math.random() * 999)}`;
+
+    try {
+        const result = await sendOrderCompleteNotification(userId, orderId, giftCode);
+        return res.json({
+            success: result.success,
+            message: result.success ? `🎁 Đã gửi thông báo cho user ${userId}` : result.message,
+            giftCode
+        });
+    } catch (error) {
+        console.error("❌ Lỗi /completeOrder:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+module.exports = router;
+
+
+// fcm-register.js
+import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging.js";
+import { auth } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+
+const SERVER_URL = "https://shapespeaker.onrender.com";
+
+// DOM
+const statusEl = document.getElementById("statusMessage");
+const authEl = document.getElementById("authStatus");
+const userEl = document.getElementById("userIdDisplay");
+const tokenEl = document.getElementById("fcmTokenDisplay");
+const toggleEl = document.getElementById("fcmToggle");
+
+let currentUser = null;
+let currentToken = null;
+
+// Hiển thị trạng thái
+function setStatus(text, type = "info") {
+    statusEl.textContent = text;
+    const colors = {
+        info: "bg-gray-700 text-gray-200",
+        success: "bg-green-600 text-white",
+        error: "bg-red-600 text-white"
+    };
+    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type]}`;
+}
+
+// Lấy VAPID key từ server
+async function getVapidKeyFromServer() {
+    try {
+        const res = await fetch(`${SERVER_URL}/api/getVapidKey`);
+        if (!res.ok) throw new Error("Không lấy được VAPID key");
+        const data = await res.json();
+        return data.vapidKey;
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
+}
+
+// Chờ SW active
+async function waitForSWActive(registration) {
+    if (registration.active) return registration.active;
+
+    return new Promise((resolve, reject) => {
+        const sw = registration.installing || registration.waiting;
+        if (!sw) return reject("No SW installing or waiting");
+
+        sw.addEventListener('statechange', () => {
+            if (sw.state === 'activated') resolve(sw);
+        });
+
+        setTimeout(() => reject("SW activation timed out"), 5000);
+    });
+}
+
+// Auth listener
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (user) {
+        authEl.textContent = "Đã đăng nhập";
+        userEl.textContent = user.uid;
+
+        try {
+            const res = await fetch(`${SERVER_URL}/notifications/checkFCMToken?userId=${user.uid}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.registered && data.tokens && data.tokens.length > 0) {
+                    currentToken = data.tokens[0];
+                    tokenEl.textContent = currentToken;
+                    toggleEl.checked = true;
+                    setStatus("🔔 Thiết bị đã đăng ký nhận thông báo.", "success");
+                } else {
+                    currentToken = null;
+                    tokenEl.textContent = "Chưa có";
+                    toggleEl.checked = false;
+                    setStatus("ℹ️ Thiết bị chưa đăng ký nhận thông báo.", "info");
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    } else {
+        authEl.textContent = "Chưa đăng nhập";
+        userEl.textContent = "N/A";
+        tokenEl.textContent = "Chưa có";
+        toggleEl.checked = false;
+        setStatus("⚠️ Bạn cần đăng nhập để nhận thông báo.", "info");
+    }
+});
+
+// Bật FCM
+async function enableFCM() {
+    if (!currentUser) {
+        setStatus("⚠️ Bạn cần đăng nhập trước khi bật thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    if (!("Notification" in window)) {
+        setStatus("⚠️ Trình duyệt không hỗ trợ thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") {
+        setStatus("❌ Bạn đã từ chối quyền thông báo.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    setStatus("⏳ Lấy VAPID key từ server...");
+    const VAPID_KEY = await getVapidKeyFromServer();
+    if (!VAPID_KEY) {
+        setStatus("❌ Không lấy được VAPID key", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
+    try {
+        setStatus("⏳ Đăng ký Service Worker...");
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        await waitForSWActive(registration);
+
+        const messaging = getMessaging();
+        const token = await getToken(messaging, {
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: registration
+        });
+
+        if (!token) throw new Error("Không lấy được token FCM");
+
+        const res = await fetch(`${SERVER_URL}/notifications/saveFCMToken`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.uid, fcmToken: token, platform: "web" })
+        });
+
+        if (res.ok) {
+            currentToken = token;
+            tokenEl.textContent = token;
+            setStatus("🎉 Thiết bị đã đăng ký nhận thông báo thành công!", "success");
+        } else {
+            const errData = await res.json().catch(() => ({}));
+            setStatus(`⚠️ Lỗi server: ${errData.message || res.statusText}`, "error");
+            toggleEl.checked = false;
+        }
+
+    } catch (err) {
+        console.error("SW hoặc FCM lỗi:", err);
+        setStatus("❌ Lỗi khi lấy hoặc gửi token FCM", "error");
+        toggleEl.checked = false;
+    }
+}
+
+// Tắt FCM
+async function disableFCM() {
+    if (!currentUser || !currentToken) {
+        toggleEl.checked = false;
+        return;
+    }
+
+    try {
+        const res = await fetch(`${SERVER_URL}/notifications/deleteFCMToken`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: currentUser.uid, fcmToken: currentToken })
+        });
+
+        if (res.ok) {
+            currentToken = null;
+            tokenEl.textContent = "Chưa có";
+            setStatus("🔕 Đã hủy đăng ký nhận thông báo.", "info");
+        } else {
+            const err = await res.json().catch(() => ({}));
+            setStatus("❌ Lỗi khi hủy đăng ký FCM", "error");
+            toggleEl.checked = true;
+        }
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Lỗi khi hủy đăng ký FCM", "error");
+        toggleEl.checked = true;
+    }
+}
+
+// Toggle listener
+export function handleToggleChange(e) {
+    if (e.target.checked) enableFCM();
+    else disableFCM();
+}
+
+// public/firebase-messaging-sw.js
+
+// ⚠️ Dùng compat build vì SW sử dụng API namespaced (firebase.messaging())
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
+
+// Firebase config (copy từ project của bạn)
+firebase.initializeApp({
+    apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
+    authDomain: "book-management-b7265.firebaseapp.com",
+    projectId: "book-management-b7265",
+    storageBucket: "book-management-b7265.appspot.com",
+    messagingSenderId: "1046859996196",
+    appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1",
+    measurementId: "G-ZYTCE1YML4"
+});
+
+// Lấy messaging instance
+const messaging = firebase.messaging();
+
+// =====================
+// Background message handler
+// =====================
+messaging.onBackgroundMessage((payload) => {
+    console.log('[firebase-messaging-sw.js] Received background message', payload);
+
+    const notificationTitle = payload.notification?.title || 'Thông báo';
+    const notificationOptions = {
+        body: payload.notification?.body || '',
+        icon: payload.notification?.icon || '/favicon.ico',
+        data: payload.data || {}
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// =====================
+// Notification click handler
+// =====================
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+
+    const clickAction = event.notification.data?.click_action || '/';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            for (const client of clientList) {
+                // So sánh URL bằng cách normalize để tránh mismatch /?query hoặc trailing slash
+                const clientUrl = new URL(client.url);
+                const clickUrl = new URL(clickAction, self.location.origin);
+                if (clientUrl.pathname === clickUrl.pathname && 'focus' in client) return client.focus();
+            }
+            if (clients.openWindow) return clients.openWindow(clickAction);
+        })
+    );
+});
+
+// =====================
+// Debug log SW ready
+// =====================
+self.addEventListener('install', (event) => {
+    console.log('[firebase-messaging-sw.js] SW installing...');
+    self.skipWaiting(); // đảm bảo SW active ngay
+});
+
+self.addEventListener('activate', (event) => {
+    console.log('[firebase-messaging-sw.js] SW activated');
+    event.waitUntil(self.clients.claim()); // claim clients ngay
+});

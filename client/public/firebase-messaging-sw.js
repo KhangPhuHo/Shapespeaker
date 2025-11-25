@@ -15,54 +15,154 @@ firebase.initializeApp({
     measurementId: "G-ZYTCE1YML4"
 });
 
-// Lấy messaging instance
+// Lấy messaging instance (nếu cần)
 const messaging = firebase.messaging();
 
-// =====================
-// Background message handler
-// =====================
-messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Received background message', payload);
+// Helper: normalise payload -> trả về object { title, body, icon, click_action, rawData }
+function parsePayload(payload) {
+    // payload có thể là:
+    // - event.data.json() (data-only)
+    // - { notification: {...}, data: {...} }
+    // - admin SDK webpush fcmOptions.link
+    let title = 'Thông báo';
+    let body = '';
+    let icon = '/favicon.ico';
+    let click_action = '/';
+    const rawData = {};
 
-    const notificationTitle = payload.notification?.title || 'Thông báo';
-    const notificationOptions = {
-        body: payload.notification?.body || '',
-        icon: payload.notification?.icon || '/favicon.ico',
-        data: payload.data || {}
+    try {
+        // Nếu payload là object chứa notification/data
+        if (payload) {
+            // payload có thể có .data (string map) or payload.data (nested)
+            // Copy toàn bộ để dùng sau
+            Object.assign(rawData, payload);
+
+            // Check data-first (data-only from server)
+            const data = payload.data || payload; // some servers put fields at root
+
+            if (data && typeof data === 'object') {
+                // If data contains string fields for title/body
+                if (data.title) title = data.title;
+                if (data.body) body = data.body;
+                if (data.icon) icon = data.icon;
+                if (data.click_action) click_action = data.click_action;
+                if (data.clickAction) click_action = data.clickAction;
+                if (data.link) click_action = data.link;
+            }
+
+            // If there's a notification block, prefer it for visible text (fallback)
+            if (payload.notification && typeof payload.notification === 'object') {
+                title = payload.notification.title || title;
+                body = payload.notification.body || body;
+                icon = payload.notification.icon || icon;
+            }
+
+            // If webpush.fcmOptions.link exists (admin SDK)
+            if (payload.webpush && payload.webpush.fcmOptions && payload.webpush.fcmOptions.link) {
+                click_action = payload.webpush.fcmOptions.link;
+            }
+        }
+    } catch (e) {
+        console.error('[SW] parsePayload error', e);
+    }
+
+    return { title, body, icon, click_action, rawData };
+}
+
+// Use 'push' event to ensure data-only payloads are received by SW
+self.addEventListener('push', function (event) {
+    if (!event.data) {
+        console.log('[firebase-messaging-sw.js] Push event but no data');
+        return;
+    }
+
+    let payloadJson;
+    try {
+        payloadJson = event.data.json();
+    } catch (e) {
+        // not JSON? try text
+        try {
+            payloadJson = JSON.parse(event.data.text());
+        } catch (err) {
+            payloadJson = { body: event.data.text() || '' };
+        }
+    }
+
+    const { title, body, icon, click_action, rawData } = parsePayload(payloadJson);
+
+    const options = {
+        body: body,
+        icon: icon || '/favicon.ico',
+        data: {
+            click_action: click_action || '/',
+            raw: rawData
+        },
+        // you can add other options like tag, renotify, badge, image...
+        // tag: 'general-notification'
     };
 
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    event.waitUntil(
+        (async () => {
+            try {
+                await self.registration.showNotification(title, options);
+            } catch (err) {
+                console.error('[firebase-messaging-sw.js] showNotification error', err);
+            }
+        })()
+    );
 });
 
-// =====================
+// Also keep compatibility with firebase-messaging-compat background API if it calls onBackgroundMessage
+// (This might not be invoked in SW for all setups, but it's okay to include as fallback)
+try {
+    messaging.onBackgroundMessage && messaging.onBackgroundMessage((payload) => {
+        console.log('[firebase-messaging-sw.js] onBackgroundMessage', payload);
+        const { title, body, icon, click_action } = parsePayload(payload);
+        const options = {
+            body: body,
+            icon: icon || '/favicon.ico',
+            data: { click_action: click_action || '/' }
+        };
+        self.registration.showNotification(title, options);
+    });
+} catch (e) {
+    // ignore if not supported
+    console.warn('[firebase-messaging-sw.js] onBackgroundMessage not available or failed', e);
+}
+
 // Notification click handler
-// =====================
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 
-    const clickAction = event.notification.data?.click_action || '/';
+    const clickAction = (event.notification.data && event.notification.data.click_action) || '/';
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+            // try to focus an existing window with same path
             for (const client of clientList) {
-                // So sánh URL bằng cách normalize để tránh mismatch /?query hoặc trailing slash
-                const clientUrl = new URL(client.url);
-                const clickUrl = new URL(clickAction, self.location.origin);
-                if (clientUrl.pathname === clickUrl.pathname && 'focus' in client) return client.focus();
+                try {
+                    const clientUrl = new URL(client.url);
+                    const clickUrl = new URL(clickAction, self.location.origin);
+                    if (clientUrl.pathname === clickUrl.pathname) {
+                        if ('focus' in client) return client.focus();
+                    }
+                } catch (e) {
+                    // parsing error, ignore and continue
+                    console.error('[SW] URL parse error', e);
+                }
             }
             if (clients.openWindow) return clients.openWindow(clickAction);
         })
     );
 });
 
-// =====================
-// Debug log SW ready
-// =====================
+// install / activate
 self.addEventListener('install', (event) => {
     console.log('[firebase-messaging-sw.js] SW installing...');
-    self.skipWaiting(); // đảm bảo SW active ngay
+    self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
     console.log('[firebase-messaging-sw.js] SW activated');
-    event.waitUntil(self.clients.claim()); // claim clients ngay
+    event.waitUntil(self.clients.claim());
 });

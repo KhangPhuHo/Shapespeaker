@@ -23,7 +23,7 @@ function setStatus(text, type = "info") {
         success: "bg-green-600 text-white",
         error: "bg-red-600 text-white"
     };
-    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type]}`;
+    statusEl.className = `mt-4 p-4 rounded-lg text-center font-medium min-h-[4rem] ${colors[type] || colors.info}`;
 }
 
 // Lấy VAPID key từ server
@@ -39,19 +39,27 @@ async function getVapidKeyFromServer() {
     }
 }
 
-// Chờ SW active
+// Chờ SW active (improved)
 async function waitForSWActive(registration) {
+    if (!registration) throw new Error("No registration provided");
     if (registration.active) return registration.active;
 
     return new Promise((resolve, reject) => {
         const sw = registration.installing || registration.waiting;
         if (!sw) return reject("No SW installing or waiting");
 
-        sw.addEventListener('statechange', () => {
-            if (sw.state === 'activated') resolve(sw);
-        });
+        const onStateChange = () => {
+            if (sw.state === 'activated') {
+                sw.removeEventListener('statechange', onStateChange);
+                resolve(sw);
+            }
+        };
+        sw.addEventListener('statechange', onStateChange);
 
-        setTimeout(() => reject("SW activation timed out"), 5000);
+        setTimeout(() => {
+            sw.removeEventListener('statechange', onStateChange);
+            reject("SW activation timed out");
+        }, 7000);
     });
 }
 
@@ -80,6 +88,7 @@ onAuthStateChanged(auth, async (user) => {
             }
         } catch (err) {
             console.error(err);
+            setStatus("⚠️ Lỗi khi kiểm tra token trên server.", "error");
         }
     } else {
         authEl.textContent = "Chưa đăng nhập";
@@ -121,13 +130,17 @@ async function enableFCM() {
 
     try {
         setStatus("⏳ Đăng ký Service Worker...");
+        // register SW
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         await waitForSWActive(registration);
+
+        // Fallback: ensure navigator.serviceWorker.ready
+        const swReady = await navigator.serviceWorker.ready.catch(() => registration);
 
         const messaging = getMessaging();
         const token = await getToken(messaging, {
             vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: registration
+            serviceWorkerRegistration: swReady
         });
 
         if (!token) throw new Error("Không lấy được token FCM");
