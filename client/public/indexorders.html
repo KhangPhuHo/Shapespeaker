@@ -249,7 +249,7 @@
 
 
         const SERVER_URL = "https://shapespeaker.onrender.com";
-        
+
         window.updateStatus = async function (orderId) {
             const select = document.getElementById(`status-${orderId}`);
             if (!select) return;
@@ -274,7 +274,12 @@
                 if (newStatus === "delivered") {
                     try {
                         // Tạo giftcode frontend
-                        const giftCode = await createAndSaveGiftCode(userId, orderId);
+                        const giftCode = await createAndSaveGiftCode(
+                            userId,
+                            orderId,
+                            orderDataBefore.items
+                        );
+
                         showToast(`🎁 Giftcode: ${giftCode} đã thêm vào tài khoản`, "info");
 
                         // Gọi backend để gửi FCM
