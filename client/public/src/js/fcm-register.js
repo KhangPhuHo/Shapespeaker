@@ -107,6 +107,13 @@ async function enableFCM() {
         return;
     }
 
+    // ⛔️ THÊM ĐOẠN NÀY
+    if (Notification.permission === "denied") {
+        setStatus("❌ Trình duyệt đã chặn thông báo. Vào Chrome → Settings → Privacy → Notifications để bật lại.", "error");
+        toggleEl.checked = false;
+        return;
+    }
+
     if (!("Notification" in window)) {
         setStatus("⚠️ Trình duyệt không hỗ trợ thông báo.", "error");
         toggleEl.checked = false;
@@ -131,7 +138,10 @@ async function enableFCM() {
     try {
         setStatus("⏳ Đăng ký Service Worker...");
         // register SW
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+        const registration =
+            await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js')
+            || await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
         await waitForSWActive(registration);
 
         // Fallback: ensure navigator.serviceWorker.ready

@@ -124,7 +124,12 @@ async function sendOrderCompleteNotification(userId, orderId, giftCode) {
             if (!resp.success) {
                 const errCode = resp.error && resp.error.code;
                 // common invalid token codes
-                if (errCode === 'messaging/invalid-argument' || errCode === 'messaging/registration-token-not-registered' || errCode === 'messaging/registration-token-not-registered') {
+                const INVALID_TOKEN_ERRORS = new Set([
+                    'messaging/invalid-argument',
+                    'messaging/registration-token-not-registered'
+                ]);
+
+                if (INVALID_TOKEN_ERRORS.has(errCode)) {
                     invalidTokens.push(tokens[idx]);
                 }
             }

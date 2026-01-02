@@ -69,22 +69,6 @@ app.get("/api/getVapidKey", (req, res) => {
   return res.json({ success: true, vapidKey: VAPID_KEY });
 });
 
-// ví dụ route gửi notification
-app.post("/notifications/send", async (req, res) => {
-    const { tokens, title, body } = req.body;
-    try {
-        const response = await messaging.sendMulticast({
-            tokens,
-            notification: { title, body },
-        });
-        res.json({ success: true, response });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, error: err.message });
-    }
-});
-
-
 // 🔐 Xoá user
 app.post("/deleteUser", async (req, res) => {
   const { requesterUid, targetUid } = req.body;
