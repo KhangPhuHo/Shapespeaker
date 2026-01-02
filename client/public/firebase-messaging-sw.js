@@ -1,58 +1,46 @@
 /* eslint-disable no-undef */
 
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js');
-
 // =======================
-// INIT FIREBASE
+// SERVICE WORKER – DATA ONLY (FINAL)
 // =======================
-firebase.initializeApp({
-  apiKey: "AIzaSyCu6mwsKL-O1GmNG4BNHFdGcuqAgrk8IhY",
-  authDomain: "book-management-b7265.firebaseapp.com",
-  projectId: "book-management-b7265",
-  messagingSenderId: "1046859996196",
-  appId: "1:1046859996196:web:1fb51609ff2dc20c130cb1"
-});
 
-const messaging = firebase.messaging();
+console.log('[SW] Loaded');
 
-console.log('[SW] Firebase Messaging initialized');
+self.addEventListener('push', (event) => {
+  console.log('[SW] 📩 Push received');
 
-// =======================
-// BACKGROUND MESSAGE
-// =======================
-messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] 📩 onBackgroundMessage payload:', payload);
-
-  const data = payload.data || {};
-
-  // ====== NỘI DUNG CÓ THỂ CHỈNH ======
-  let title = data.title || '🔔 Thông báo mới';
-  let body = data.body || '';
-  let icon = data.icon || '/favicon.ico';
-  let image = data.image; // optional
-  let url = data.click_action || '/';
-
-  // 🎯 xử lý theo type
-  if (data.type === 'ADMIN') {
-    title = '🛠️ Thông báo hệ thống';
+  if (!event.data) {
+    console.warn('[SW] No payload');
+    return;
   }
 
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch (e) {
+    console.error('[SW] Payload parse error', e);
+    return;
+  }
+
+  // ======= CONTENT (CUSTOMIZE HERE) =======
+  const title = data.title || '🔔 Thông báo';
   const options = {
-    body,
-    icon,
-    image, // ✅ ảnh lớn
-    data: {
-      url,
-      raw: data
-    },
+    body: data.body || '',
+    icon: data.icon || '/favicon.ico',
+    image: data.image, // ✅ hỗ trợ ảnh lớn (Chrome / Android)
     tag: data.type || 'general', // chống spam
-    renotify: true
+    renotify: true,
+    data: {
+      url: data.click_action || '/',
+      raw: data
+    }
   };
 
-  console.log('[SW] 🔔 showNotification:', title, options);
+  console.log('[SW] 🔔 showNotification', title, options);
 
-  return self.registration.showNotification(title, options);
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
 // =======================
@@ -60,29 +48,28 @@ messaging.onBackgroundMessage((payload) => {
 // =======================
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] 👉 Notification clicked');
-  event.notification.close();
 
+  event.notification.close();
   const url = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientsArr) => {
-      for (const client of clientsArr) {
-        if (client.url === url && 'focus' in client) {
-          console.log('[SW] Focus existing window');
-          return client.focus();
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientsArr) => {
+        for (const client of clientsArr) {
+          if (client.url === url && 'focus' in client) {
+            return client.focus();
+          }
         }
-      }
-      console.log('[SW] Open new window');
-      return clients.openWindow(url);
-    })
+        return clients.openWindow(url);
+      })
   );
 });
 
 // =======================
 // INSTALL / ACTIVATE
 // =======================
-self.addEventListener('install', (event) => {
-  console.log('[SW] Installing...');
+self.addEventListener('install', () => {
+  console.log('[SW] Installing');
   self.skipWaiting();
 });
 
